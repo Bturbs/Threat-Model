@@ -1,0 +1,128 @@
+name: Generate and Deploy Threat Model Reports
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - 'threat-models/**'
+      - 'src/**'
+  workflow_dispatch:
+
+jobs:
+  generate-and-deploy:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+      
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      
+      - name: Install Graphviz
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y graphviz
+      
+      - name: Install Python dependencies
+        run: |
+          pip install -r requirements.txt
+      
+      - name: Generate all threat model reports
+        run: |
+          python -m src.cli batch threat-models/ --output-dir ./reports-output
+      
+      - name: Create index page
+        run: |
+          cat > ./reports-output/index.html << 'EOF'
+          <!DOCTYPE html>
+          <html lang="en">
+          <head>
+              <meta charset="UTF-8">
+              <meta name="viewport" content="width=device-width, initial-scale=1.0">
+              <title>Threat Model Reports</title>
+              <style>
+                  body {
+                      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Arial, sans-serif;
+                      max-width: 1200px;
+                      margin: 0 auto;
+                      padding: 40px 20px;
+                      background: #f8f9fa;
+                  }
+                  h1 { color: #2c3e50; margin-bottom: 30px; }
+                  .models { display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 20px; }
+                  .model-card {
+                      background: white;
+                      border: 1px solid #dee2e6;
+                      border-radius: 8px;
+                      padding: 20px;
+                      text-decoration: none;
+                      color: inherit;
+                      transition: box-shadow 0.2s, transform 0.2s;
+                  }
+                  .model-card:hover {
+                      box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+                      transform: translateY(-2px);
+                  }
+                  .model-card h2 {
+                      color: #3498db;
+                      font-size: 1.2rem;
+                      margin-bottom: 10px;
+                  }
+                  .model-card p {
+                      color: #7f8c8d;
+                      font-size: 0.9rem;
+                      margin: 0;
+                  }
+                  .timestamp {
+                      text-align: center;
+                      margin-top: 40px;
+                      color: #95a5a6;
+                      font-size: 0.9rem;
+                  }
+              </style>
+          </head>
+          <body>
+              <h1>Threat Model Reports</h1>
+              <div class="models">
+          EOF
+          
+          for dir in threat-models/*/; do
+            model_name=$(basename "$dir")
+            # Prefer threat-model.yaml for title extraction, fallback to _meta.yaml (legacy)
+            if [ -f "$dir/reports/threat-model.html" ]; then
+              if [ -f "$dir/threat-model.yaml" ]; then
+                  title=$(grep -m 1 'title:' "$dir/threat-model.yaml" | sed 's/title: *"\?\([^"]*\)"\?/\1/')
+              elif [ -f "$dir/_meta.yaml" ]; then
+                  title=$(grep -m 1 'title:' "$dir/_meta.yaml" | sed 's/title: *"\?\([^"]*\)"\?/\1/')
+              else
+                  title="$model_name"
+              fi
+              
+              echo "                  <a href=\"$model_name/reports/threat-model.html\" class=\"model-card\">" >> ./reports-output/index.html
+              echo "                      <h2>$title</h2>" >> ./reports-output/index.html
+              echo "                      <p>View threat model report →</p>" >> ./reports-output/index.html
+              echo "                  </a>" >> ./reports-output/index.html
+            fi
+          done
+          
+          cat >> ./reports-output/index.html << 'EOF'
+              </div>
+              <div class="timestamp">
+                  Generated: $(date -u '+%Y-%m-%d %H:%M:%S UTC')
+              </div>
+          </body>
+          </html>
+          EOF
+      
+      - name: Deploy to GitHub Pages
+        uses: peaceiris/actions-gh-pages@v3
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          publish_dir: ./reports-output
+          force_orphan: true

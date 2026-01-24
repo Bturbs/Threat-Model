@@ -1,0 +1,411 @@
+meta:
+  title: BYOD Access Architecture
+  modelId: TM-BYOD-ARCH
+  version: "1.0"
+  scope: Enterprise BYOD Security Architecture
+  owner: Security Architecture Team
+  lastUpdated: "2026-01-24"
+
+assets:
+  - ID: A-BYOD-DEVICE
+    name: User Device (BYOD)
+    type: Client
+    description: Personally owned laptop or mobile device used to access corporate resources.
+    trustZone: Untrusted
+    dataFlows:
+      - ID: DF-01
+        name: Authentication Request
+        source: A-BYOD-DEVICE
+        destination: A-IDP
+        protocol: HTTPS
+        dataClassification: Restricted
+        crossesTrustBoundary: true
+      - ID: DF-02
+        name: Device Registration
+        source: A-BYOD-DEVICE
+        destination: A-MDM
+        protocol: HTTPS
+        dataClassification: Internal
+        crossesTrustBoundary: true
+      - ID: DF-03
+        name: Access Corporate Services
+        source: A-BYOD-DEVICE
+        destination: A-CORP-SERVICES
+        protocol: HTTPS
+        dataClassification: Confidential
+        crossesTrustBoundary: true
+
+  - ID: A-IDP
+    name: Identity Provider
+    type: Serverless Service
+    description: Central authentication and policy enforcement platform (Azure AD/Okta).
+    trustZone: Corporate Cloud
+    dataFlows:
+      - ID: DF-04
+        name: Identity Verification
+        source: A-IDP
+        destination: A-COND-ACCESS
+        protocol: Internal API
+        dataClassification: Restricted
+        crossesTrustBoundary: false
+      - ID: DF-05
+        name: Issue Access Token
+        source: A-IDP
+        destination: A-BYOD-DEVICE
+        protocol: HTTPS
+        dataClassification: Restricted
+        crossesTrustBoundary: true
+
+  - ID: A-MDM
+    name: Device Management Platform
+    type: Serverless Service
+    description: MDM/MAM platform managing device registration and compliance (Intune/Workspace ONE).
+    trustZone: Corporate Cloud
+    dataFlows:
+      - ID: DF-06
+        name: Device Compliance Report
+        source: A-MDM
+        destination: A-COND-ACCESS
+        protocol: Internal API
+        dataClassification: Internal
+        crossesTrustBoundary: false
+
+  - ID: A-COND-ACCESS
+    name: Conditional Access Engine
+    type: Compute
+    description: Evaluates access requests based on identity, device posture, and risk signals.
+    trustZone: Corporate Cloud
+    dataFlows:
+      - ID: DF-07
+        name: Access Decision
+        source: A-COND-ACCESS
+        destination: A-IDP
+        protocol: Internal API
+        dataClassification: Internal
+        crossesTrustBoundary: false
+
+  - ID: A-CORP-SERVICES
+    name: Corporate Cloud Services
+    type: Data Store
+    description: Email, file storage, and SaaS applications.
+    trustZone: Corporate Cloud
+    dataFlows:
+      - ID: DF-08
+        name: Audit Logs
+        source: A-CORP-SERVICES
+        destination: A-LOGGING
+        protocol: Syslog/API
+        dataClassification: Internal
+        crossesTrustBoundary: false
+
+  - ID: A-ENDPOINT-SEC
+    name: Endpoint Security Agent
+    type: Client Service
+    description: Antivirus/EDR agent on BYOD device for compliance reporting.
+    trustZone: Managed Container
+    dataFlows:
+      - ID: DF-09
+        name: Compliance Telemetry
+        source: A-ENDPOINT-SEC
+        destination: A-MDM
+        protocol: HTTPS
+        dataClassification: Internal
+        crossesTrustBoundary: true
+
+  - ID: A-LOGGING
+    name: Logging & Monitoring Platform
+    type: Database
+    description: SIEM/Log Analytics for authentication and access logs.
+    trustZone: Corporate Cloud
+    dataFlows: []
+
+attackers:
+  - REFID: ATT-EXT
+    name: External Attacker
+    description: Remote attacker targeting stolen credentials or phishing.
+    motivation: Data theft, corporate espionage.
+    capability: Advanced
+
+  - REFID: ATT-INSIDER
+    name: Malicious Insider
+    description: Employee attempting to abuse BYOD access for unauthorized purposes.
+    motivation: Data exfiltration, sabotage.
+    capability: Authenticated access
+
+  - REFID: ATT-DEVICE-OWNER
+    name: Negligent Device Owner
+    description: Legitimate user with poor security practices (weak passwords, no device lock).
+    motivation: Convenience over security.
+    capability: Legitimate access
+
+securityObjectives:
+  - ID: SO-CONF
+    name: Confidentiality
+    description: Ensure corporate data is only accessible to authorized users on compliant devices.
+    category: CIA
+  - ID: SO-INT
+    name: Integrity
+    description: Prevent unauthorized modification of corporate data or policies.
+    category: CIA
+  - ID: SO-AVAIL
+    name: Availability
+    description: Ensure legitimate users can access resources when needed.
+    category: CIA
+  - ID: SO-ACCOUNT
+    name: Accountability
+    description: Maintain audit trails for all access activities.
+    category: Governance
+
+threats:
+  - ID: T-01
+    title: Stolen Credentials Used from Unmanaged Device
+    threatType: Spoofing
+    attack: Attacker steals user credentials via phishing and authenticates from a non-compliant device.
+    impactDesc: Unauthorized access to corporate data from an untrusted device.
+    impactedSecObj:
+      - SO-CONF
+      - SO-ACCOUNT
+    attackers:
+      - ATT-EXT
+    CVSS:
+      vector: CVSS:3.1/AV:N/AC:L/PR:N/UI:R/S:U/C:H/I:H/A:N
+      score: 8.1
+      severity: High
+    testSteps:
+      - "Obtain valid user credentials via phishing simulation."
+      - "Attempt to authenticate from a device not enrolled in MDM."
+      - "Observe if conditional access blocks the attempt."
+    expectedBehavior: "Conditional access should deny login from unregistered device."
+    countermeasures:
+      - ID: CM-01
+        title: Device Compliance Enforcement
+        description: Require device enrollment and compliance before granting access.
+        status: in_place
+      - ID: CM-02
+        title: MFA Enforcement
+        description: Require phishing-resistant MFA for all authentications.
+        status: in_place
+
+  - ID: T-02
+    title: Device ID Spoofing
+    threatType: Spoofing
+    attack: Attacker clones a compliant device ID to bypass device-based access controls.
+    impactDesc: Unauthorized device gains access by impersonating a registered device.
+    impactedSecObj:
+      - SO-CONF
+      - SO-INT
+    attackers:
+      - ATT-INSIDER
+    CVSS:
+      vector: CVSS:3.1/AV:N/AC:H/PR:L/UI:N/S:U/C:H/I:H/A:N
+      score: 6.8
+      severity: Medium
+    testSteps:
+      - "Extract device ID from a compliant enrolled device."
+      - "Attempt to replay or spoof the device ID from another device."
+      - "Test if conditional access validates device certificate or hardware binding."
+    expectedBehavior: "Access should be denied unless device presents valid certificate tied to hardware."
+    countermeasures:
+      - ID: CM-03
+        title: Hardware-Bound Device Certificates
+        description: Use TPM or Secure Enclave to bind device identity to hardware.
+        status: planned
+      - ID: CM-04
+        title: Device Attestation
+        description: Verify device integrity signals during authentication.
+        status: planned
+
+  - ID: T-03
+    title: MFA Fatigue Attack
+    threatType: Spoofing
+    attack: Attacker bombards user with repeated MFA push notifications until user approves out of frustration.
+    impactDesc: Attacker gains access using stolen primary credentials and user's fatigued approval.
+    impactedSecObj:
+      - SO-CONF
+    attackers:
+      - ATT-EXT
+    CVSS:
+      vector: CVSS:3.1/AV:N/AC:L/PR:N/UI:R/S:U/C:H/I:H/A:N
+      score: 8.1
+      severity: High
+    testSteps:
+      - "Initiate multiple rapid authentication attempts with valid credentials."
+      - "Observe if rate limiting or anomaly detection blocks the attack."
+    expectedBehavior: "System should throttle MFA requests and alert on suspicious patterns."
+    countermeasures:
+      - ID: CM-05
+        title: MFA Rate Limiting
+        description: Limit number of MFA prompts within a time window.
+        status: in_place
+      - ID: CM-06
+        title: Number Matching MFA
+        description: Use number-matching or FIDO2 instead of push-only MFA.
+        status: planned
+
+  - ID: T-04
+    title: Manipulation of Device Compliance State
+    threatType: Tampering
+    attack: Attacker or user manipulates endpoint agent or MDM signals to report false compliance.
+    impactDesc: Non-compliant device appears compliant and gains unauthorized access.
+    impactedSecObj:
+      - SO-CONF
+      - SO-INT
+    attackers:
+      - ATT-INSIDER
+      - ATT-DEVICE-OWNER
+    CVSS:
+      vector: CVSS:3.1/AV:L/AC:H/PR:L/UI:N/S:U/C:H/I:H/A:N
+      score: 6.3
+      severity: Medium
+    testSteps:
+      - "Root or jailbreak a test device."
+      - "Attempt to bypass endpoint security agent or spoof compliance signals."
+      - "Check if MDM detects jailbreak/root or tampered agent."
+    expectedBehavior: "MDM should detect device tampering and mark device non-compliant."
+    countermeasures:
+      - ID: CM-07
+        title: Jailbreak/Root Detection
+        description: Detect and block rooted or jailbroken devices.
+        status: in_place
+      - ID: CM-08
+        title: Endpoint Agent Integrity Checks
+        description: Use attestation to verify agent has not been tampered with.
+        status: planned
+
+  - ID: T-05
+    title: Data Leakage via Screenshots or Copy-Paste
+    threatType: Information Disclosure
+    attack: User or malware captures corporate data via screenshots, copy-paste, or screen recording.
+    impactDesc: Confidential corporate data is exfiltrated to personal apps or cloud storage.
+    impactedSecObj:
+      - SO-CONF
+    attackers:
+      - ATT-INSIDER
+      - ATT-DEVICE-OWNER
+    CVSS:
+      vector: CVSS:3.1/AV:L/AC:L/PR:L/UI:N/S:U/C:H/I:N/A:N
+      score: 5.5
+      severity: Medium
+    testSteps:
+      - "Access corporate document in managed app."
+      - "Attempt to take screenshot or copy text."
+      - "Try to paste into personal messaging app."
+    expectedBehavior: "Managed app should block screenshots and restrict copy-paste to managed apps only."
+    countermeasures:
+      - ID: CM-09
+        title: DLP in Managed Apps
+        description: Enforce data loss prevention policies within managed application containers.
+        status: in_place
+      - ID: CM-10
+        title: Screen Capture Blocking
+        description: Prevent screenshots and screen recordings in managed apps.
+        status: in_place
+
+  - ID: T-06
+    title: Token Theft via Malware on BYOD
+    threatType: Information Disclosure
+    attack: Malware on personal device steals OAuth access or refresh tokens.
+    impactDesc: Attacker uses stolen tokens to access corporate resources without re-authentication.
+    impactedSecObj:
+      - SO-CONF
+    attackers:
+      - ATT-EXT
+    CVSS:
+      vector: CVSS:3.1/AV:L/AC:L/PR:N/UI:R/S:U/C:H/I:H/A:N
+      score: 7.3
+      severity: High
+    testSteps:
+      - "Extract OAuth tokens from device storage or memory."
+      - "Replay tokens from different device or IP."
+      - "Test if token is bound to device or can be used elsewhere."
+    expectedBehavior: "Tokens should be short-lived, bound to device, and require re-authentication on anomalies."
+    countermeasures:
+      - ID: CM-11
+        title: Token Binding
+        description: Bind access tokens to device hardware or certificate.
+        status: planned
+      - ID: CM-12
+        title: Short Token Lifetimes
+        description: Use short-lived access tokens and require frequent re-authentication.
+        status: in_place
+
+  - ID: T-07
+    title: Insecure Backup to Personal Cloud
+    threatType: Information Disclosure
+    attack: Corporate data cached on device is backed up to user's personal iCloud or Google Drive.
+    impactDesc: Corporate data is stored in unmanaged personal cloud storage.
+    impactedSecObj:
+      - SO-CONF
+    attackers:
+      - ATT-DEVICE-OWNER
+    CVSS:
+      vector: CVSS:3.1/AV:N/AC:L/PR:L/UI:N/S:U/C:H/I:N/A:N
+      score: 6.5
+      severity: Medium
+    testSteps:
+      - "Enable device backup to personal cloud account."
+      - "Access corporate data in managed app."
+      - "Check if corporate data is included in device backup."
+    expectedBehavior: "Managed app data should be excluded from device backups or encrypted separately."
+    countermeasures:
+      - ID: CM-13
+        title: Managed App Backup Exclusion
+        description: Configure managed apps to exclude data from device backups.
+        status: in_place
+
+  - ID: T-08
+    title: Over-Permissive Access Policies
+    threatType: Elevation of Privilege
+    attack: Conditional access policy grants excessive access due to misconfiguration.
+    impactDesc: Users gain access to resources they should not have based on their role or device state.
+    impactedSecObj:
+      - SO-CONF
+      - SO-INT
+    attackers:
+      - ATT-INSIDER
+    CVSS:
+      vector: CVSS:3.1/AV:N/AC:L/PR:L/UI:N/S:U/C:H/I:H/A:N
+      score: 8.1
+      severity: High
+    testSteps:
+      - "Authenticate with low-privilege user account."
+      - "Attempt to access high-sensitivity resources."
+      - "Test if conditional access correctly enforces least privilege."
+    expectedBehavior: "Access should be denied based on role, device compliance, and data sensitivity."
+    countermeasures:
+      - ID: CM-14
+        title: Policy Review and Testing
+        description: Regularly review and test conditional access policies.
+        status: in_place
+      - ID: CM-15
+        title: Least Privilege by Default
+        description: Configure policies to deny by default, allow only necessary access.
+        status: in_place
+
+  - ID: T-09
+    title: Denial of Service via Compliance Lockout
+    threatType: Denial of Service
+    attack: Legitimate user's device becomes non-compliant and they are locked out of all corporate resources.
+    impactDesc: Productivity loss, user frustration, potential business disruption.
+    impactedSecObj:
+      - SO-AVAIL
+    attackers:
+      - ATT-DEVICE-OWNER
+    CVSS:
+      vector: CVSS:3.1/AV:N/AC:L/PR:N/UI:N/S:U/C:N/I:N/A:H
+      score: 7.5
+      severity: High
+    testSteps:
+      - "Simulate device compliance failure (e.g., outdated OS, missing patch)."
+      - "Attempt to access corporate services."
+      - "Verify grace period or fallback access mechanism exists."
+    expectedBehavior: "User should receive clear notification and grace period to remediate compliance issues."
+    countermeasures:
+      - ID: CM-16
+        title: Compliance Grace Period
+        description: Allow short grace period for users to remediate non-compliance.
+        status: in_place
+      - ID: CM-17
+        title: Self-Service Remediation
+        description: Provide clear guidance and tools for users to fix compliance issues.
+        status: in_place

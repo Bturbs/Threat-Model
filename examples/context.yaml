@@ -1,0 +1,94 @@
+# Context YAML Template for Threat Model
+meta:
+  title: "AI-Enabled Cloud-Native Engineering Organisation IT Estate"
+  modelId: "TM-AI-CLOUD-ENG-001"
+  version: "1.0"
+
+  scope: |
+    This threat model covers the end-to-end IT estate of a modern, cloud-native
+    engineering organisation. The scope includes company-managed Mac endpoints,
+    identity and access management via Azure AD / Entra ID, source code management
+    and CI/CD using GitLab, containerisation using Docker, and internal development
+    and staging environments hosted in Azure.
+
+    Collaboration platforms including Slack, Microsoft 365 (Teams, SharePoint,
+    OneDrive, Exchange), and Atlassian Jira and Confluence are in scope, alongside
+    AI systems such as Microsoft Copilot for M365 and internal or third-party AI
+    models. Enterprise DLP, Microsoft Defender for Cloud, Defender for Cloud Apps,
+    and the physical security of the office environment are also included.
+
+    Out of scope are customer-owned environments, production customer deployments,
+    personal devices, and third-party SaaS platforms not federated with Entra ID.
+
+  description: |
+    This system represents a modern, AI-enabled software development organisation
+    designed to maximise developer autonomy and delivery speed while maintaining
+    strong security controls. Engineers develop and containerise applications on
+    Mac endpoints using Docker, store and manage code in GitLab, and deploy
+    workloads to Azure-based development and staging environments.
+
+    Productivity and collaboration are supported through Slack, Microsoft 365,
+    and Atlassian tools, while AI capabilities such as Microsoft Copilot and
+    internal assistants enhance knowledge discovery and content creation.
+    Security is enforced using identity-centric controls, enterprise DLP, and
+    Microsoft Defender services, with physical office security forming part of
+    the overall threat landscape.
+
+  assumptions:
+    - All users authenticate through Azure AD / Entra ID with multi-factor authentication enabled
+    - All corporate endpoints are company-managed Mac devices with security baselines applied
+    - GitLab authentication and CI/CD pipelines are integrated with Azure AD
+    - Docker images are built locally or via GitLab CI/CD and stored in approved registries
+    - Microsoft Copilot and internal AI models only access data permitted by identity and DLP controls
+    - DLP policies are enforced across endpoints, cloud applications, and AI interactions
+    - Employees work in a hybrid model and may take devices off-site
+    - Insider threat scenarios are considered alongside external attackers
+
+  constraints:
+    - Security controls must balance risk reduction with developer productivity
+    - The organisation operates under GDPR and internal data protection policies
+    - The environment is cloud-first with no traditional on-premise infrastructure
+    - Security operations resources are limited, requiring prioritisation of high-impact risks
+    - AI systems must comply with data residency, privacy, and governance requirements
+
+  stakeholders:
+    - name: Chief Information Security Officer (CISO)
+      role: Accountable for enterprise security strategy, risk acceptance, and governance
+      contact: 
+
+    - name: Head of Engineering
+      role: Responsible for engineering practices, tooling, and delivery velocity
+      contact: 
+
+    - name: Platform and Cloud Security Team
+      role: Design, implementation, and operation of cloud, identity, and security controls
+      contact: 
+
+    - name: Software Engineers
+      role: Develop, build, and deploy applications within the IT estate
+      contact: 
+
+    - name: IT Operations
+      role: Endpoint management, identity administration, and physical office infrastructure
+      contact: 
+
+
+# Example:
+# meta:
+#   title: "E-commerce Platform"
+#   modelId: "ECOM-001"
+#   version: "1.0"
+#   scope: |
+#     Includes web frontend, backend API, database, payment gateway. Excludes 3rd party logistics.
+#   description: |
+#     Online store for physical goods, supporting user accounts, shopping cart, and payments.
+#   assumptions:
+#     - All users are authenticated before checkout
+#     - Payment gateway is PCI compliant
+#   constraints:
+#     - GDPR applies
+#     - Only cloud hosting allowed
+#   stakeholders:
+#     - name: Alice Smith
+#       role: Product Owner
+#       contact: alice@company.com

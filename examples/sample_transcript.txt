@@ -1,0 +1,42 @@
+Meeting Transcript - Product Architecture Review
+Date: January 15, 2026
+Attendees: Dev Team, Security Team
+
+John (Architect): So let me walk you through the architecture of our new e-commerce platform.
+
+We have a React frontend that users access through their browsers. The frontend communicates with our API Gateway which handles all incoming requests.
+
+The API Gateway forwards requests to our main backend service, which is a Node.js application. This backend connects to a PostgreSQL database where we store all user data, including personal information and credit card details.
+
+Sarah (Security): Wait, you're storing credit card data directly?
+
+John: Yes, for now. We encrypt it at rest using AES-256. The backend also connects to Redis for session management and caching.
+
+Mike (Dev): We also have a third-party payment service integration - we send payment requests to Stripe's API.
+
+Sarah: What about authentication?
+
+John: We use JWT tokens. Users login through the frontend, the backend validates credentials against the database and issues a JWT. The token is stored in localStorage on the client.
+
+Sarah: localStorage for JWTs? That's vulnerable to XSS attacks. We should use httpOnly cookies instead.
+
+John: Good point, let's add that to the backlog.
+
+Mike: The backend also exposes a webhook endpoint for receiving payment confirmations from Stripe. And we have an admin panel that internal staff use to manage orders and view customer data.
+
+Sarah: Is the admin panel on the same domain?
+
+Mike: Yes, it's at /admin on the main application. Admin users have elevated privileges in the database.
+
+John: We're planning to add a message queue - RabbitMQ - for handling order processing asynchronously. Orders will be published to the queue and processed by worker services.
+
+Sarah: What about rate limiting on the APIs?
+
+John: Not implemented yet. We're also considering adding Elasticsearch for product search functionality.
+
+Meeting notes:
+- Need to review data encryption approach
+- Consider PCI compliance requirements  
+- Add rate limiting before launch
+- Review admin access controls
+- Implement proper session management

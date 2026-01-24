@@ -1,0 +1,171 @@
+name: Generate and Deploy Threat Model Reports
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - 'threat-models/**'
+      - 'src/**'
+      - '.github/workflows/deploy-reports.yml'
+  workflow_dispatch:
+
+jobs:
+  generate-and-deploy:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+      
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      
+      - name: Install Graphviz
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y graphviz
+      
+      - name: Install Python dependencies
+        run: |
+          pip install -r requirements.txt
+      
+      - name: Generate all threat model reports
+        run: |
+          python -m src.cli batch threat-models/ --output-dir ./reports-output
+      
+      - name: Create index page
+        run: |
+          cat > generate_index.py << 'OH_PYTHON_MY_PYTHON'
+          import os
+          import glob
+          import datetime
+          
+          output_dir = './reports-output'
+          os.makedirs(output_dir, exist_ok=True)
+          
+          models = []
+          # Find all generated reports recursively
+          # Structure is: output_dir / relative_model_path / reports / threat-model.html
+          search_path = os.path.join(output_dir, '**', 'threat-model.html')
+          for report_path in glob.glob(search_path, recursive=True):
+              # Get path relative to output_dir for the link
+              rel_link = os.path.relpath(report_path, output_dir).replace(os.path.sep, '/')
+              
+              # Determine original model source path to extract title
+              # Path structure: .../model_name/reports/threat-model.html
+              # We want 'model_name' part (can be nested like a/b/c)
+              
+              # Split path parts relative to output root
+              parts = rel_link.split('/')
+              # Filter out 'reports' and 'threat-model.html' from end to get model path
+              if len(parts) >= 2 and parts[-2] == 'reports':
+                  model_rel_path = '/'.join(parts[:-2])
+              else:
+                  model_rel_path = os.path.dirname(rel_link)
+
+              # Source directory check
+              src_dir = os.path.join('threat-models', model_rel_path)
+              
+              title = model_rel_path # Default fallback
+              
+              # Try to extract actual title from YAML
+              for meta_file in ['threat-model.yaml', '_meta.yaml']:
+                  meta_path = os.path.join(src_dir, meta_file)
+                  if os.path.exists(meta_path):
+                      try:
+                          with open(meta_path, 'r', encoding='utf-8') as f:
+                              content = f.read()
+                              # Simple line search to avoid parsing full YAML dependency here if not needed
+                              for line in content.splitlines():
+                                  if line.strip().startswith('title:'):
+                                      title = line.split(':', 1)[1].strip().strip('"\'')
+                                      break
+                          if title != model_rel_path:
+                              break
+                      except Exception:
+                          pass
+
+              models.append({'link': rel_link, 'title': title})
+
+          # Sort by title
+          models.sort(key=lambda x: x['title'])
+          
+          # Prepare JS array for randomizer
+          js_links = "[" + ",".join([f"'{m['link']}'" for m in models]) + "]"
+          
+          html_content = f"""<!DOCTYPE html>
+          <html lang="en">
+          <head>
+              <meta charset="UTF-8">
+              <meta name="viewport" content="width=device-width, initial-scale=1.0">
+              <title>Threat Model Reports</title>
+              <style>
+                  body {{ font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Arial, sans-serif; max-width: 1200px; margin: 0 auto; padding: 40px 20px; background: #f8f9fa; }}
+                  h1 {{ color: #2c3e50; margin-bottom: 30px; border-bottom: 2px solid #e9ecef; padding-bottom: 10px; }}
+                  .models {{ display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 20px; }}
+                  .model-card {{ background: white; border: 1px solid #dee2e6; border-radius: 8px; padding: 25px; text-decoration: none; color: inherit; transition: all 0.2s ease; display: flex; flex-direction: column; height: 100%; box-sizing: border-box; }}
+                  .model-card:hover {{ box-shadow: 0 8px 15px rgba(0,0,0,0.1); transform: translateY(-2px); border-color: #bdc3c7; }}
+                  .model-card h2 {{ color: #2980b9; font-size: 1.25rem; margin: 0 0 15px 0; line-height: 1.4; }}
+                  .model-card p {{ color: #7f8c8d; font-size: 0.95rem; margin-top: auto; font-weight: 500; display: flex; align-items: center; }}
+                  .model-card p::after {{ content: '→'; margin-left: auto; font-size: 1.2em; transition: transform 0.2s; }}
+                  .model-card:hover p::after {{ transform: translateX(5px); }}
+                  .timestamp {{ text-align: center; margin-top: 50px; color: #95a5a6; font-size: 0.85rem; border-top: 1px solid #e9ecef; padding-top: 20px; }}
+                  .random-btn {{ display: block; margin: 0 auto 30px; padding: 12px 24px; background: #27ae60; color: white; border: none; border-radius: 6px; cursor: pointer; font-size: 1rem; font-weight: 600; transition: background 0.2s; box-shadow: 0 2px 5px rgba(0,0,0,0.1); }}
+                  .random-btn:hover {{ background: #219150; transform: translateY(-1px); box-shadow: 0 4px 8px rgba(0,0,0,0.15); }}
+              </style>
+              <script>
+                  const models = {js_links};
+                  function openRandom() {{
+                      if (models.length > 0) {{
+                          const random = models[Math.floor(Math.random() * models.length)];
+                          window.location.href = random;
+                      }}
+                  }}
+                  // Auto-redirect if specifically requested by query param ?random=true
+                  if (new URLSearchParams(window.location.search).has('random')) {{
+                      openRandom();
+                  }}
+              </script>
+          </head>
+          <body>
+              <h1>Threat Model Reports</h1>
+              <button onclick="openRandom()" class="random-btn">🎲 Surprise Me With a Random Model</button>
+              <div class="models">
+          """
+          
+          for m in models:
+              html_content += f"""
+                  <a href="{m['link']}" class="model-card">
+                      <h2>{m['title']}</h2>
+                      <p>View Report</p>
+                  </a>
+              """
+              
+          html_content += f"""
+              </div>
+              <div class="timestamp">
+                  Generated: {datetime.datetime.utcnow().strftime('%Y-%m-%d %H:%M:%S UTC')}
+              </div>
+          </body>
+          </html>
+          """
+          
+          with open(os.path.join(output_dir, 'index.html'), 'w', encoding='utf-8') as f:
+              f.write(html_content)
+              
+          print(f"Index generated with {len(models)} models.")
+          OH_PYTHON_MY_PYTHON
+          
+          python generate_index.py
+      
+      - name: Deploy to GitHub Pages
+        uses: peaceiris/actions-gh-pages@v3
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          publish_dir: ./reports-output
+          force_orphan: true

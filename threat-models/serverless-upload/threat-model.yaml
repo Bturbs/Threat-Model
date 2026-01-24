@@ -1,0 +1,252 @@
+meta:
+  title: Serverless File Upload & Processing Platform
+  modelId: TM-SERVERLESS-UPLOAD
+  version: "1.0"
+  scope: Cloud Serverless Architecture
+  owner: Development Team
+  lastUpdated: "2026-01-24"
+
+assets:
+  - ID: A-SPA
+    name: Web Frontend (SPA)
+    type: Client
+    description: Browser-based React application used by end users.
+    trustZone: Internet
+    dataFlows:
+      - ID: DF-01
+        name: Authentication Request
+        source: A-SPA
+        destination: A-IDP
+        protocol: HTTPS
+        dataClassification: Restricted
+        crossesTrustBoundary: true
+      - ID: DF-02
+        name: Upload Request (Get URL)
+        source: A-SPA
+        destination: A-API
+        protocol: HTTPS
+        dataClassification: Restricted
+        crossesTrustBoundary: true
+      - ID: DF-03
+        name: File Upload (PUT)
+        source: A-SPA
+        destination: A-OBJ-STORE
+        protocol: HTTPS
+        dataClassification: Confidential
+        crossesTrustBoundary: true
+
+  - ID: A-API
+    name: Backend API
+    type: Serverless Service
+    description: Stateless serverless REST API for auth validation and issuing upload permissions.
+    trustZone: Cloud Managed
+    dataFlows:
+      - ID: DF-04
+        name: Return Pre-signed URL
+        source: A-API
+        destination: A-SPA
+        protocol: HTTPS
+        dataClassification: Restricted
+        crossesTrustBoundary: true
+
+  - ID: A-OBJ-STORE
+    name: Object Storage Service
+    type: Data Store
+    description: Stores uploaded files and emits events upon object creation.
+    trustZone: Cloud Data
+    dataFlows:
+      - ID: DF-05
+        name: Object Created Event
+        source: A-OBJ-STORE
+        destination: A-PROC-FUNC
+        protocol: Internal Event
+        dataClassification: Internal
+        crossesTrustBoundary: false
+
+  - ID: A-PROC-FUNC
+    name: Processing Function
+    type: Compute
+    description: Processes uploaded files and extracts metadata triggered by storage events.
+    trustZone: Cloud Compute
+    dataFlows:
+      - ID: DF-06
+        name: Store Metadata
+        source: A-PROC-FUNC
+        destination: A-DB
+        protocol: TCP/Database
+        dataClassification: Internal
+        crossesTrustBoundary: false
+      - ID: DF-07
+        name: Read File Content
+        source: A-PROC-FUNC
+        destination: A-OBJ-STORE
+        protocol: HTTPS/Internal
+        dataClassification: Confidential
+        crossesTrustBoundary: false
+
+  - ID: A-DB
+    name: Metadata Database
+    type: Database
+    description: Managed NoSQL database storing extracted metadata.
+    trustZone: Cloud Data
+    dataFlows: []
+
+  - ID: A-IDP
+    name: Identity Provider
+    type: External Service
+    description: External service (OAuth 2.0 / OIDC).
+    trustZone: External
+    dataFlows:
+      - ID: DF-08
+        name: Return Token
+        source: A-IDP
+        destination: A-SPA
+        protocol: HTTPS
+        dataClassification: Restricted
+        crossesTrustBoundary: true
+
+attackers:
+  - REFID: ATT-EXT
+    name: External Attacker
+    description: Unauthenticated remote attacker.
+    motivation: Disruption, malware distribution.
+    capability: Varied
+
+  - REFID: ATT-MAL-USER
+    name: Malicious Insider/User
+    description: Authenticated user attempting to abuse the system.
+    motivation: Privilege gain, data theft.
+    capability: Authenticated access
+
+securityObjectives:
+  - ID: SO-CONF
+    name: Confidentiality
+    description: Ensure uploaded files are only accessible to owners.
+    category: CIA
+  - ID: SO-INT
+    name: Integrity
+    description: Ensure metadata accurately reflects file content.
+    category: CIA
+  - ID: SO-AVAIL
+    name: Availability
+    description: Ensure platform is resilient to DOS attacks.
+    category: CIA
+
+threats:
+  - ID: T-01
+    title: Malicious File Upload (Malware Distribution)
+    threatType: Tampering
+    attack: An attacker uploads a file containing malware.
+    impactDesc: Valid users execute malware, potentially compromising their systems or the organization.
+    impactedSecObj:
+      - SO-INT
+    attackers:
+      - ATT-MAL-USER
+    CVSS:
+      vector: CVSS:3.1/AV:N/AC:L/PR:L/UI:R/S:C/C:H/I:H/A:H
+      score: 9.0
+      severity: Critical
+    testPrerequisites:
+      - "Staging environment deployed"
+      - "Anti-malware scanner temporarily disabled (to test propagation) or enabled (to test detection)"
+      - "Sample EICAR file"
+    testSteps:
+      - "Authenticate as a standard user."
+      - "Generate a pre-signed URL for upload."
+      - "Upload the EICAR test file designated as 'report.pdf'."
+      - "Observe if the file is accepted and processed."
+      - "Attempt to download the file as another user."
+    expectedBehavior: "The system should detect the malware signature upon upload/processing and quarantine/delete the file."
+    countermeasures:
+      - ID: CM-01
+        title: Malware Scanning
+        description: Scan all files immediately after upload. Quarantine until clean.
+        status: planned
+      - ID: CM-02
+        title: Sandbox Processing
+        description: Process files in ephemeral, isolated sandbox environments.
+        status: planned
+
+  - ID: T-02
+    title: Remote Code Execution via Parsing Vulnerability
+    threatType: Elevation of Privilege
+    attack: Attacker uploads a malformed file exploiting a vulnerable parser.
+    impactDesc: Attacker gains code execution within the serverless function environment.
+    impactedSecObj:
+      - SO-CONF
+      - SO-INT
+    attackers:
+      - ATT-MAL-USER
+    CVSS:
+      vector: CVSS:3.1/AV:N/AC:H/PR:L/UI:N/S:U/C:H/I:H/A:H
+      score: 7.5
+      severity: High
+    testPrerequisites:
+      - "Environment with known vulnerable parser library (for negative testing) or current version"
+      - "Specifically crafted payload for the image/document parser"
+    testSteps:
+      - "Identify the parsing library used (e.g., ImageMagick, libxml)."
+      - "Create a payload targeting a known CVE in that library (e.g., ImageTragick)."
+      - "Upload the payload."
+      - "Monitor logs for evidence of RCE (e.g., outbound network connection, environment variable dump)."
+    expectedBehavior: "The function should either crash safely or process the file without executing embedded code."
+    countermeasures:
+      - ID: CM-03
+        title: Update Libraries
+        description: Automated dependency patching for parsing libraries.
+        status: in_place
+      - ID: CM-04
+        title: Least Privilege IAM
+        description: Restrict function role to only necessary buckets/tables.
+        status: in_place
+
+  - ID: T-03
+    title: Denial of Service via Large Files
+    threatType: Denial of Service
+    attack: Attacker uploads massive files to exhaust storage or budget.
+    impactDesc: System becomes unavailable or incurs massive costs.
+    impactedSecObj:
+      - SO-AVAIL
+    attackers:
+      - ATT-MAL-USER
+    CVSS:
+      vector: CVSS:3.1/AV:N/AC:L/PR:L/UI:N/S:U/C:N/I:N/A:H
+      score: 6.5
+      severity: Medium
+    testSteps:
+      - "Attempt to generate a pre-signed URL for a 10TB file size request."
+      - "Attempt to upload >5GB data to a URL signed for 10MB."
+    expectedBehavior: "API should reject the URL request. Storage service should reset connection if upload exceeds signed content-length."
+    countermeasures:
+      - ID: CM-05
+        title: Enforce Limits
+        description: Strict size limits in pre-signed URL generation.
+        status: planned
+      - ID: CM-06
+        title: Use Content-Length-Range
+        description: Enforce content-length-range condition in S3 POST policy.
+        status: planned
+
+  - ID: T-04
+    title: Unauthorized Metadata Access (IDOR)
+    threatType: Information Disclosure
+    attack: Attacker requests metadata for files meant for other users.
+    impactDesc: Confidential file metadata is leaked.
+    impactedSecObj:
+      - SO-CONF
+    attackers:
+      - ATT-MAL-USER
+    CVSS:
+      vector: CVSS:3.1/AV:N/AC:L/PR:L/UI:N/S:U/C:H/I:N/A:N
+      score: 6.5
+      severity: Medium
+    testSteps:
+      - "User A uploads File 1."
+      - "User B captures their own valid session token."
+      - "User B attempts to call GET /metadata/{File1-ID}."
+    expectedBehavior: "API should return 403 Forbidden or 404 Not Found."
+    countermeasures:
+      - ID: CM-07
+        title: Object Level Authorization
+        description: Check user ownership of file ID before returning data.
+        status: in_place

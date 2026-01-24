@@ -1,0 +1,849 @@
+{# ============================================================================
+   INTERACTIVE DIAGRAM MACROS
+   Reusable Jinja2 macros for creating interactive, zoomable diagrams.
+   
+   Usage:
+     {% from 'macros/diagrams.html' import interactive_diagram, diagram_styles, diagram_scripts %}
+     
+     {{ diagram_styles() }}
+     
+     {{ interactive_diagram(
+         diagram_type='attack-tree',
+         diagram_title='Attack Tree',
+         content_type='mermaid',
+         content=attack_tree_mermaid
+     ) }}
+     
+     {{ diagram_scripts() }}
+   ============================================================================ #}
+
+{# ----------------------------------------------------------------------------
+   MACRO: interactive_diagram
+   Renders a diagram inside an interactive container with zoom/pan controls.
+   
+   Parameters:
+     - diagram_type: str - Unique identifier for the diagram type (e.g., 'attack-tree', 'dfd')
+     - diagram_title: str - Human-readable title for the diagram
+     - content_type: str - 'mermaid', 'plantuml-img', or 'svg'
+     - content: str - The diagram content (mermaid code, image URL, or SVG)
+     - diagram_id: str (optional) - Unique ID for the diagram element
+     - show_legend: bool (optional) - Whether to show a legend
+     - legend_items: list (optional) - List of legend items
+   ---------------------------------------------------------------------------- #}
+{% macro interactive_diagram(diagram_type, diagram_title, content_type, content, diagram_id=none, show_legend=false, legend_items=none) %}
+<div class="interactive-diagram" 
+     data-diagram-type="{{ diagram_type }}" 
+     data-diagram-title="{{ diagram_title }}"
+     data-content-type="{{ content_type }}">
+    
+    {# Toolbar with zoom/pan controls #}
+    <div class="diagram-toolbar">
+        <div class="diagram-toolbar-left">
+            <span class="diagram-title-label">{{ diagram_title }}</span>
+        </div>
+        <div class="diagram-toolbar-center">
+            <button class="toolbar-btn" data-action="zoom-out" title="Zoom Out (-)">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <circle cx="11" cy="11" r="8"/><line x1="7" y1="11" x2="15" y2="11"/>
+                </svg>
+            </button>
+            <span class="zoom-level">100%</span>
+            <button class="toolbar-btn" data-action="zoom-in" title="Zoom In (+)">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <circle cx="11" cy="11" r="8"/><line x1="11" y1="7" x2="11" y2="15"/><line x1="7" y1="11" x2="15" y2="11"/>
+                </svg>
+            </button>
+        </div>
+        <div class="diagram-toolbar-right">
+            <button class="toolbar-btn" data-action="reset" title="Reset View (0)">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/>
+                    <path d="M3 3v5h5"/>
+                </svg>
+            </button>
+            <button class="toolbar-btn" data-action="fit" title="Fit to View">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M8 3H5a2 2 0 0 0-2 2v3m18 0V5a2 2 0 0 0-2-2h-3m0 18h3a2 2 0 0 0 2-2v-3M3 16v3a2 2 0 0 0 2 2h3"/>
+                </svg>
+            </button>
+            <button class="toolbar-btn" data-action="fullscreen" title="Fullscreen (F)">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M8 3H5a2 2 0 0 0-2 2v3m0 8v3a2 2 0 0 0 2 2h3m8-18h3a2 2 0 0 1 2 2v3m0 8v3a2 2 0 0 1-2 2h-3"/>
+                </svg>
+            </button>
+        </div>
+    </div>
+    
+    {# Viewport for pan/zoom #}
+    <div class="diagram-viewport">
+        <div class="diagram-canvas">
+            {% if content_type == 'mermaid' %}
+            <div class="mermaid" {% if diagram_id %}data-diagram-id="{{ diagram_id }}"{% endif %}>
+{{ content }}
+            </div>
+            {% elif content_type == 'plantuml-img' %}
+            <img class="plantuml-diagram" 
+                 {% if diagram_id %}id="{{ diagram_id }}"{% endif %}
+                 alt="{{ diagram_title }} Loading..."
+                 data-loading="true">
+            {% elif content_type == 'svg' %}
+            {{ content | safe }}
+            {% endif %}
+        </div>
+    </div>
+    
+    {# Fullscreen close button (hidden until fullscreen) #}
+    <button class="fullscreen-close" data-action="exit-fullscreen" title="Exit Fullscreen (Esc)">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/>
+        </svg>
+    </button>
+    
+    {# Instructions hint #}
+    <div class="diagram-hint">
+        <span>Scroll to zoom • Drag to pan • Click nodes for details</span>
+    </div>
+</div>
+{% endmacro %}
+
+
+{# ----------------------------------------------------------------------------
+   MACRO: diagram_styles
+   Outputs all CSS required for interactive diagrams.
+   Call this once in the <head> or <style> section.
+   ---------------------------------------------------------------------------- #}
+{% macro diagram_styles() %}
+/* ========== INTERACTIVE DIAGRAM STYLES ========== */
+.interactive-diagram {
+    position: relative;
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    background: #fafafa;
+    margin: 15px 0;
+    overflow: hidden;
+}
+
+.interactive-diagram .diagram-toolbar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 8px 12px;
+    background: linear-gradient(to bottom, #f8f9fa, #e9ecef);
+    border-bottom: 1px solid var(--border);
+    flex-wrap: wrap;
+    gap: 8px;
+}
+
+.interactive-diagram .diagram-toolbar-left,
+.interactive-diagram .diagram-toolbar-center,
+.interactive-diagram .diagram-toolbar-right {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.interactive-diagram .diagram-title-label {
+    font-size: 0.85rem;
+    font-weight: 600;
+    color: var(--dark);
+}
+
+.interactive-diagram .toolbar-btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 32px;
+    height: 32px;
+    border: 1px solid #ced4da;
+    border-radius: 4px;
+    background: #fff;
+    cursor: pointer;
+    color: #495057;
+    transition: all 0.15s ease;
+}
+
+.interactive-diagram .toolbar-btn:hover {
+    background: #e9ecef;
+    border-color: #adb5bd;
+}
+
+.interactive-diagram .toolbar-btn:active {
+    background: #dee2e6;
+    transform: scale(0.95);
+}
+
+.interactive-diagram .toolbar-btn.active {
+    background: var(--sidebar-active);
+    color: #fff;
+    border-color: var(--sidebar-active);
+}
+
+.interactive-diagram .toolbar-btn:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
+
+.interactive-diagram .zoom-level {
+    font-size: 0.8rem;
+    color: #6c757d;
+    min-width: 50px;
+    text-align: center;
+    user-select: none;
+    font-family: monospace;
+}
+
+.interactive-diagram .diagram-viewport {
+    position: relative;
+    width: 100%;
+    min-height: 400px;
+    max-height: 70vh;
+    overflow: hidden;
+    cursor: grab;
+    background: 
+        linear-gradient(90deg, #f5f5f5 1px, transparent 1px),
+        linear-gradient(#f5f5f5 1px, transparent 1px);
+    background-size: 20px 20px;
+    background-color: #fff;
+}
+
+.interactive-diagram .diagram-viewport.grabbing {
+    cursor: grabbing;
+}
+
+.interactive-diagram .diagram-viewport.fullscreen {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100vw;
+    height: 100vh;
+    max-height: 100vh;
+    z-index: 9999;
+    background: #fff;
+    border-radius: 0;
+}
+
+.interactive-diagram .diagram-canvas {
+    transform-origin: 0 0;
+    transition: none;
+    will-change: transform;
+    display: inline-block;
+    padding: 20px;
+}
+
+/* SVG rendering quality improvements */
+.interactive-diagram .diagram-canvas svg {
+    shape-rendering: geometricPrecision;
+    text-rendering: optimizeLegibility;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+}
+
+.interactive-diagram .diagram-canvas svg text {
+    font-family: Arial, Helvetica, sans-serif;
+    font-size: 14px;
+}
+
+.interactive-diagram .diagram-canvas svg .nodeLabel,
+.interactive-diagram .diagram-canvas svg .label {
+    font-size: 13px;
+    font-weight: 500;
+}
+
+.interactive-diagram .diagram-canvas svg .edgeLabel {
+    font-size: 11px;
+}
+
+/* Mermaid diagram specific improvements */
+.interactive-diagram .mermaid svg {
+    min-width: 100%;
+    height: auto;
+}
+
+.interactive-diagram .diagram-canvas.animating {
+    transition: transform 0.2s ease-out;
+}
+
+/* SVG hover effects for nodes */
+.interactive-diagram .diagram-canvas svg .node:hover,
+.interactive-diagram .diagram-canvas svg g[id^="flowchart-"]:hover,
+.interactive-diagram .diagram-canvas svg g[id^="T_"]:hover,
+.interactive-diagram .diagram-canvas svg g[id^="A_"]:hover,
+.interactive-diagram .diagram-canvas svg g[id^="M_"]:hover {
+    filter: drop-shadow(0 0 8px rgba(52, 152, 219, 0.6));
+    cursor: pointer;
+}
+
+.interactive-diagram .diagram-canvas svg .node rect,
+.interactive-diagram .diagram-canvas svg .node circle,
+.interactive-diagram .diagram-canvas svg .node ellipse,
+.interactive-diagram .diagram-canvas svg .node polygon {
+    transition: stroke-width 0.15s ease;
+}
+
+.interactive-diagram .diagram-canvas svg .node:hover rect,
+.interactive-diagram .diagram-canvas svg .node:hover circle,
+.interactive-diagram .diagram-canvas svg .node:hover ellipse,
+.interactive-diagram .diagram-canvas svg .node:hover polygon {
+    stroke-width: 3px;
+}
+
+/* Diagram tooltip */
+.diagram-tooltip {
+    position: fixed;
+    z-index: 10000;
+    padding: 10px 14px;
+    background: rgba(44, 62, 80, 0.95);
+    color: #fff;
+    border-radius: 6px;
+    font-size: 0.85rem;
+    line-height: 1.4;
+    max-width: 320px;
+    pointer-events: none;
+    opacity: 0;
+    transition: opacity 0.15s ease;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+}
+
+.diagram-tooltip.visible {
+    opacity: 1;
+}
+
+.diagram-tooltip .tooltip-title {
+    font-weight: 600;
+    margin-bottom: 4px;
+    color: #3498db;
+}
+
+.diagram-tooltip .tooltip-meta {
+    font-size: 0.78rem;
+    color: #bdc3c7;
+}
+
+/* PlantUML image quality */
+.interactive-diagram .plantuml-diagram {
+    image-rendering: -webkit-optimize-contrast;
+    image-rendering: crisp-edges;
+    max-width: none;
+    height: auto;
+    min-height: 400px;
+}
+
+/* Print mode enhancements for PlantUML */
+body.print-mode .interactive-diagram .plantuml-diagram {
+    min-height: 600px;
+    width: 100%;
+    object-fit: contain;
+    image-rendering: high-quality;
+}
+
+/* Fullscreen close button */
+.interactive-diagram .fullscreen-close {
+    position: fixed;
+    top: 20px;
+    right: 20px;
+    z-index: 10001;
+    width: 44px;
+    height: 44px;
+    border-radius: 50%;
+    background: #e74c3c;
+    color: #fff;
+    border: none;
+    cursor: pointer;
+    display: none;
+    align-items: center;
+    justify-content: center;
+    box-shadow: 0 2px 10px rgba(0,0,0,0.2);
+    transition: background 0.15s ease;
+}
+
+.interactive-diagram .fullscreen-close:hover {
+    background: #c0392b;
+}
+
+.interactive-diagram .diagram-viewport.fullscreen ~ .fullscreen-close {
+    display: flex;
+}
+
+/* Hint text */
+.interactive-diagram .diagram-hint {
+    position: absolute;
+    bottom: 8px;
+    left: 50%;
+    transform: translateX(-50%);
+    font-size: 0.75rem;
+    color: #999;
+    background: rgba(255,255,255,0.9);
+    padding: 4px 12px;
+    border-radius: 12px;
+    pointer-events: none;
+    opacity: 0.7;
+    transition: opacity 0.2s;
+}
+
+.interactive-diagram:hover .diagram-hint {
+    opacity: 0;
+}
+
+/* Threat card highlight animation */
+.threat-card.highlight {
+    box-shadow: 0 0 20px rgba(52, 152, 219, 0.5);
+    border-color: var(--sidebar-active);
+    animation: highlight-pulse 0.5s ease-in-out 3;
+}
+
+@keyframes highlight-pulse {
+    0%, 100% { box-shadow: 0 0 10px rgba(52, 152, 219, 0.3); }
+    50% { box-shadow: 0 0 25px rgba(52, 152, 219, 0.6); }
+}
+
+/* Print styles - static diagram */
+@media print {
+    .interactive-diagram .diagram-toolbar,
+    .interactive-diagram .diagram-hint,
+    .interactive-diagram .fullscreen-close {
+        display: none !important;
+    }
+    .interactive-diagram .diagram-viewport {
+        max-height: none !important;
+        overflow: visible !important;
+        cursor: default !important;
+        min-height: auto !important;
+    }
+    .interactive-diagram .diagram-canvas {
+        transform: none !important;
+    }
+    .interactive-diagram .plantuml-diagram {
+        width: auto !important;
+        max-width: 100% !important;
+        max-height: 95vh !important;
+        height: auto !important;
+        display: block;
+        margin: 0 auto;
+        image-rendering: high-quality;
+    }
+    .diagram-tooltip {
+        display: none !important;
+    }
+}
+
+/* No-JS fallback */
+.no-js .interactive-diagram .diagram-toolbar {
+    display: none;
+}
+
+.no-js .interactive-diagram .diagram-viewport {
+    overflow: auto;
+    cursor: default;
+}
+{% endmacro %}
+
+
+{# ----------------------------------------------------------------------------
+   MACRO: diagram_scripts
+   Outputs all JavaScript required for interactive diagrams.
+   Call this once at the end of <body>.
+   ---------------------------------------------------------------------------- #}
+{% macro diagram_scripts() %}
+<script>
+/**
+ * Interactive Diagram Controller
+ * Provides zoom, pan, fullscreen, and node inspection for diagrams.
+ * Automatically initializes all elements with class 'interactive-diagram'.
+ */
+(function() {
+    'use strict';
+    
+    // Configuration
+    const CONFIG = {
+        minZoom: 0.1,
+        maxZoom: 5,
+        zoomStep: 0.25,
+        wheelZoomFactor: 0.001,
+        animationDuration: 200
+    };
+    
+    /**
+     * DiagramController class - manages a single interactive diagram
+     */
+    class DiagramController {
+        constructor(container) {
+            this.container = container;
+            this.viewport = container.querySelector('.diagram-viewport');
+            this.canvas = container.querySelector('.diagram-canvas');
+            this.zoomDisplay = container.querySelector('.zoom-level');
+            this.diagramType = container.dataset.diagramType || 'unknown';
+            this.diagramTitle = container.dataset.diagramTitle || 'Diagram';
+            this.contentType = container.dataset.contentType || 'mermaid';
+            
+            // State
+            this.scale = 1;
+            this.translateX = 0;
+            this.translateY = 0;
+            this.isPanning = false;
+            this.startX = 0;
+            this.startY = 0;
+            this.isFullscreen = false;
+            this.initialized = false;
+            
+            this.init();
+        }
+        
+        init() {
+            if (!this.viewport || !this.canvas) {
+                console.warn('DiagramController: Missing viewport or canvas');
+                return;
+            }
+            
+            this.bindToolbarEvents();
+            this.bindPanEvents();
+            this.bindWheelZoom();
+            this.bindKeyboardEvents();
+            this.bindTouchEvents();
+            this.setupNodeInspection();
+            
+            // Mark as initialized
+            this.container._diagramController = this;
+            this.initialized = true;
+            
+            // Fit to view once content is ready
+            this.waitForContent().then(() => this.fitToView());
+        }
+        
+        waitForContent() {
+            return new Promise(resolve => {
+                const check = () => {
+                    const content = this.canvas.querySelector('svg, img[src]:not([src=""])');
+                    if (content) {
+                        // For images, wait until loaded
+                        if (content.tagName === 'IMG' && !content.complete) {
+                            content.addEventListener('load', resolve, { once: true });
+                            content.addEventListener('error', resolve, { once: true });
+                        } else {
+                            resolve();
+                        }
+                    } else {
+                        setTimeout(check, 100);
+                    }
+                };
+                setTimeout(check, 100);
+            });
+        }
+        
+        updateTransform(animate = false) {
+            if (animate) {
+                this.canvas.classList.add('animating');
+                setTimeout(() => this.canvas.classList.remove('animating'), CONFIG.animationDuration);
+            }
+            this.canvas.style.transform = `translate(${this.translateX}px, ${this.translateY}px) scale(${this.scale})`;
+            if (this.zoomDisplay) {
+                this.zoomDisplay.textContent = Math.round(this.scale * 100) + '%';
+            }
+        }
+        
+        zoomTo(newScale, centerX = null, centerY = null) {
+            const oldScale = this.scale;
+            newScale = Math.max(CONFIG.minZoom, Math.min(CONFIG.maxZoom, newScale));
+            
+            if (centerX !== null && centerY !== null) {
+                const viewportRect = this.viewport.getBoundingClientRect();
+                const relX = centerX - viewportRect.left;
+                const relY = centerY - viewportRect.top;
+                this.translateX = relX - (relX - this.translateX) * (newScale / oldScale);
+                this.translateY = relY - (relY - this.translateY) * (newScale / oldScale);
+            }
+            
+            this.scale = newScale;
+            this.updateTransform();
+        }
+        
+        zoomIn() { this.zoomTo(this.scale + CONFIG.zoomStep); }
+        zoomOut() { this.zoomTo(this.scale - CONFIG.zoomStep); }
+        
+        reset() {
+            this.scale = 1;
+            this.translateX = 0;
+            this.translateY = 0;
+            this.updateTransform(true);
+        }
+        
+        fitToView() {
+            const viewportRect = this.viewport.getBoundingClientRect();
+            const content = this.canvas.querySelector('svg, img');
+            
+            if (!content) return;
+            
+            this.canvas.style.transform = 'none';
+            
+            let contentWidth, contentHeight, contentX = 0, contentY = 0;
+            if (content.tagName === 'svg') {
+                const bbox = content.getBBox ? content.getBBox() : content.getBoundingClientRect();
+                contentWidth = bbox.width || content.clientWidth;
+                contentHeight = bbox.height || content.clientHeight;
+                contentX = bbox.x || 0;
+                contentY = bbox.y || 0;
+            } else {
+                contentWidth = content.naturalWidth || content.width;
+                contentHeight = content.naturalHeight || content.height;
+            }
+            
+            if (!contentWidth || !contentHeight) {
+                this.canvas.style.transform = `translate(${this.translateX}px, ${this.translateY}px) scale(${this.scale})`;
+                return;
+            }
+            
+            const padding = Math.max(16, Math.min(40, viewportRect.width * 0.05));
+            const availableWidth = viewportRect.width - padding * 2;
+            const availableHeight = viewportRect.height - padding * 2;
+            
+            const scaleX = availableWidth / contentWidth;
+            const scaleY = availableHeight / contentHeight;
+            const newScale = Math.min(scaleX, scaleY);
+            
+            this.scale = Math.max(CONFIG.minZoom, Math.min(CONFIG.maxZoom, newScale));
+            this.translateX = padding - (contentX * this.scale);
+            this.translateY = padding - (contentY * this.scale);
+            
+            this.updateTransform(true);
+        }
+        
+        toggleFullscreen() {
+            this.isFullscreen = !this.isFullscreen;
+            this.viewport.classList.toggle('fullscreen', this.isFullscreen);
+            
+            const fsBtn = this.container.querySelector('[data-action="fullscreen"]');
+            if (fsBtn) fsBtn.classList.toggle('active', this.isFullscreen);
+            
+            document.body.style.overflow = this.isFullscreen ? 'hidden' : '';
+            
+            if (this.isFullscreen) {
+                setTimeout(() => this.fitToView(), 100);
+            }
+        }
+        
+        bindToolbarEvents() {
+            this.container.querySelectorAll('[data-action]').forEach(btn => {
+                btn.addEventListener('click', (e) => {
+                    e.preventDefault();
+                    const action = btn.dataset.action;
+                    switch (action) {
+                        case 'zoom-in': this.zoomIn(); break;
+                        case 'zoom-out': this.zoomOut(); break;
+                        case 'reset': this.reset(); break;
+                        case 'fit': this.fitToView(); break;
+                        case 'fullscreen':
+                        case 'exit-fullscreen':
+                            this.toggleFullscreen();
+                            break;
+                    }
+                });
+            });
+        }
+        
+        bindPanEvents() {
+            this.viewport.addEventListener('mousedown', (e) => {
+                if (e.button !== 0) return;
+                this.isPanning = true;
+                this.startX = e.clientX - this.translateX;
+                this.startY = e.clientY - this.translateY;
+                this.viewport.classList.add('grabbing');
+                e.preventDefault();
+            });
+            
+            document.addEventListener('mousemove', (e) => {
+                if (!this.isPanning) return;
+                this.translateX = e.clientX - this.startX;
+                this.translateY = e.clientY - this.startY;
+                this.updateTransform();
+            });
+            
+            document.addEventListener('mouseup', () => {
+                this.isPanning = false;
+                this.viewport.classList.remove('grabbing');
+            });
+        }
+        
+        bindWheelZoom() {
+            this.viewport.addEventListener('wheel', (e) => {
+                e.preventDefault();
+                const delta = -e.deltaY * CONFIG.wheelZoomFactor * this.scale;
+                this.zoomTo(this.scale + delta, e.clientX, e.clientY);
+            }, { passive: false });
+        }
+        
+        bindKeyboardEvents() {
+            this.container.setAttribute('tabindex', '0');
+            this.container.addEventListener('keydown', (e) => {
+                switch (e.key) {
+                    case '+': case '=': this.zoomIn(); e.preventDefault(); break;
+                    case '-': this.zoomOut(); e.preventDefault(); break;
+                    case '0': this.reset(); e.preventDefault(); break;
+                    case 'f': case 'F': this.toggleFullscreen(); e.preventDefault(); break;
+                    case 'Escape':
+                        if (this.isFullscreen) { this.toggleFullscreen(); e.preventDefault(); }
+                        break;
+                }
+            });
+        }
+        
+        bindTouchEvents() {
+            let lastTouchDist = 0;
+            
+            this.viewport.addEventListener('touchstart', (e) => {
+                if (e.touches.length === 1) {
+                    this.isPanning = true;
+                    this.startX = e.touches[0].clientX - this.translateX;
+                    this.startY = e.touches[0].clientY - this.translateY;
+                } else if (e.touches.length === 2) {
+                    this.isPanning = false;
+                    lastTouchDist = this.getTouchDistance(e.touches);
+                }
+            }, { passive: true });
+            
+            this.viewport.addEventListener('touchmove', (e) => {
+                if (e.touches.length === 1 && this.isPanning) {
+                    this.translateX = e.touches[0].clientX - this.startX;
+                    this.translateY = e.touches[0].clientY - this.startY;
+                    this.updateTransform();
+                } else if (e.touches.length === 2) {
+                    const newDist = this.getTouchDistance(e.touches);
+                    const center = this.getTouchCenter(e.touches);
+                    this.zoomTo(this.scale * (newDist / lastTouchDist), center.x, center.y);
+                    lastTouchDist = newDist;
+                }
+                e.preventDefault();
+            }, { passive: false });
+            
+            this.viewport.addEventListener('touchend', () => { this.isPanning = false; });
+        }
+        
+        getTouchDistance(touches) {
+            const dx = touches[0].clientX - touches[1].clientX;
+            const dy = touches[0].clientY - touches[1].clientY;
+            return Math.sqrt(dx * dx + dy * dy);
+        }
+        
+        getTouchCenter(touches) {
+            return {
+                x: (touches[0].clientX + touches[1].clientX) / 2,
+                y: (touches[0].clientY + touches[1].clientY) / 2
+            };
+        }
+        
+        setupNodeInspection() {
+            // Create shared tooltip
+            if (!document.getElementById('diagram-tooltip')) {
+                const tooltip = document.createElement('div');
+                tooltip.id = 'diagram-tooltip';
+                tooltip.className = 'diagram-tooltip';
+                document.body.appendChild(tooltip);
+            }
+            
+            const tooltip = document.getElementById('diagram-tooltip');
+            
+            // Observe for SVG content
+            const observer = new MutationObserver(() => {
+                const svg = this.canvas.querySelector('svg');
+                if (svg) {
+                    this.attachNodeListeners(svg, tooltip);
+                    observer.disconnect();
+                }
+            });
+            
+            observer.observe(this.canvas, { childList: true, subtree: true });
+            
+            const svg = this.canvas.querySelector('svg');
+            if (svg) this.attachNodeListeners(svg, tooltip);
+        }
+        
+        attachNodeListeners(svg, tooltip) {
+            const nodes = svg.querySelectorAll('.node, g[id^="flowchart-"], g[id^="T_"], g[id^="A_"], g[id^="M_"], g[id="ROOT"]');
+            
+            nodes.forEach(node => {
+                node.style.cursor = 'pointer';
+                
+                node.addEventListener('mouseenter', () => {
+                    const nodeId = node.id || '';
+                    const nodeText = node.textContent.trim().substring(0, 100);
+                    const meta = this.extractNodeMeta(nodeId, nodeText);
+                    
+                    if (meta.title) {
+                        tooltip.innerHTML = `
+                            <div class="tooltip-title">${meta.title}</div>
+                            ${meta.type ? `<div class="tooltip-meta">Type: ${meta.type}</div>` : ''}
+                            ${meta.id ? `<div class="tooltip-meta">ID: ${meta.id}</div>` : ''}
+                        `;
+                        tooltip.classList.add('visible');
+                    }
+                });
+                
+                node.addEventListener('mousemove', (e) => {
+                    tooltip.style.left = (e.clientX + 15) + 'px';
+                    tooltip.style.top = (e.clientY + 15) + 'px';
+                });
+                
+                node.addEventListener('mouseleave', () => {
+                    tooltip.classList.remove('visible');
+                });
+                
+                node.addEventListener('click', () => {
+                    const nodeId = node.id || '';
+                    if (nodeId.startsWith('T_')) {
+                        const threatId = nodeId.replace('T_', '');
+                        const threatEl = document.getElementById('threat-' + threatId);
+                        if (threatEl) {
+                            threatEl.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                            threatEl.classList.add('highlight');
+                            setTimeout(() => threatEl.classList.remove('highlight'), 2000);
+                        }
+                    }
+                });
+            });
+        }
+        
+        extractNodeMeta(nodeId, nodeText) {
+            let meta = { title: nodeText.substring(0, 60), type: null, id: null };
+            
+            if (nodeId.startsWith('T_')) {
+                meta.type = 'Threat';
+                meta.id = nodeId.replace('T_', '');
+            } else if (nodeId.startsWith('A_')) {
+                meta.type = 'Asset';
+                meta.id = nodeId.replace('A_', '');
+            } else if (nodeId.startsWith('M_')) {
+                meta.type = 'Mitigation';
+                meta.id = nodeId.replace('M_', '');
+            } else if (nodeId === 'ROOT') {
+                meta.type = 'Threat Model Root';
+            }
+            
+            return meta;
+        }
+    }
+    
+    /**
+     * Initialize all interactive diagrams on the page.
+     * Called automatically on DOMContentLoaded.
+     */
+    function initInteractiveDiagrams() {
+        document.querySelectorAll('.interactive-diagram').forEach(container => {
+            if (!container._diagramController) {
+                new DiagramController(container);
+            }
+        });
+    }
+    
+    // Auto-initialize when DOM is ready
+    if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', () => {
+            setTimeout(initInteractiveDiagrams, 500);
+        });
+    } else {
+        setTimeout(initInteractiveDiagrams, 500);
+    }
+    
+    // Export for manual initialization
+    window.DiagramController = DiagramController;
+    window.initInteractiveDiagrams = initInteractiveDiagrams;
+})();
+</script>
+{% endmacro %}
