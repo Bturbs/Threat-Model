@@ -1,0 +1,55 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Threat Model Reports</title>
+    <style>
+        body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Arial, sans-serif; max-width: 1200px; margin: 0 auto; padding: 40px 20px; background: #f8f9fa; }
+        h1 { color: #2c3e50; margin-bottom: 30px; border-bottom: 2px solid #e9ecef; padding-bottom: 10px; }
+        .models { display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 20px; }
+        .model-card { background: white; border: 1px solid #dee2e6; border-radius: 8px; padding: 25px; text-decoration: none; color: inherit; transition: all 0.2s ease; display: flex; flex-direction: column; height: 100%; box-sizing: border-box; }
+        .model-card:hover { box-shadow: 0 8px 15px rgba(0,0,0,0.1); transform: translateY(-2px); border-color: #bdc3c7; }
+        .model-card h2 { color: #2980b9; font-size: 1.25rem; margin: 0 0 15px 0; line-height: 1.4; }
+        .model-card p { color: #7f8c8d; font-size: 0.95rem; margin-top: auto; font-weight: 500; display: flex; align-items: center; }
+        .model-card p::after { content: '→'; margin-left: auto; font-size: 1.2em; transition: transform 0.2s; }
+        .model-card:hover p::after { transform: translateX(5px); }
+        .timestamp { text-align: center; margin-top: 50px; color: #95a5a6; font-size: 0.85rem; border-top: 1px solid #e9ecef; padding-top: 20px; }
+        .random-btn { display: block; margin: 0 auto 30px; padding: 12px 24px; background: #27ae60; color: white; border: none; border-radius: 6px; cursor: pointer; font-size: 1rem; font-weight: 600; transition: background 0.2s; box-shadow: 0 2px 5px rgba(0,0,0,0.1); }
+        .random-btn:hover { background: #219150; transform: translateY(-1px); box-shadow: 0 4px 8px rgba(0,0,0,0.15); }
+    </style>
+    <script>
+        const models = ['byod-architecture/reports/threat-model.html','serverless-upload/reports/threat-model.html'];
+        function openRandom() {
+            if (models.length > 0) {
+                const random = models[Math.floor(Math.random() * models.length)];
+                window.location.href = random;
+            }
+        }
+        // Auto-redirect if specifically requested by query param ?random=true
+        if (new URLSearchParams(window.location.search).has('random')) {
+            openRandom();
+        }
+    </script>
+</head>
+<body>
+    <h1>Threat Model Reports</h1>
+    <button onclick="openRandom()" class="random-btn">🎲 Surprise Me With a Random Model</button>
+    <div class="models">
+
+        <a href="byod-architecture/reports/threat-model.html" class="model-card">
+            <h2>BYOD Access Architecture</h2>
+            <p>View Report</p>
+        </a>
+    
+        <a href="serverless-upload/reports/threat-model.html" class="model-card">
+            <h2>Serverless File Upload & Processing Platform</h2>
+            <p>View Report</p>
+        </a>
+    
+    </div>
+    <div class="timestamp">
+        Generated: 2026-01-24 21:28:17 UTC
+    </div>
+</body>
+</html>
