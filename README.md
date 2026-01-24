@@ -540,19 +540,6 @@ threats:
 - [Testing Examples](examples/enhanced-testing-examples.yaml) - SQL injection, XSS, rate limiting examples
 - [Public Cloud Storage Model](threat-models/public-cloud-storage/threat-model.yaml) - S3 security testing
 
-## Contributing
-
-Contributions are welcome! To contribute:
-
-1. Fork the repository
-2. Create a feature branch
-3. Make your changes
-4. Test with `python -m src.cli batch threat-models`
-5. Submit a pull request
-
-## License
-
-MIT License - see LICENSE file for details
 
 ---
 
