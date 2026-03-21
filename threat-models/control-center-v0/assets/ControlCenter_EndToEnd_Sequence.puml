@@ -1,0 +1,126 @@
+@startuml ControlCenter_EndToEnd_Sequence
+title Meetsendai Control Center - End-to-End Tenant Lifecycle V0 (Initiator + Verifier)
+skinparam maxMessageSize 150
+skinparam BoxPadding 10
+
+legend top right
+  **Risk Levels (Transactions & Actor Swimlanes)**
+  |<#White> Black Arrow | Internal / Low Risk Operation |
+  |<#E6F2FF> Light Blue Box | Trusted Internal System Boundary |
+  |<#Orange> Orange Arrow | Privileged Config / IAM (Medium Risk) |
+  |<#FFE6CC> Light Orange Box| Approval Gateway (Medium Risk) |
+  |<#Red> Red Arrow | Destructive / Irreversible Action (High Risk) |
+  |<#FFCCCC> Light Red Box| High-Privilege Internal Admin (High Risk) |
+endlegend
+
+box "Meetsendai Internal Admins (High Privilege)" #FFCCCC
+actor "CC-Initiator" as Initiator
+actor "CC-Verifier" as Verifier
+end box
+
+box "Control Center Platform (Trusted Internal)" #E6F2FF
+participant "Control Center\nApplication" as CC
+participant "Approval &\nAudit Engine" as Audit
+participant "CI/CD Pipeline" as Pipeline
+participant "Terraform (IaC)" as TF
+end box
+
+box "Cloud Infrastructure (Trusted Internal)" #F2F9FF
+participant "Azure Infrastructure\n& Key Vault (TDE)" as Azure
+participant "Tenant SQL DB\n(Newly Provisioned)" as DB
+participant "Email Service\n(Azure Communication)" as Email
+end box
+
+box "Identity & Config (Med Risk)" #FFE6CC
+participant "Auth0\n(CC Admin Auth)" as EntraCC
+participant "Auth0\n(Tenant Auth)" as TenantIDP
+end box
+
+box "External (Client)" #FFCCCC
+actor "Tenant Primary\nContact" as PrimaryContact
+end box
+
+== 1. Control Center Login ==
+Initiator -[#orange]-> EntraCC: Authenticate (MFA Required)
+EntraCC --[#orange]-> Initiator: CC Session Token (CC-Initiator Role)
+
+== 2a. Tenant Creation — Initiation ==
+Initiator -[#orange]-> CC: Submit New Tenant Request\n(Name, Region, Seat Limit, Lead Threshold, Auth Type)
+activate CC
+CC -[#orange]-> Audit: Register Pending Request\n(Initiator locked from self-verifying)
+CC -[#orange]-> Verifier: Dispatch Verification Notification
+deactivate CC
+
+== 2b. Tenant Creation — Verifier Approval ==
+Verifier -[#orange]-> EntraCC: Authenticate (MFA Required)
+EntraCC --[#orange]-> Verifier: CC Session Token
+Verifier -[#orange]-> CC: Approve or Reject Request
+activate CC
+CC -[#orange]-> Audit: Log Verification Decision\n(Verifier Identity + Timestamp + Outcome)
+CC -> CC: Verification passed\nInitiate Provisioning Pipeline
+deactivate CC
+
+== 2c. Automated Tenant Provisioning ==
+CC -> Pipeline: Trigger Terraform Plan/Apply
+activate Pipeline
+Pipeline -> TF: Execute Terraform for New Tenant
+activate TF
+TF -[#orange]-> Azure: Provision Isolated SQL Database\n(EU Region — Azure West Europe)
+TF -[#orange]-> Azure: Configure Azure Key Vault TDE\n(Tenant Database Encryption)
+Azure --[#orange]-> TF: DB Provisioned & Encrypted
+TF -[#orange]-> TenantIDP: Provision Auth0 Application\n(Tenant Authentication)
+TenantIDP --[#orange]-> TF: Auth0 Tenant Configured
+TF -[#orange]-> DB: Write Tenant Config\n(Seat Limit, Lead Threshold, EU Region Lock)
+TF --> Pipeline: Provisioning Complete
+deactivate TF
+Pipeline -[#orange]-> Email: Dispatch Welcome Email\n(Primary Contact Address)
+activate Email
+Email --[#orange]-> PrimaryContact: Your Meetsendai workspace is live!\nhttps://[slug].meetsendai.com\nFirst user to register = Tenant Admin\nSetup checklist included
+deactivate Email
+Pipeline -[#orange]-> Audit: Write Provisioning Receipt to Audit Log
+Pipeline --> Initiator: Tenant Live Notification
+deactivate Pipeline
+
+== 3. Tenant Limit Modification (Single Admin) ==
+Initiator -[#orange]-> CC: Update Seat Limit or Lead Threshold
+CC -[#orange]-> DB: Apply Updated Config
+CC -[#orange]-> Audit: Log Limit Change\n(Initiator, Timestamp, Old/New Values)
+
+== 4. Tenant Deletion — Initiation ==
+Initiator -[#red]-> CC: Submit Tenant Deletion Request\n(Reason + Client Notification Confirmed)
+activate CC
+CC -[#red]-> Audit: Register Pending Deletion Request
+CC -[#red]-> Verifier: Broadcast Elevated Deletion Alert
+deactivate CC
+
+== 5. Tenant Deletion — Verifier Approval ==
+Verifier -[#red]-> CC: Approve Deletion
+activate CC
+CC -[#red]-> Audit: Log Deletion Verification\n(Verifier Identity + Timestamp)
+CC -> CC: Verification passed — Begin Deletion Sequence
+deactivate CC
+
+== 6. Tenant Deletion — Execution ==
+CC -[#red]-> TenantIDP: Immediately Suspend Tenant Login
+CC -[#red]-> DB: Freeze Tenant Data\n(30-Day Soft-Delete Period Begins)
+CC -[#orange]-> Audit: Log Suspension Timestamp
+
+note over CC, DB
+  Standard path: 30-day soft-delete retention
+  (data frozen, inaccessible but retained for compliance).
+  Emergency hard-delete: both Initiator AND Verifier
+  must confirm in writing before pipeline executes.
+end note
+
+CC -[#red]-> Pipeline: Trigger Terraform Destroy after Retention Period
+activate Pipeline
+Pipeline -> TF: Terraform Destroy — Tenant Scope
+TF -[#red]-> DB: Purge Tenant SQL Database
+TF -[#red]-> Azure: Invalidate Azure Key Vault TDE Key
+TF -[#red]-> TenantIDP: Deprovision Auth0 Tenant Application
+TF --> Pipeline: Destruction Complete
+deactivate Pipeline
+Pipeline -[#red]-> Audit: Write Signed Deletion Receipt\nto Immutable Audit Log
+Pipeline --> Initiator: Tenant Deletion Confirmed
+
+@enduml

@@ -1,0 +1,72 @@
+@startuml Meetsendai_V0_DataCapture_Workflow
+title Meetsendai V0 - Data Capture Workflow (EU Only)
+skinparam style strictuml
+skinparam wrapWidth 200
+
+legend top right
+  **Risk Levels (Transactions & Actor Swimlanes)**
+  |<#White> White Box | Internal / Trusted Execution (Low Risk) |
+  |<#E6F2FF> <color:black>Light Blue Lane</color> | Internal Trusted System Boundary |
+  |<#Orange> Orange Box | PII Processing (Medium Risk) |
+  |<#FFE6CC> <color:black>Light Orange Lane</color>| Auth / Transit (Medium Risk) |
+  |<#Red> <color:white>Red Box</color> | External Data Ingress-Egress (High Risk) |
+  |<#FFCCCC> <color:black>Light Red Lane</color>| Untrusted External Actors (High Risk) |
+endlegend
+
+|#FFCCCC|Sales Rep|
+start
+:Access Meetsendai Platform\n(HTTPS / TLS 1.3);
+
+|#FFE6CC|Auth0|
+:Authenticate User (Username / Password);
+note right
+  Auth0 only in V0.
+  No SSO or Entra ID.
+end note
+
+|#E6F2FF|Azure Application (Docker) — EU Region|
+:Issue Session Token (JWT)\nwith Signed Location Header (EU);
+note right
+  Location context is passed via
+  signed application-layer headers.
+  No external edge network (Cloudflare) in V0.
+end note
+
+|#FFCCCC|Sales Rep|
+:Select Event in App;
+:Capture Business Card (Photo)\n& Record Voice Note; <<#Red>>
+
+|#E6F2FF|Azure Application (Docker) — EU Region|
+:Receive Submission over HTTPS / TLS 1.3;
+:Extract Signed Location Header → Confirm EU Context;
+
+|#E6F2FF|Azure Application (Docker) — EU Region|
+:Pass Image to OCR Engine; <<#Orange>>
+:Pass Audio to OpenAI Whisper\nfor Transcription; <<#Orange>>
+note right
+  All processing occurs within
+  EU Azure region (West / North Europe).
+end note
+:Fetch Tenant Product Docs from SQL DB;
+:AI Cross-References Transcript\nvs Product Documentation; <<#Orange>>
+:Generate Personalised Draft Email; <<#Orange>>
+:Store Lead PII & Draft in EU Tenant SQL DB\n(TDE via Azure Key Vault, TLS 1.3 in transit); <<#Orange>>
+
+|#FFCCCC|Sales Rep|
+:Human-in-the-Loop:\nReview & Approve Draft Email;
+:Dispatch Email to Lead; <<#Red>>
+
+|#E6F2FF|Azure Application (Docker) — EU Region|
+:Record Interaction Metrics\n(Scoped to Event / Tenant);
+note right
+  No cross-event aggregation or
+  global statistics dashboard in V0.
+end note
+
+if (GDPR Data Subject Request?) then (Query / Delete)
+    :Identify Subject Records in Tenant DB; <<#Orange>>
+    :Execute Query or Full Deletion\nin EU Tenant SQL DB; <<#Orange>>
+endif
+
+stop
+@enduml

@@ -1,6 +1,6 @@
 <!DOCTYPE html>
 <html lang="en" class="no-js">
-{% from 'macros/diagrams.html' import interactive_diagram, diagram_styles, diagram_scripts %}
+{% from 'macros/diagrams.html' import interactive_diagram, arch_diagram_cards, diagram_styles, diagram_scripts %}
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -742,6 +742,241 @@
             font-family: monospace;
             font-size: 0.9rem;
         }
+
+        /* ── Per-asset detail cards ─────────────────────────────────── */
+        /* Asset group in threats section */
+        .asset-threat-group {
+            margin-bottom: 40px;
+        }
+        .asset-threat-group-header {
+            background: #f8f9fa;
+            border: 1px solid #e9ecef;
+            border-radius: 8px 8px 0 0;
+            padding: 16px 20px 12px 20px;
+            border-bottom: 2px solid #dee2e6;
+        }
+        .asset-group-tree {
+            background: #fff;
+            border: 1px solid #e9ecef;
+            border-top: none;
+            padding: 16px 20px;
+        }
+        .asset-group-tree .asset-attack-tree-title {
+            font-size: 0.7rem;
+            font-weight: 700;
+            letter-spacing: 0.08em;
+            text-transform: uppercase;
+            color: #8a9ab0;
+            margin-bottom: 10px;
+        }
+        .asset-threat-group > .threat-card {
+            border-radius: 0;
+            border-top: none;
+        }
+        .asset-threat-group > .threat-card:last-child {
+            border-radius: 0 0 8px 8px;
+        }
+
+        .asset-detail-card {
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            margin-bottom: 24px;
+            overflow: hidden;
+        }
+        .asset-detail-header {
+            padding: 14px 18px;
+            background: #f8f9fa;
+            border-bottom: 1px solid var(--border);
+        }
+        .asset-detail-title-row {
+            display: flex;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 8px;
+        }
+        .asset-detail-name {
+            font-size: 1rem;
+            font-weight: 700;
+            color: #2c3e50;
+        }
+        .asset-detail-type-badge {
+            font-size: 0.72rem;
+            padding: 2px 8px;
+            border-radius: 10px;
+            background: #e8f4fd;
+            color: #2471a3;
+            border: 1px solid #aed6f1;
+            font-weight: 600;
+        }
+        .asset-detail-zone-badge {
+            font-size: 0.72rem;
+            padding: 2px 8px;
+            border-radius: 10px;
+            background: #eafaf1;
+            color: #1e8449;
+            border: 1px solid #a9dfbf;
+            font-weight: 600;
+        }
+        .asset-detail-threat-count {
+            font-size: 0.72rem;
+            padding: 2px 8px;
+            border-radius: 10px;
+            font-weight: 700;
+        }
+        .threat-count-high   { background: #fde8e8; color: #c0392b; border: 1px solid #f5b7b1; }
+        .threat-count-medium { background: #fef5e7; color: #d35400; border: 1px solid #fad7a0; }
+        .threat-count-low    { background: #fdfee7; color: #7d6608; border: 1px solid #f9e79f; }
+        .asset-detail-desc {
+            margin: 8px 0 0;
+            font-size: 0.85rem;
+            color: #555;
+        }
+        .asset-detail-body {
+            display: flex;
+            gap: 0;
+            flex-wrap: wrap;
+        }
+        .asset-attack-tree {
+            flex: 1 1 520px;
+            border-right: 1px solid var(--border);
+            padding: 16px;
+            min-width: 0;
+        }
+        .asset-attack-tree-title,
+        .asset-threats-title {
+            font-size: 0.78rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            color: #888;
+            margin-bottom: 10px;
+        }
+        .mini-tree-label {
+            font-size: 0.72rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            color: #888;
+            margin-bottom: 8px;
+            padding: 0 4px;
+        }
+        .asset-attack-tree .diagram-container {
+            min-height: 180px;
+        }
+        .asset-threats-list {
+            flex: 0 0 340px;
+            padding: 16px;
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+        }
+        .asset-threat-row {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            padding: 7px 10px;
+            border-radius: 6px;
+            border: 1px solid var(--border);
+            text-decoration: none;
+            color: inherit;
+            font-size: 0.83rem;
+            transition: background .15s;
+        }
+        .asset-threat-row:hover { background: #f0f4f8; }
+        .asset-threat-id {
+            font-family: monospace;
+            font-size: 0.72rem;
+            color: #888;
+            white-space: nowrap;
+        }
+        .asset-threat-title {
+            flex: 1;
+            min-width: 0;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+        .cvss-pill {
+            font-size: 0.7rem;
+            font-weight: 700;
+            padding: 1px 6px;
+            border-radius: 8px;
+            white-space: nowrap;
+        }
+        .cvss-critical { background: #8B0000; color: #fff; }
+        .cvss-high     { background: #e74c3c; color: #fff; }
+        .cvss-medium   { background: #f39c12; color: #fff; }
+        .cvss-low      { background: #f1c40f; color: #2c3e50; }
+        .asset-threat-status {
+            font-size: 0.7rem;
+            font-weight: 600;
+            white-space: nowrap;
+        }
+        .status-mitigated { color: #27ae60; }
+        .status-open      { color: #e74c3c; }
+        .asset-no-threats {
+            padding: 16px 18px;
+            font-size: 0.85rem;
+            color: #aaa;
+            font-style: italic;
+        }
+        /* ── End per-asset cards ─────────────────────────────────────── */
+        .aspect-badge {
+            display: inline-block;
+            padding: 2px 8px;
+            border-radius: 12px;
+            font-size: 0.72rem;
+            font-weight: 600;
+            letter-spacing: 0.3px;
+            background: #e8f4fd;
+            color: #2471a3;
+            border: 1px solid #aed6f1;
+            margin-left: 8px;
+            vertical-align: middle;
+            white-space: nowrap;
+        }
+
+        /* Components overview section */
+        .components-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+            gap: 16px;
+            margin-top: 16px;
+        }
+        .component-card {
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            padding: 16px 18px;
+            background: var(--card-bg, #fff);
+        }
+        .component-card h4 {
+            margin: 0 0 6px 0;
+            font-size: 1rem;
+            color: #2c3e50;
+        }
+        .component-card .component-desc {
+            font-size: 0.85rem;
+            color: #666;
+            margin-bottom: 10px;
+            min-height: 18px;
+        }
+        .component-stats {
+            display: flex;
+            gap: 8px;
+            flex-wrap: wrap;
+        }
+        .component-stat {
+            font-size: 0.78rem;
+            padding: 2px 8px;
+            border-radius: 10px;
+            font-weight: 600;
+        }
+        .component-stat.threats  { background:#fde8e8; color:#c0392b; }
+        .component-stat.assets   { background:#e8f4fd; color:#2471a3; }
+        .component-stat.critical { background:#f9ebea; color:#922b21; }
+        .component-stat.high     { background:#fef5e7; color:#d35400; }
+        .component-stat.medium   { background:#fdfee7; color:#7d6608; }
+        .component-stat.low      { background:#eafaf1; color:#1e8449; }
         
         .threat-card-body {
             display: flex;
@@ -901,7 +1136,61 @@
         .cm-status-value.no {
             color: var(--red);
         }
-        
+
+        .cm-effort {
+            font-size: 0.7rem;
+            font-weight: 700;
+            padding: 2px 8px;
+            border-radius: 4px;
+            text-transform: uppercase;
+            letter-spacing: 0.04em;
+            margin-left: auto;
+        }
+        .cm-effort-low    { background: #e6f9ee; color: #196a35; border: 1px solid #a3d9b5; }
+        .cm-effort-medium { background: #fff8e1; color: #8a6200; border: 1px solid #ffd54f; }
+        .cm-effort-high   { background: #fff0f0; color: #9b1c1c; border: 1px solid #f5c6cb; }
+
+        .cm-why {
+            margin: 12px 0 0;
+            padding: 12px 14px;
+            background: #f0f7ff;
+            border-left: 3px solid #3498db;
+            border-radius: 0 4px 4px 0;
+            font-size: 0.88rem;
+            color: #2c3e50;
+            line-height: 1.55;
+        }
+        .cm-why-label {
+            font-weight: 700;
+            font-size: 0.75rem;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            color: #2980b9;
+            margin-bottom: 4px;
+        }
+
+        .cm-impl {
+            margin: 12px 0 0;
+        }
+        .cm-impl-label {
+            font-weight: 700;
+            font-size: 0.75rem;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            color: #555;
+            margin-bottom: 6px;
+        }
+        .cm-impl ol {
+            padding-left: 18px;
+            margin: 0;
+        }
+        .cm-impl ol li {
+            font-size: 0.87rem;
+            color: #333;
+            line-height: 1.55;
+            margin-bottom: 4px;
+        }
+
         /* Visual diagram styles */
         .visual-tree {
             display: flex;
@@ -1804,6 +2093,114 @@
         }
         
         {{ diagram_styles() }}
+        /* ========== ARCHITECTURE DIAGRAM CARDS ========== */
+        .arch-diagram-card {
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            margin-bottom: 28px;
+            overflow: hidden;
+            background: #fff;
+            box-shadow: 0 1px 4px rgba(0,0,0,.06);
+        }
+        .arch-diagram-header {
+            padding: 16px 20px 12px;
+            border-bottom: 1px solid var(--border);
+            background: var(--light-gray);
+        }
+        .arch-diagram-title-row {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            flex-wrap: wrap;
+        }
+        .arch-diagram-title-row h3 {
+            margin: 0;
+            font-size: 1.1rem;
+            color: var(--dark);
+        }
+        .arch-type-badge {
+            background: #3498db;
+            color: #fff;
+            font-size: 0.7rem;
+            padding: 2px 8px;
+            border-radius: 12px;
+            text-transform: uppercase;
+            letter-spacing: .04em;
+            font-weight: 600;
+        }
+        .arch-source-path {
+            font-size: 0.75rem;
+            color: #7f8c8d;
+            font-family: monospace;
+            margin-left: auto;
+        }
+        .arch-diagram-desc {
+            margin: 8px 0 0;
+            font-size: 0.9rem;
+            color: #555;
+        }
+        .arch-diagram-tabs {
+            display: flex;
+            gap: 0;
+            border-bottom: 1px solid var(--border);
+            background: #f1f3f5;
+        }
+        .arch-tab-btn {
+            padding: 8px 20px;
+            border: none;
+            border-right: 1px solid var(--border);
+            background: transparent;
+            cursor: pointer;
+            font-size: 0.85rem;
+            font-weight: 500;
+            color: #6c757d;
+            transition: all .15s;
+        }
+        .arch-tab-btn:hover { background: #e9ecef; color: var(--dark); }
+        .arch-tab-btn.active { background: #fff; color: var(--sidebar-active); border-bottom: 2px solid var(--sidebar-active); }
+        .arch-tab-content { display: block; }
+        .arch-diagram-viewport {
+            position: relative;
+            min-height: 420px;
+            overflow: auto;
+            background: #fafafa;
+            display: flex;
+            align-items: flex-start;
+            justify-content: center;
+            padding: 16px;
+        }
+        .arch-diagram-img {
+            max-width: 100%;
+            display: block;
+        }
+        .arch-diagram-loading {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            color: #95a5a6;
+            font-size: 0.9rem;
+            pointer-events: none;
+        }
+        .arch-diagram-img[src] + .arch-diagram-loading { display: none; }
+        .arch-source-toolbar {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 8px 16px;
+            background: #f8f9fa;
+            border-bottom: 1px solid var(--border);
+            flex-wrap: wrap;
+            gap: 8px;
+        }
+        .arch-source-label { font-size: 0.8rem; color: #6c757d; }
+        .arch-diagram-missing {
+            padding: 20px;
+            background: #fff3cd;
+            color: #856404;
+            font-size: 0.9rem;
+        }
+        /* ======================================================= */
     </style>
     <script src="https://cdn.jsdelivr.net/npm/mermaid/dist/mermaid.min.js"></script>
 </head>
@@ -1832,7 +2229,7 @@
     <aside class="sidebar">
         <div class="sidebar-header">
             <h2>Threat Models</h2>
-            <div class="subtitle">Security Analysis Platform</div>
+            <div class="subtitle">By BTurbs</div>
         </div>
         
         <!-- Threat Model List -->
@@ -1889,22 +2286,13 @@
                     <a href="#scope" class="nav-item">Scope</a>
                     <a href="#analysis" class="nav-item">Analysis</a>
                     <a href="#attack-tree" class="nav-item">Attack Tree</a>
-                    {% if has_data_flows %}<a href="#dfd" class="nav-item">Data Flow Diagram</a>{% endif %}
-                    {% if has_data_flows %}<a href="#puml-dfd" class="nav-item">PlantUML Risk View</a>{% endif %}
+                    {% if model.diagrams %}<a href="#architecture-diagrams" class="nav-item">Architecture Diagrams</a>{% endif %}
+                    {% if is_composed %}<a href="#components" class="nav-item">🧩 Components</a>{% endif %}
+                    {# Data Flow Diagram nav links removed #}
                 </div>
             </div>
-            
-            <!-- Assets Section -->
-            <div class="nav-section expanded">
-                <div class="nav-section-header" onclick="toggleSection(this)">
-                    <span class="nav-toggle">
-                        <svg viewBox="0 0 24 24"><path d="M8.59 16.59L13.17 12 8.59 7.41 10 6l6 6-6 6-1.41-1.41z"/></svg>
-                    </span>
-                    <span class="nav-section-title">Assets ({{ model.assets | length }})</span>
-                </div>
-            </div>
-            
-            <!-- Threats Section -->
+
+            <!-- Assets / Threats Section -->
             <div class="nav-section expanded">
                 <div class="nav-section-header" onclick="toggleSection(this)">
                     <span class="nav-toggle">
@@ -1913,33 +2301,8 @@
                     <span class="nav-section-title">Threats ({{ model.threats | length }})</span>
                 </div>
                 <div class="nav-section-content">
-                    {% set threat_types = {} %}
-                    {% for threat in model.threats %}
-                        {% if threat.threatType not in threat_types %}
-                            {% set _ = threat_types.update({threat.threatType: []}) %}
-                        {% endif %}
-                        {% set _ = threat_types[threat.threatType].append(threat) %}
-                    {% endfor %}
-                    {% for threat_type, threats in threat_types.items() %}
-                    <div class="nav-threat-group" data-threat-group="{{ threat_type }}">
-                        <div class="nav-threat-group-header" onclick="toggleThreatGroup(this)">
-                            <span class="nav-threat-group-toggle">
-                                <svg viewBox="0 0 24 24"><path d="M8.59 16.59L13.17 12 8.59 7.41 10 6l6 6-6 6-1.41-1.41z"/></svg>
-                            </span>
-                            <span class="nav-threat-group-title">{{ threat_type }}</span>
-                            <span class="nav-threat-group-count">{{ threats | length }}</span>
-                        </div>
-                        <div class="nav-threat-group-items">
-                            {% for threat in threats %}
-                            <a href="#threat-{{ threat.ID }}" class="nav-threat-item">
-                                {% if threat.CVSS and threat.CVSS.score %}
-                                <span class="cvss {% if threat.CVSS.score >= 7.0 %}cvss-high{% elif threat.CVSS.score >= 4.0 %}cvss-medium{% else %}cvss-low{% endif %}" style="font-size: 0.65rem; margin-right: 5px;">{{ threat.CVSS.score }}</span>
-                                {% endif %}
-                                {{ threat.title | truncate(25) }}
-                            </a>
-                            {% endfor %}
-                        </div>
-                    </div>
+                    {% for asset in model.assets %}
+                    <a href="#asset-{{ asset.ID }}" class="nav-item" style="font-weight:600;">{{ asset.name }}</a>
                     {% endfor %}
                 </div>
             </div>
@@ -2096,28 +2459,6 @@
             </tr>
         </table>
 
-        {% if model.assets %}
-        <h4 style="margin: 20px 0 10px 0;">Assets Identified</h4>
-        <table>
-            <thead>
-                <tr>
-                    <th>Asset</th>
-                    <th>Type</th>
-                    <th>Trust Zone</th>
-                </tr>
-            </thead>
-            <tbody>
-                {% for asset in model.assets %}
-                <tr>
-                    <td>{{ asset.name }}</td>
-                    <td>{{ asset.type }}</td>
-                    <td>{{ asset.trustZone or 'internal' }}</td>
-                </tr>
-                {% endfor %}
-            </tbody>
-        </table>
-        {% endif %}
-
         <!-- Attack Tree -->
         <h3 id="attack-tree">Attack Tree</h3>
         {% if model.threats %}
@@ -2163,208 +2504,219 @@
         <p>No threats defined.</p>
         {% endif %}
 
-        <!-- Data Flow Diagram -->
-        {% if has_data_flows %}
-        <h3 id="dfd">Data Flow Diagrams</h3>
-        <p class="diagram-description">This section includes PlantUML component view, sequence view, and UML source.</p>
-        
-        <div class="diagram-tabs">
-            <button class="tab-btn active" data-tab="puml-component">Component View</button>
-            <button class="tab-btn" data-tab="puml-sequence">Sequence View</button>
-            <button class="tab-btn" data-tab="puml-source">UML Source</button>
-        </div>
-        
-        <div class="tab-content active" id="puml-component" data-tab-name="Component View (PlantUML)">
-            {{ interactive_diagram(
-                diagram_type='plantuml-component',
-                diagram_title='PlantUML Component Diagram',
-                content_type='plantuml-img',
-                content='',
-                diagram_id='puml-component-img'
-            ) }}
-        </div>
-        
-        <div class="tab-content" id="puml-sequence" data-tab-name="Sequence View (PlantUML)">
-            {{ interactive_diagram(
-                diagram_type='plantuml-sequence',
-                diagram_title='PlantUML Sequence Diagram',
-                content_type='plantuml-img',
-                content='',
-                diagram_id='puml-sequence-img'
-            ) }}
-        </div>
-        
-        <div class="tab-content" id="puml-source" data-tab-name="UML Source Code">
-            <div class="puml-source-tabs">
-                <button class="source-tab-btn active" data-source="component">Component PUML</button>
-                <button class="source-tab-btn" data-source="sequence">Sequence PUML</button>
-            </div>
-            <div class="source-content active" id="source-component">
-                <pre class="puml-source"><code>{{ dfd_plantuml }}</code></pre>
-                <button class="copy-btn" onclick="copyPumlSource('component')">Copy PlantUML</button>
-            </div>
-            <div class="source-content" id="source-sequence">
-                <pre class="puml-source"><code>{{ dfd_plantuml_sequence }}</code></pre>
-                <button class="copy-btn" onclick="copyPumlSource('sequence')">Copy PlantUML</button>
-            </div>
-        </div>
-        
-        <div class="puml-legend">
-            <h4>Risk Color Legend</h4>
-            <div class="legend-items">
-                <div class="legend-item"><span class="legend-color critical"></span> Critical Risk (CVSS 9.0+)</div>
-                <div class="legend-item"><span class="legend-color high"></span> High Risk (CVSS 7.0-8.9)</div>
-                <div class="legend-item"><span class="legend-color medium"></span> Medium Risk (CVSS 4.0-6.9)</div>
-                <div class="legend-item"><span class="legend-color low"></span> Low Risk (CVSS &lt; 4.0)</div>
-            </div>
-            <div class="legend-items">
-                <div class="legend-item"><span class="legend-arrow red">→</span> Crosses Trust Boundary</div>
-                <div class="legend-item"><span class="legend-arrow orange">→</span> Sensitive Data Flow</div>
-            </div>
-        </div>
-        {% endif %}
-    </section>
+        {{ arch_diagram_cards(diagrams_before_attack_tree, slot_id='architecture-diagrams') }}
 
-    <!-- Threats Section -->
+        {{ arch_diagram_cards(diagrams_after_attack_tree) }}
+        {{ arch_diagram_cards(diagrams_after_dfd) }}
+
+    </section>
+    {% if is_composed %}
+    <section id="components">
+        <h2>Components</h2>
+        <p style="margin-bottom:4px;">This threat model is composed from <strong>{{ aspects_summary | length }}</strong> sub-model aspect{{ 's' if aspects_summary | length != 1 else '' }}. Each card summarises the threats and assets contributed by that component.</p>
+        <div class="components-grid">
+            {% for aspect in aspects_summary %}
+            <div class="component-card">
+                <h4>{{ aspect.name }}</h4>
+                <div class="component-desc">{{ aspect.description }}</div>
+                <div class="component-stats">
+                    {% if aspect.threats %}<span class="component-stat threats">{{ aspect.threats }} threat{{ 's' if aspect.threats != 1 else '' }}</span>{% endif %}
+                    {% if aspect.assets %}<span class="component-stat assets">{{ aspect.assets }} asset{{ 's' if aspect.assets != 1 else '' }}</span>{% endif %}
+                    {% if aspect.critical %}<span class="component-stat critical">{{ aspect.critical }} Critical</span>{% endif %}
+                    {% if aspect.high %}<span class="component-stat high">{{ aspect.high }} High</span>{% endif %}
+                    {% if aspect.medium %}<span class="component-stat medium">{{ aspect.medium }} Medium</span>{% endif %}
+                    {% if aspect.low %}<span class="component-stat low">{{ aspect.low }} Low</span>{% endif %}
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+    </section>
+    {% endif %}
     <section id="threats">
         <h2>Threats</h2>
-        
-        {% for threat in model.threats %}
-        <div id="threat-{{ threat.ID }}" class="threat-card">
-            <div class="threat-card-header">
-                <h4>{{ threat.title }} <span class="threat-id">( {{ threat.ID }} )</span></h4>
-            </div>
-            <div class="threat-card-body">
-                
-                <!-- Left side: Details -->
-                <div class="threat-details">
-                    <div class="detail-row">
-                        <div class="detail-label">Threat Status:</div>
-                        <div class="detail-value {% if threat.fullyMitigated %}mitigated{% else %}unmitigated{% endif %}">
-                            {% if threat.fullyMitigated %}Mitigated{% else %}Unmitigated{% endif %}
-                        </div>
-                    </div>
-                    
-                    <div class="detail-row">
-                        <div class="detail-label">Threat Description</div>
-                        <div class="detail-value">{{ threat.attack }}</div>
-                    </div>
-                    
-                    <div class="detail-row">
-                        <div class="detail-label">Impact</div>
-                        <div class="detail-value">
-                            <ul style="margin: 5px 0 0 20px; padding: 0;">
-                                {% for impact in threat.impactDesc.split(',') %}
-                                <li>{{ impact | trim }}</li>
-                                {% endfor %}
-                            </ul>
-                        </div>
-                    </div>
-                    
-                    <div class="detail-row">
-                        <div class="detail-label">Security Objectives</div>
-                        <div class="sec-obj-tags">
-                            {% for obj in threat.impactedSecObj %}
-                            <span class="sec-obj-tag">{{ obj }}</span>
-                            {% endfor %}
-                        </div>
-                    </div>
-                    
-                    {% if threat_assets_map.get(threat.ID) %}
-                    <div class="detail-row">
-                        <div class="detail-label">Affected Assets</div>
-                        <div class="affected-assets">
-                            {% for asset in threat_assets_map.get(threat.ID, []) %}
-                            <span class="affected-asset-badge">{{ asset.name }}</span>
-                            {% endfor %}
-                        </div>
-                    </div>
-                    {% endif %}
-                    
-                    {% if threat.CVSS %}
-                    <div class="cvss-section">
-                        <div class="detail-label">CVSS</div>
-                        <div class="cvss-score">
-                            Base Score: <strong>{{ threat.CVSS.score }}</strong>
-                            <span class="cvss {% if threat.CVSS.score >= 9.0 %}cvss-high{% elif threat.CVSS.score >= 7.0 %}cvss-high{% elif threat.CVSS.score >= 4.0 %}cvss-medium{% else %}cvss-low{% endif %}" style="margin-left: 8px; padding: 2px 8px; border-radius: 4px;">
-                                {{ threat.CVSS.severity }}
-                            </span>
-                        </div>
-                        <div class="cvss-vector">Vector: <code>{{ threat.CVSS.vector }}</code></div>
-                    </div>
-                    {% endif %}
+
+        {% for section in asset_sections %}
+        {% if section.threats %}
+        {% set asset = section.asset %}
+        <div class="asset-threat-group" id="asset-{{ asset.ID }}">
+
+            <!-- Asset group header -->
+            <div class="asset-threat-group-header">
+                <div class="asset-detail-title-row">
+                    <span class="asset-detail-name">{{ asset.name }}</span>
+                    <span class="asset-detail-type-badge">{{ asset.type }}</span>
+                    {% if asset.trustZone %}<span class="asset-detail-zone-badge">{{ asset.trustZone }}</span>{% endif %}
+                    <span class="asset-detail-threat-count {% if section.max_cvss >= 7.0 %}threat-count-high{% elif section.max_cvss >= 4.0 %}threat-count-medium{% else %}threat-count-low{% endif %}">
+                        {{ section.threat_count }} threat{{ 's' if section.threat_count != 1 else '' }}
+                    </span>
                 </div>
-                
-                <!-- Right side: Visual diagram -->
-                <div class="threat-diagram">
-                    <div class="visual-tree">
-                        <!-- Threat Node -->
-                        <div class="vt-node vt-threat">
-                            <div style="font-size: 0.75rem; color: #666; margin-bottom: 5px;">Threat</div>
-                            <div class="vt-threat-title">{{ threat.title }}</div>
+                {% if asset.description %}<p class="asset-detail-desc">{{ asset.description }}</p>{% endif %}
+            </div>
+
+            <!-- Per-asset attack tree -->
+            {% if section.mermaid %}
+            <div class="asset-group-tree">
+                <div class="asset-attack-tree-title">Attack Tree</div>
+                <div class="diagram-container">
+                    <div class="mermaid" data-diagram-id="asset-tree-{{ asset.ID }}">{{ section.mermaid }}</div>
+                </div>
+            </div>
+            {% endif %}
+
+            <!-- Threat cards for this asset -->
+            {% for item in section.threats %}
+            {% set threat = item.threat %}
+            <div id="threat-{{ threat.ID }}" class="threat-card">
+                <div class="threat-card-header">
+                    <h4>{{ threat.title }} <span class="threat-id">( {{ threat.ID }} )</span>{% if threat.source_aspect %}<span class="aspect-badge">{{ threat.source_aspect }}</span>{% endif %}</h4>
+                </div>
+                <div class="threat-card-body">
+                    
+                    <!-- Left side: Details -->
+                    <div class="threat-details">
+                        <div class="detail-row">
+                            <div class="detail-label">Threat Status:</div>
+                            <div class="detail-value {% if threat.fullyMitigated %}mitigated{% else %}unmitigated{% endif %}">
+                                {% if threat.fullyMitigated %}Mitigated{% else %}Unmitigated{% endif %}
+                            </div>
+                        </div>
+                        
+                        <div class="detail-row">
+                            <div class="detail-label">Threat Description</div>
+                            <div class="detail-value">{{ threat.attack }}</div>
+                        </div>
+                        
+                        <div class="detail-row">
+                            <div class="detail-label">Impact</div>
+                            <div class="detail-value">
+                                <ul style="margin: 5px 0 0 20px; padding: 0;">
+                                    {% for impact in threat.impactDesc.split(',') %}
+                                    <li>{{ impact | trim }}</li>
+                                    {% endfor %}
+                                </ul>
+                            </div>
+                        </div>
+                        
+                        <div class="detail-row">
+                            <div class="detail-label">Security Objectives</div>
                             <div class="sec-obj-tags">
                                 {% for obj in threat.impactedSecObj %}
-                                <span class="sec-obj-tag" style="color: var(--red); border-color: var(--red);">{{ obj }}</span>
+                                <span class="sec-obj-tag">{{ obj }}</span>
                                 {% endfor %}
                             </div>
                         </div>
                         
-                        <!-- Connector: exploits -->
-                        <div class="vt-connector">
-                            <div class="vt-line"></div>
-                            <div class="vt-label">exploits</div>
-                            <div class="vt-line"></div>
-                        </div>
-                        
-                        <!-- Attack Node -->
-                        <div class="vt-node vt-attack">
-                            <div class="vt-attack-label">Attack</div>
-                            <div>{{ threat.attack }}</div>
-                        </div>
-                        
-                        <!-- Connector: mitigates -->
-                        <div class="vt-connector">
-                            <div class="vt-line"></div>
-                            <div class="vt-label">mitigates</div>
-                        </div>
-                        
-                        <!-- Countermeasures row -->
-                        <div class="vt-cm-row">
-                            {% for cm in threat.countermeasures %}
-                            <div class="vt-cm {% if cm.status != 'in_place' %}not-impl{% endif %}">
-                                <div class="vt-cm-label">Countermeasure</div>
-                                <div class="vt-cm-title">{{ cm.title }}</div>
+                        {% if threat.CVSS %}
+                        <div class="cvss-section">
+                            <div class="detail-label">CVSS</div>
+                            <div class="cvss-score">
+                                Base Score: <strong>{{ threat.CVSS.score }}</strong>
+                                <span class="cvss {% if threat.CVSS.score >= 9.0 %}cvss-high{% elif threat.CVSS.score >= 7.0 %}cvss-high{% elif threat.CVSS.score >= 4.0 %}cvss-medium{% else %}cvss-low{% endif %}" style="margin-left: 8px; padding: 2px 8px; border-radius: 4px;">
+                                    {{ threat.CVSS.severity }}
+                                </span>
                             </div>
-                            {% endfor %}
+                            <div class="cvss-vector">Vector: <code>{{ threat.CVSS.vector }}</code></div>
+                        </div>
+                        {% endif %}
+                    </div>
+                    
+                    <!-- Right side: Visual diagram -->
+                    <div class="threat-diagram">
+                        <div class="visual-tree">
+                            <!-- Threat Node -->
+                            <div class="vt-node vt-threat">
+                                <div style="font-size: 0.75rem; color: #666; margin-bottom: 5px;">Threat</div>
+                                <div class="vt-threat-title">{{ threat.title }}</div>
+                                <div class="sec-obj-tags">
+                                    {% for obj in threat.impactedSecObj %}
+                                    <span class="sec-obj-tag" style="color: var(--red); border-color: var(--red);">{{ obj }}</span>
+                                    {% endfor %}
+                                </div>
+                            </div>
+                            
+                            <!-- Connector: exploits -->
+                            <div class="vt-connector">
+                                <div class="vt-line"></div>
+                                <div class="vt-label">exploits</div>
+                                <div class="vt-line"></div>
+                            </div>
+                            
+                            <!-- Attack Node -->
+                            <div class="vt-node vt-attack">
+                                <div class="vt-attack-label">Attack</div>
+                                <div>{{ threat.attack }}</div>
+                            </div>
+                            
+                            <!-- Connector: mitigates -->
+                            <div class="vt-connector">
+                                <div class="vt-line"></div>
+                                <div class="vt-label">mitigates</div>
+                            </div>
+                            
+                            <!-- Countermeasures row -->
+                            <div class="vt-cm-row">
+                                {% for cm in threat.countermeasures %}
+                                <div class="vt-cm {% if cm.status != 'in_place' %}not-impl{% endif %}">
+                                    <div class="vt-cm-label">Countermeasure</div>
+                                    <div class="vt-cm-title">{{ cm.title }}</div>
+                                </div>
+                                {% endfor %}
+                            </div>
                         </div>
                     </div>
                 </div>
-            </div>
-            
-            <!-- Countermeasures detailed section -->
-            <div class="cm-section" style="margin: 0 20px 20px 20px;">
-                <h5>Counter-measures for {{ threat.ID }}</h5>
                 
-                {% for cm in threat.countermeasures %}
-                <div class="cm-item {% if cm.status == 'in_place' %}implemented{% else %}not-implemented{% endif %}">
-                    <div class="cm-header">
-                        <div>
-                            <span class="cm-id">{{ cm.ID }}</span>
-                            <span class="cm-title">{{ cm.title }}</span>
+                <!-- Countermeasures detailed section -->
+                <div class="cm-section" style="margin: 0 20px 20px 20px;">
+                    <h5>Counter-measures for {{ threat.ID }}</h5>
+                    
+                    {% for cm in threat.countermeasures %}
+                    <div class="cm-item {% if cm.status == 'in_place' %}implemented{% else %}not-implemented{% endif %}">
+                        <div class="cm-header">
+                            <div style="display:flex;align-items:center;flex-wrap:wrap;gap:8px;">
+                                <span class="cm-id">{{ cm.ID }}</span>
+                                <span class="cm-title">{{ cm.title }}</span>
+                            </div>
+                            {% if cm.effort %}
+                            <span class="cm-effort cm-effort-{{ cm.effort | lower }}">{{ cm.effort }} effort</span>
+                            {% endif %}
+                        </div>
+                        <div class="cm-desc">{{ cm.description }}</div>
+
+                        {% if cm.why %}
+                        <div class="cm-why">
+                            <div class="cm-why-label">Why this works</div>
+                            {{ cm.why }}
+                        </div>
+                        {% endif %}
+
+                        {% if cm.implementation %}
+                        <div class="cm-impl">
+                            <div class="cm-impl-label">How to implement</div>
+                            <ol>
+                                {% for step in cm.implementation %}
+                                <li>{{ step }}</li>
+                                {% endfor %}
+                            </ol>
+                        </div>
+                        {% endif %}
+
+                        <div class="cm-status" style="margin-top:12px;">
+                            <span class="cm-status-label">Countermeasure in place?</span>
+                            <span class="cm-status-value {% if cm.status == 'in_place' %}yes{% else %}no{% endif %}">
+                                {% if cm.status == 'in_place' %}✓{% else %}✗{% endif %}
+                            </span>
                         </div>
                     </div>
-                    <div class="cm-desc">{{ cm.description }}</div>
-                    <div class="cm-status">
-                        <span class="cm-status-label">Countermeasure in place?</span>
-                        <span class="cm-status-value {% if cm.status == 'in_place' %}yes{% else %}no{% endif %}">
-                            {% if cm.status == 'in_place' %}✓{% else %}✗{% endif %}
-                        </span>
-                    </div>
+                    {% endfor %}
                 </div>
-                {% endfor %}
             </div>
+            {% endfor %}
+
         </div>
+        {% endif %}
         {% endfor %}
+
     </section>
 
     <!-- Security Testing Section -->
@@ -2995,6 +3347,79 @@
             pendingEl.textContent = pending;
         }
         
+        // ========== ARCHITECTURE DIAGRAM RENDERING ==========
+        const customDiagrams = {{ custom_diagrams | tojson | safe }};
+
+        function renderArchDiagrams() {
+            if (!customDiagrams || customDiagrams.length === 0) return;
+            loadPako(function() {
+                customDiagrams.forEach(function(diag) {
+                    if (!diag.content || diag.content.trim().length === 0) return;
+                    try {
+                        const encoded = encodePlantUML(diag.content);
+                        if (!encoded) return;
+                        const url = 'https://www.plantuml.com/plantuml/svg/' + encoded;
+                        const img = document.getElementById('custom-diagram-img-' + diag.id);
+                        if (!img) return;
+                        img.src = url;
+                        img.onload = function() {
+                            const loader = document.getElementById('arch-loading-' + diag.id);
+                            if (loader) loader.style.display = 'none';
+                        };
+                        img.onerror = function() {
+                            const loader = document.getElementById('arch-loading-' + diag.id);
+                            if (loader) {
+                                loader.textContent = 'Failed to render. Use the PUML Source tab to copy and render locally.';
+                                loader.style.color = '#dc3545';
+                            }
+                        };
+                    } catch (e) {
+                        console.error('Error encoding architecture diagram:', diag.id, e);
+                    }
+                });
+            });
+        }
+
+        document.addEventListener('DOMContentLoaded', renderArchDiagrams);
+
+        // Tab switching for architecture diagram cards
+        document.addEventListener('DOMContentLoaded', function() {
+            document.querySelectorAll('.arch-tab-btn').forEach(function(btn) {
+                btn.addEventListener('click', function() {
+                    const diagId = this.dataset.archDiagram;
+                    const tabId  = this.dataset.archTab;
+                    const card   = this.closest('.arch-diagram-card');
+                    // Deactivate all tabs in this card
+                    card.querySelectorAll('.arch-tab-btn').forEach(b => b.classList.remove('active'));
+                    card.querySelectorAll('.arch-tab-content').forEach(function(c) {
+                        c.style.display = 'none';
+                        c.classList.remove('active');
+                    });
+                    // Activate clicked tab
+                    this.classList.add('active');
+                    const target = document.getElementById(tabId);
+                    if (target) { target.style.display = ''; target.classList.add('active'); }
+                });
+            });
+        });
+
+        function copyArchSource(diagId) {
+            const diag = customDiagrams.find(function(d) { return d.id === diagId; });
+            if (!diag || !diag.content) return;
+            navigator.clipboard.writeText(diag.content).then(function() {
+                alert('PlantUML source copied to clipboard!');
+            }).catch(function() {
+                const el = document.getElementById('arch-source-code-' + diagId);
+                if (el) {
+                    const range = document.createRange();
+                    range.selectNode(el);
+                    window.getSelection().removeAllRanges();
+                    window.getSelection().addRange(range);
+                }
+            });
+        }
+        // =====================================================
+
         // Sidebar navigation toggle
         function toggleSection(header) {
             const section = header.closest('.nav-section');

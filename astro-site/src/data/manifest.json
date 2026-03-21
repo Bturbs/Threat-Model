@@ -1,0 +1,50 @@
+[
+  {
+    "title": "BYOD Access Architecture",
+    "modelId": "TM-BYOD-ARCH",
+    "version": "1.0",
+    "lastUpdated": "2026-01-24",
+    "scope": "Enterprise BYOD Security Architecture",
+    "owner": "Security Architecture Team",
+    "reportPath": "byod-architecture/reports/threat-model.html",
+    "threatCount": 25,
+    "assetCount": 7,
+    "mitigatedCount": 0,
+    "criticalCount": 0,
+    "highCount": 13,
+    "mediumCount": 12,
+    "lowCount": 0
+  },
+  {
+    "title": "Enhanced Testing Examples",
+    "modelId": "enhanced-testing-demo",
+    "version": "1.0",
+    "lastUpdated": "2026-01-24",
+    "scope": "Demonstration of enhanced security testing features for various threat types",
+    "owner": "Security Team",
+    "reportPath": "enhanced-testing-demo/reports/threat-model.html",
+    "threatCount": 3,
+    "assetCount": 3,
+    "mitigatedCount": 0,
+    "criticalCount": 1,
+    "highCount": 2,
+    "mediumCount": 0,
+    "lowCount": 0
+  },
+  {
+    "title": "Serverless File Upload & Processing Platform",
+    "modelId": "TM-SERVERLESS-UPLOAD",
+    "version": "1.0",
+    "lastUpdated": "2026-01-24",
+    "scope": "Cloud Serverless Architecture",
+    "owner": "Development Team",
+    "reportPath": "serverless-upload/reports/threat-model.html",
+    "threatCount": 8,
+    "assetCount": 6,
+    "mitigatedCount": 0,
+    "criticalCount": 2,
+    "highCount": 2,
+    "mediumCount": 4,
+    "lowCount": 0
+  }
+]

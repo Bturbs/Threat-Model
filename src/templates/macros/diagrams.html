@@ -3,7 +3,7 @@
    Reusable Jinja2 macros for creating interactive, zoomable diagrams.
    
    Usage:
-     {% from 'macros/diagrams.html' import interactive_diagram, diagram_styles, diagram_scripts %}
+     {% from 'macros/diagrams.html' import interactive_diagram, arch_diagram_cards, diagram_styles, diagram_scripts %}
      
      {{ diagram_styles() }}
      
@@ -13,21 +13,81 @@
          content_type='mermaid',
          content=attack_tree_mermaid
      ) }}
+
+     {{ arch_diagram_cards(diagrams_before_attack_tree) }}
      
      {{ diagram_scripts() }}
    ============================================================================ #}
 
 {# ----------------------------------------------------------------------------
-   MACRO: interactive_diagram
-   Renders a diagram inside an interactive container with zoom/pan controls.
-   
+   MACRO: arch_diagram_cards
+   Renders a list of architecture diagram cards sourced from the assets/ folder.
+   Placement grouping (before_attack_tree / after_attack_tree / after_dfd) is
+   resolved in report_generator.py — the macro just renders whatever list it
+   receives, keeping placement logic out of the template entirely.
+
    Parameters:
-     - diagram_type: str - Unique identifier for the diagram type (e.g., 'attack-tree', 'dfd')
-     - diagram_title: str - Human-readable title for the diagram
-     - content_type: str - 'mermaid', 'plantuml-img', or 'svg'
-     - content: str - The diagram content (mermaid code, image URL, or SVG)
-     - diagram_id: str (optional) - Unique ID for the diagram element
-     - show_legend: bool (optional) - Whether to show a legend
+     - diagrams: list of diagram dicts (from report_generator context)
+     - section_title: optional heading for the group (default 'Architecture Diagrams')
+   ---------------------------------------------------------------------------- #}
+{% macro arch_diagram_cards(diagrams, section_title='Architecture Diagrams', slot_id=none) %}
+{% if diagrams %}
+<div class="arch-diagrams-slot"{% if slot_id %} id="{{ slot_id }}"{% endif %}>
+    <h3 class="arch-diagrams-slot-title">{{ section_title }}</h3>
+    <p class="arch-diagrams-slot-desc">
+        Hand-crafted diagrams sourced from the <code>assets/</code> folder.
+        Each file is referenced by path in <code>threat-model.yaml</code> so
+        the origin of every diagram is always traceable.
+    </p>
+    {% for diag in diagrams %}
+    <div class="arch-diagram-card" id="arch-diagram-{{ diag.id }}">
+        <div class="arch-diagram-header">
+            <div class="arch-diagram-title-row">
+                <h4>{{ diag.title }}</h4>
+                {% if diag.type %}<span class="arch-type-badge">{{ diag.type }}</span>{% endif %}
+                <span class="arch-source-path">📄 {{ diag.file }}</span>
+            </div>
+            {% if diag.description %}<p class="arch-diagram-desc">{{ diag.description }}</p>{% endif %}
+        </div>
+        {% if diag.content %}
+        <div class="arch-diagram-tabs">
+            <button class="arch-tab-btn active"
+                    data-arch-diagram="{{ diag.id }}"
+                    data-arch-tab="view-{{ diag.id }}">Diagram</button>
+            <button class="arch-tab-btn"
+                    data-arch-diagram="{{ diag.id }}"
+                    data-arch-tab="source-{{ diag.id }}">PUML Source</button>
+        </div>
+        <div class="arch-tab-content active" id="view-{{ diag.id }}">
+            <div class="arch-diagram-viewport">
+                <img id="custom-diagram-img-{{ diag.id }}"
+                     alt="{{ diag.title }} — rendering..."
+                     class="arch-diagram-img">
+                <div class="arch-diagram-loading" id="arch-loading-{{ diag.id }}">
+                    Rendering via PlantUML&hellip;
+                </div>
+            </div>
+        </div>
+        <div class="arch-tab-content" id="source-{{ diag.id }}" style="display:none;">
+            <div class="arch-source-toolbar">
+                <span class="arch-source-label">Source: <code>{{ diag.file }}</code></span>
+                <button class="copy-btn" onclick="copyArchSource('{{ diag.id }}')">Copy PlantUML</button>
+            </div>
+            <pre class="puml-source"><code id="arch-source-code-{{ diag.id }}">{{ diag.content }}</code></pre>
+        </div>
+        {% else %}
+        <div class="arch-diagram-missing">
+            ⚠ Could not load file: <code>{{ diag.file }}</code>
+            — ensure it exists relative to the threat model folder.
+        </div>
+        {% endif %}
+    </div>
+    {% endfor %}
+</div>
+{% endif %}
+{% endmacro %}
+
+
      - legend_items: list (optional) - List of legend items
    ---------------------------------------------------------------------------- #}
 {% macro interactive_diagram(diagram_type, diagram_title, content_type, content, diagram_id=none, show_legend=false, legend_items=none) %}

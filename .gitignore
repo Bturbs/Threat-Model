@@ -40,3 +40,9 @@ Thumbs.db
 # threat-models/*/reports/*.html
 # threat-models/*/reports/*.svg
 # threat-models/*/reports/*.png
+
+# Astro portal (local dev only - not used in CI)
+astro-site/node_modules/
+astro-site/dist/
+astro-site/.astro/
+astro-site/public/

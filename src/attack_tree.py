@@ -91,97 +91,101 @@ class AttackTreeGenerator:
         return self.model.assets[0].ID if self.model.assets else None
     
     def to_mermaid(self) -> str:
-        """Generate Mermaid.js graph syntax for attack tree."""
-        # LR = Left-to-Right (horizontal orientation like reference image)
+        """Generate global attack tree matching the reference design.
+
+        Layout: graph LR (left-to-right).
+        Structure: Model Title → Asset (blue) → Threat (CVSS-coloured) → Countermeasure (grey dashed).
+        Threat label format: "Title | score Severity"
+        Countermeasures use dashed edges and stadium shape, prefixed TODO/DONE.
+        """
         lines = ['graph LR']
-        defined_nodes = set()
-        defined_edges = set()
-        
+
+        # ── Build asset → threats mapping ────────────────────────────────────
         asset_threats: dict[str, list[Threat]] = {}
         for threat in self.model.threats:
             asset_id = self._find_asset_for_threat(threat)
             if asset_id:
-                if asset_id not in asset_threats:
-                    asset_threats[asset_id] = []
-                asset_threats[asset_id].append(threat)
-        
-        safe_title = self.model.meta.title.replace('"', "'").replace('(', '').replace(')', '')
-        lines.append('')
-        lines.append('    %% Threat Model Root')
-        lines.append(f'    ROOT(["{safe_title}"])')
-        defined_nodes.add('ROOT')
-        
-        lines.append('')
-        lines.append('    %% Assets')
-        for asset_id in asset_threats.keys():
+                asset_threats.setdefault(asset_id, []).append(threat)
+
+        # ── Model title root ──────────────────────────────────────────────────
+        safe_title = (
+            self.model.meta.title
+            .replace('"', "'").replace('(', '').replace(')', '')
+        )
+        lines += [
+            '',
+            '    %% Model Root',
+            f'    ROOT["{safe_title}"]',
+        ]
+
+        # ── Assets ────────────────────────────────────────────────────────────
+        lines += ['', '    %% Assets']
+        for asset_id in asset_threats:
             asset = self._asset_map.get(asset_id)
-            if asset:
-                safe_name = asset.name.replace('"', "'").replace('(', '').replace(')', '')
-                node_id = f'A_{self._safe_id(asset_id)}'
-                lines.append(f'    {node_id}["{safe_name}"]')
-                lines.append(f'    ROOT --> {node_id}')
-                defined_nodes.add(node_id)
-        
-        lines.append('')
-        lines.append('    %% Threats')
+            if not asset:
+                continue
+            safe_name = asset.name.replace('"', "'").replace('(', '').replace(')', '')
+            a_nid = f'A_{self._safe_id(asset_id)}'
+            lines.append(f'    {a_nid}["{safe_name}"]')
+            lines.append(f'    ROOT --> {a_nid}')
+            lines.append(f'    style {a_nid} fill:#3498db,stroke:#2980b9,color:#fff')
+
+        # ── Threats ───────────────────────────────────────────────────────────
+        lines += ['', '    %% Threats']
+        seen: set[str] = set()
         for asset_id, threats in asset_threats.items():
-            asset_node_id = f'A_{self._safe_id(asset_id)}'
+            a_nid = f'A_{self._safe_id(asset_id)}'
             for threat in threats:
-                threat_id = f'T_{self._safe_id(threat.ID)}'
-                if threat_id not in defined_nodes:
-                    cvss_score = self._get_cvss_score(threat)
-                    safe_threat_title = threat.title.replace('"', "'").replace('(', '').replace(')', '').replace('[', '').replace(']', '')
-                    # Truncate title for readability
-                    wrapped_title = self._wrap_text(safe_threat_title, 50)
-                    # Color-code CVSS severity in label
-                    severity = 'High' if cvss_score >= 7.0 else 'Medium' if cvss_score >= 4.0 else 'Low'
-                    node_label = f"{wrapped_title} | {cvss_score:.1f} {severity}"
-                    lines.append(f'    {threat_id}["{node_label}"]')
-                    defined_nodes.add(threat_id)
-                edge_key = f'{asset_node_id}->{threat_id}'
-                if edge_key not in defined_edges:
-                    lines.append(f'    {asset_node_id} --> {threat_id}')
-                    defined_edges.add(edge_key)
-        
-        lines.append('')
-        lines.append('    %% Mitigations')
-        mitigation_styles = []
+                t_nid = f'T_{self._safe_id(threat.ID)}'
+                cvss = self._get_cvss_score(threat)
+                severity = (
+                    'Critical' if cvss >= 9.0 else
+                    'High'     if cvss >= 7.0 else
+                    'Medium'   if cvss >= 4.0 else
+                    'Low'
+                )
+                if t_nid not in seen:
+                    safe_title = (
+                        threat.title
+                        .replace('"', "'")
+                        .replace('(', '').replace(')', '')
+                        .replace('[', '').replace(']', '')
+                    )
+                    label = f"{self._wrap_text(safe_title, 45)} | {cvss:.1f} {severity}"
+                    lines.append(f'    {t_nid}["{label}"]')
+                    if cvss >= 9.0:
+                        lines.append(f'    style {t_nid} fill:#8B0000,stroke:#5c0000,color:#fff')
+                    elif cvss >= 7.0:
+                        lines.append(f'    style {t_nid} fill:#e74c3c,stroke:#c0392b,color:#fff')
+                    elif cvss >= 4.0:
+                        lines.append(f'    style {t_nid} fill:#f39c12,stroke:#d68910,color:#fff')
+                    else:
+                        lines.append(f'    style {t_nid} fill:#f1c40f,stroke:#d4ac0d,color:#2c3e50')
+                    seen.add(t_nid)
+                lines.append(f'    {a_nid} --> {t_nid}')
+
+        # ── Countermeasures (dashed) ───────────────────────────────────────────
+        lines += ['', '    %% Countermeasures']
         for threat in self.model.threats:
-            threat_id = f'T_{self._safe_id(threat.ID)}'
+            t_nid = f'T_{self._safe_id(threat.ID)}'
+            if t_nid not in seen:
+                continue
             for cm in threat.countermeasures:
-                node_id = f'M_{self._safe_id(threat.ID)}_{self._safe_id(cm.ID)}'
-                safe_title = cm.title.replace('"', "'").replace('(', '').replace(')', '').replace('[', '').replace(']', '')
-                # Truncate for readability
-                wrapped_cm = self._wrap_text(safe_title, 40)
-                status_icon = 'DONE' if cm.status == 'in_place' else 'TODO'
-                lines.append(f'    {node_id}(["{status_icon}: {wrapped_cm}"])')
-                lines.append(f'    {threat_id} -.-> {node_id}')
-                mitigation_styles.append({'node_id': node_id, 'status': cm.status})
-        
-        lines.append('')
-        lines.append('    %% Styles')
-        lines.append('    style ROOT fill:#2c3e50,stroke:#1a252f,color:#fff,stroke-width:3px')
-        for asset_id in asset_threats.keys():
-            lines.append(f'    style A_{self._safe_id(asset_id)} fill:#3498db,stroke:#2980b9,color:#fff')
-        # Color threats based on CVSS severity (like reference image)
-        for threat in self.model.threats:
-            cvss_score = self._get_cvss_score(threat)
-            if cvss_score >= 7.0:
-                # High - Red/Orange
-                lines.append(f'    style T_{self._safe_id(threat.ID)} fill:#e74c3c,stroke:#c0392b,color:#fff,stroke-width:2px')
-            elif cvss_score >= 4.0:
-                # Medium - Orange/Yellow
-                lines.append(f'    style T_{self._safe_id(threat.ID)} fill:#f39c12,stroke:#d68910,color:#fff,stroke-width:2px')
-            else:
-                # Low - Yellow/Green
-                lines.append(f'    style T_{self._safe_id(threat.ID)} fill:#f1c40f,stroke:#d4ac0d,color:#2c3e50,stroke-width:2px')
-        for cm_style in mitigation_styles:
-            node_id = cm_style['node_id']
-            if cm_style['status'] == 'in_place':
-                lines.append(f'    style {node_id} fill:#27ae60,stroke:#1e8449,color:#fff')
-            else:
-                lines.append(f'    style {node_id} fill:#f8f9fa,stroke:#7f8c8d,color:#2c3e50')
-        
+                cm_nid = f'CM_{self._safe_id(threat.ID)}_{self._safe_id(cm.ID)}'
+                prefix = 'DONE' if cm.status == 'in_place' else 'TODO'
+                safe_cm = (
+                    cm.title
+                    .replace('"', "'")
+                    .replace('(', '').replace(')', '')
+                    .replace('[', '').replace(']', '')
+                )
+                lines.append(f'    {cm_nid}(["{prefix}: {self._wrap_text(safe_cm, 38)}"])')
+                lines.append(f'    {t_nid} -.-> {cm_nid}')
+                if cm.status == 'in_place':
+                    lines.append(f'    style {cm_nid} fill:#d5f5e3,stroke:#27ae60,color:#1e8449')
+                else:
+                    lines.append(f'    style {cm_nid} fill:#f2f3f4,stroke:#aab7b8,color:#555')
+
         return '\n'.join(lines)
     
     def _create_threat_subtree(self, threat: Threat) -> AttackNode:
@@ -342,59 +346,74 @@ def generate_per_asset_attack_trees(threat_model: ThreatModel) -> dict[str, dict
 
 
 def _generate_asset_attack_tree_mermaid(asset, threats: list, generator: AttackTreeGenerator) -> str:
-    """Generate a Mermaid attack tree diagram for a single asset."""
+    """Generate a per-asset attack tree matching the global tree style.
+
+    Layout: graph LR.
+    Structure: Asset (blue) → Threat (CVSS-coloured, "Title | score Severity")
+               Threat -.-> Countermeasure (grey dashed stadium, "TODO/DONE: title").
+    """
     if not threats:
         return ''
-    
+
     lines = ['graph LR']
-    
-    # Asset as root - use double parentheses for stadium shape
+
+    # ── Asset root ────────────────────────────────────────────────────────────
     safe_name = asset.name.replace('"', "'").replace('(', '').replace(')', '')
-    asset_node_id = f'ASSET_{asset.ID}'
-    lines.append('')
-    lines.append('    %% Asset Root')
-    lines.append(f'    {asset_node_id}(["{safe_name}"])')
-    lines.append(f'    style {asset_node_id} fill:#3498db,stroke:#2980b9,color:#fff,stroke-width:3px')
-    
-    # Threats
-    lines.append('')
-    lines.append('    %% Threats')
+    asset_nid = f'ASSET_{asset.ID}'
+    lines += [
+        '',
+        '    %% Asset Root',
+        f'    {asset_nid}["{safe_name}"]',
+        f'    style {asset_nid} fill:#3498db,stroke:#2980b9,color:#fff',
+    ]
+
+    # ── Threats ───────────────────────────────────────────────────────────────
+    lines += ['', '    %% Threats']
     for threat in threats:
-        threat_id = f'T_{threat.ID}'
-        cvss_score = generator._get_cvss_score(threat)
-        safe_title = threat.title.replace('"', "'").replace('(', '').replace(')', '')
-        wrapped_title = generator._wrap_text(safe_title, 40)
-        severity = 'Critical' if cvss_score >= 9.0 else 'High' if cvss_score >= 7.0 else 'Medium' if cvss_score >= 4.0 else 'Low'
-        node_label = f"{wrapped_title}<br/>CVSS: {cvss_score:.1f} - {severity}"
-        lines.append(f'    {threat_id}["{node_label}"]')
-        lines.append(f'    {asset_node_id} --> {threat_id}')
-        
-        # Style based on CVSS
-        if cvss_score >= 9.0:
-            lines.append(f'    style {threat_id} fill:#8B0000,stroke:#5c0000,color:#fff,stroke-width:2px')
-        elif cvss_score >= 7.0:
-            lines.append(f'    style {threat_id} fill:#e74c3c,stroke:#c0392b,color:#fff,stroke-width:2px')
-        elif cvss_score >= 4.0:
-            lines.append(f'    style {threat_id} fill:#f39c12,stroke:#d68910,color:#fff,stroke-width:2px')
+        t_nid = f'T_{threat.ID}'
+        cvss = generator._get_cvss_score(threat)
+        severity = (
+            'Critical' if cvss >= 9.0 else
+            'High'     if cvss >= 7.0 else
+            'Medium'   if cvss >= 4.0 else
+            'Low'
+        )
+        safe_title = (
+            threat.title
+            .replace('"', "'")
+            .replace('(', '').replace(')', '')
+            .replace('[', '').replace(']', '')
+        )
+        label = f"{generator._wrap_text(safe_title, 45)} | {cvss:.1f} {severity}"
+        lines.append(f'    {t_nid}["{label}"]')
+        lines.append(f'    {asset_nid} --> {t_nid}')
+        if cvss >= 9.0:
+            lines.append(f'    style {t_nid} fill:#8B0000,stroke:#5c0000,color:#fff')
+        elif cvss >= 7.0:
+            lines.append(f'    style {t_nid} fill:#e74c3c,stroke:#c0392b,color:#fff')
+        elif cvss >= 4.0:
+            lines.append(f'    style {t_nid} fill:#f39c12,stroke:#d68910,color:#fff')
         else:
-            lines.append(f'    style {threat_id} fill:#f1c40f,stroke:#d4ac0d,color:#2c3e50,stroke-width:2px')
-    
-    # Countermeasures
-    lines.append('')
-    lines.append('    %% Countermeasures')
+            lines.append(f'    style {t_nid} fill:#f1c40f,stroke:#d4ac0d,color:#2c3e50')
+
+    # ── Countermeasures (dashed) ──────────────────────────────────────────────────
+    lines += ['', '    %% Countermeasures']
     for threat in threats:
-        threat_id = f'T_{threat.ID}'
+        t_nid = f'T_{threat.ID}'
         for cm in threat.countermeasures:
-            cm_node_id = f'CM_{threat.ID}_{cm.ID}'
-            safe_cm_title = cm.title.replace('"', "'").replace('(', '').replace(')', '')
-            wrapped_cm = generator._wrap_text(safe_cm_title, 35)
-            status_icon = '✓' if cm.status == 'in_place' else '○'
-            lines.append(f'    {cm_node_id}(["{status_icon} {wrapped_cm}"])')
-            lines.append(f'    {threat_id} -.-> {cm_node_id}')
-            
+            cm_nid = f'CM_{threat.ID}_{cm.ID}'
+            prefix = 'DONE' if cm.status == 'in_place' else 'TODO'
+            safe_cm = (
+                cm.title
+                .replace('"', "'")
+                .replace('(', '').replace(')', '')
+                .replace('[', '').replace(']', '')
+            )
+            lines.append(f'    {cm_nid}(["{prefix}: {generator._wrap_text(safe_cm, 38)}"])')
+            lines.append(f'    {t_nid} -.-> {cm_nid}')
             if cm.status == 'in_place':
-                lines.append(f'    style {cm_node_id} fill:#27ae60,stroke:#1e8449,color:#fff')
+                lines.append(f'    style {cm_nid} fill:#d5f5e3,stroke:#27ae60,color:#1e8449')
             else:
-                lines.append(f'    style {cm_node_id} fill:#f8f9fa,stroke:#7f8c8d,color:#2c3e50')
-    
+                lines.append(f'    style {cm_nid} fill:#f2f3f4,stroke:#aab7b8,color:#555')
+
     return '\n'.join(lines)

@@ -1,0 +1,91 @@
+@startuml Meetsendai_Georouting_Workflow
+title Meetsendai - Data Capture Workflow (Risk Highlighted)
+skinparam style strictuml
+skinparam wrapWidth 200
+
+legend top right
+  **Risk Levels (Transactions & Actor Swimlanes)**
+  |<#White> White Box | Internal / Trusted Execution (Low Risk) |
+  |<#E6F2FF> <color:black>Light Blue Lane</color> | Internal Trusted System Boundary |
+  |<#Orange> Orange Box | PII Processing (Medium Risk) |
+  |<#FFE6CC> <color:black>Light Orange Lane</color>| Edge Gateway Transit (Medium Risk) |
+  |<#Red> <color:white>Red Box</color> | External Data Ingress-Egress (High Risk) |
+  |<#FFCCCC> <color:black>Light Red Lane</color>| Untrusted External Actors (High Risk) |
+endlegend
+
+|#FFCCCC|Sales Rep|
+start
+:Access Meetsendai Platform;
+
+|#FFE6CC|Cloudflare (Geo-Barrier)|
+:Detect Initial Request Geolocation;
+
+|#E6F2FF|Azure Application (Docker)|
+:Serve Web Application & Capture Geo-Headers;
+
+|#FFCCCC|Sales Rep|
+:Login via Auth0 / Entra ID SSO; <<#Orange>>
+
+|#E6F2FF|Azure Application (Docker)|
+:Cache Geolocation in Secure Session Token (JWT);
+
+|#FFCCCC|Sales Rep|
+:Select Event in App;
+:Capture Business Card (Photo) \n& Record Voice Note; <<#Red>>
+
+|#E6F2FF|Azure Application (Docker)|
+:Receive Request & Extract Cached Geolocation;
+
+if (Strict Local Data Residency Required?) then (No - Default to EU)
+
+    |#LightBlue|Azure EU Backend (Primary Privacy-Hub)|
+    :Process OCR & Transcribe Voice (Whisper) in EU; <<#Orange>>
+    note right
+        This includes the US, UK, Canada, and EU.
+        US laws (CCPA) do not mandate data localization.
+        Processing US data in the EU is legal 
+        and adheres to the highest privacy standard (GDPR).
+    end note
+    :Store extracted PII in EU Tenant SQL DB \n(Encrypted via Keyfactor PKI); <<#Orange>>
+    :AI cross-references transcript 
+    with Product Docs;
+    :Generate localized follow-up draft;
+
+else (Yes - e.g., Strict Enterprise or China/India)
+
+    |#LightGreen|Azure Localized Backend (Regional Spoke)|
+    :Process OCR & Transcribe Voice (Whisper) locally; <<#Orange>>
+    note right
+        Specific sovereign requirements 
+        (e.g., US Gov ITAR, specific enterprise contracts, 
+        or strict localization laws in other countries).
+    end note
+    :Store extracted PII in Local Tenant SQL DB \n(Encrypted via Keyfactor PKI); <<#Orange>>
+    :AI cross-references transcript 
+    with Product Docs;
+    :Generate localized follow-up draft;
+
+endif
+
+|#FFCCCC|Sales Rep|
+:Human-in-the-loop: \nReview & Approve Draft Message;
+:Dispatch Message (Email / WhatsApp); <<#Red>>
+
+|#E6F2FF|Global Admin Dashboard|
+:Aggregate Meta-Metrics;
+note right
+  Provides a "single pane of glass"
+  visibility across multiple regions,
+  while underlying data remains
+  strictly isolated in its home region 
+  to adhere to data compliance.
+end note
+
+|#E6F2FF|Global Admin Dashboard|
+if (Data Subject Request?) then (Query/Delete)
+    :Trigger Compliance Deletion/Query; <<#Orange>>
+    :Target specific region's DB\nto execute request; <<#Orange>>
+endif
+
+stop
+@enduml

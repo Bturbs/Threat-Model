@@ -1,8 +1,9 @@
 """HTML report generator for threat models."""
 
+from collections import defaultdict
 from datetime import datetime
 from pathlib import Path
-from typing import Optional
+from typing import Any, Optional
 from jinja2 import Environment, FileSystemLoader, select_autoescape
 from markupsafe import Markup
 
@@ -115,6 +116,7 @@ class ReportGenerator:
                 'threat_count': len(threats),
                 'mitigated_count': mitigated_count,
                 'max_cvss': max_cvss,
+                'mermaid': data.get('mermaid', ''),
             })
         
         # Build threat-to-assets mapping for display in threat cards
@@ -136,6 +138,62 @@ class ReportGenerator:
                             'type': asset.type
                         })
         
+        # Serialise custom (hand-crafted) diagram references for the template.
+        # Each dict carries id, title, type, description, file path, placement,
+        # and the raw PlantUML source loaded from the assets/ folder at parse time.
+        custom_diagrams = [
+            {
+                'id': d.id,
+                'title': d.title,
+                'type': d.type or '',
+                'description': d.description or '',
+                'file': d.file,
+                'placement': d.placement,
+                'content': d.content or '',
+            }
+            for d in model.diagrams
+        ]
+
+        # Group by placement slot so the template just uses pre-bucketed lists —
+        # placement logic lives here in Python, not scattered through Jinja2.
+        def _slot(placement: str) -> list:
+            return [d for d in custom_diagrams if d['placement'] == placement]
+
+        # ── Composed-model summary ─────────────────────────────────────────────
+        # Detect whether this is a composed model (has aspect-tagged entities).
+        is_composed = bool(model.compose) or any(
+            t.source_aspect for t in model.threats
+        )
+        aspects_summary: list[dict] = []
+        if is_composed:
+            aspect_data: defaultdict[str, Any] = defaultdict(lambda: {
+                'threats': 0, 'assets': 0,
+                'critical': 0, 'high': 0, 'medium': 0, 'low': 0,
+                'description': '',
+            })
+            for threat in model.threats:
+                sa = threat.source_aspect or 'Root Model'
+                aspect_data[sa]['threats'] += 1
+                score = threat.CVSS.score if threat.CVSS and threat.CVSS.score else 0.0
+                if score >= 9.0:
+                    aspect_data[sa]['critical'] += 1
+                elif score >= 7.0:
+                    aspect_data[sa]['high'] += 1
+                elif score >= 4.0:
+                    aspect_data[sa]['medium'] += 1
+                elif score > 0:
+                    aspect_data[sa]['low'] += 1
+            for asset in model.assets:
+                sa = asset.source_aspect or 'Root Model'
+                aspect_data[sa]['assets'] += 1
+            for entry in model.compose:
+                if entry.aspect in aspect_data and entry.description:
+                    aspect_data[entry.aspect]['description'] = entry.description
+            aspects_summary = [
+                {'name': aspect_name, **data}
+                for aspect_name, data in aspect_data.items()
+            ]
+
         context = {
             'model': model,
             'all_models': all_models or [],
@@ -157,6 +215,15 @@ class ReportGenerator:
             'threats_with_scores': threats_with_scores,
             'asset_sections': asset_sections,
             'threat_assets_map': threat_assets_map,
+            # Full list used by the JS renderer (encodes all diagrams for PlantUML)
+            'custom_diagrams': custom_diagrams,
+            # Per-slot lists used by template insertion points
+            'diagrams_before_attack_tree': _slot('before_attack_tree'),
+            'diagrams_after_attack_tree':  _slot('after_attack_tree'),
+            'diagrams_after_dfd':          _slot('after_dfd'),
+            # Composed-model context
+            'is_composed': is_composed,
+            'aspects_summary': aspects_summary,
         }
         
         template = self.env.get_template('report.html')

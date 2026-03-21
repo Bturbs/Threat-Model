@@ -1,6 +1,7 @@
 """Threat Model Tool - Command Line Interface."""
 
 import sys
+import json
 from pathlib import Path
 from datetime import datetime
 import click
@@ -203,8 +204,9 @@ def attack_tree(model_path: str, output: str, output_format: str):
 @cli.command()
 @click.argument('models_root', type=click.Path(exists=True, file_okay=False, dir_okay=True))
 @click.option('--output-dir', '-o', type=click.Path(), help='Output directory for all reports')
+@click.option('--manifest', type=click.Path(), help='Write a JSON manifest for the Astro portal (e.g. astro-site/src/data/manifest.json)')
 @click.option('--verbose', '-v', is_flag=True, help='Enable verbose logging')
-def batch(models_root: str, output_dir: str, verbose: bool):
+def batch(models_root: str, output_dir: str, manifest: str, verbose: bool):
     """Generate reports for all threat models in a directory (recursive)."""
     models_root_path = Path(models_root).resolve()
     model_infos = discover_threat_models(models_root)
@@ -296,6 +298,44 @@ def batch(models_root: str, output_dir: str, verbose: bool):
         click.echo(f'    Path: {report["output_path"]}')
         click.echo(f'    Stats: {report["threats"]} threats, {report["assets"]} assets')
     
+    # Write Astro portal manifest if requested
+    if manifest:
+        manifest_data = []
+        for model_info in all_models:
+            model = model_info['model']
+            severity_counts: dict[str, int] = {'Critical': 0, 'High': 0, 'Medium': 0, 'Low': 0}
+            mitigated = 0
+            for threat in model.threats:
+                if threat.fullyMitigated:
+                    mitigated += 1
+                if threat.CVSS and threat.CVSS.severity:
+                    sev = threat.CVSS.severity
+                    if sev in severity_counts:
+                        severity_counts[sev] += 1
+            report_rel = str(model_info['rel_path'] / 'reports' / 'threat-model.html').replace('\\', '/')
+            manifest_data.append({
+                'title': model.meta.title,
+                'modelId': model.meta.modelId,
+                'version': model.meta.version,
+                'lastUpdated': model.meta.lastUpdated or '',
+                'scope': model.meta.scope or '',
+                'owner': model.meta.owner or '',
+                'reportPath': report_rel,
+                'threatCount': len(model.threats),
+                'assetCount': len(model.assets),
+                'mitigatedCount': mitigated,
+                'criticalCount': severity_counts['Critical'],
+                'highCount': severity_counts['High'],
+                'mediumCount': severity_counts['Medium'],
+                'lowCount': severity_counts['Low'],
+            })
+        manifest_data.sort(key=lambda x: x['title'])
+        manifest_path = Path(manifest)
+        manifest_path.parent.mkdir(parents=True, exist_ok=True)
+        with open(manifest_path, 'w', encoding='utf-8') as f:
+            json.dump(manifest_data, f, indent=2)
+        click.echo(click.style(f'\nManifest written: {manifest_path}', fg='green'))
+
     click.echo(click.style(f'\n{"="*60}', fg='cyan'))
     click.echo(click.style(f'Done! {len(all_models)} individual report(s) generated.', fg='green', bold=True))
 

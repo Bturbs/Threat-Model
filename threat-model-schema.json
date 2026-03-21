@@ -1,0 +1,246 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "ThreatModel",
+  "description": "Schema for Threat Model Tool with enhanced security testing capabilities",
+  "type": "object",
+  "required": [
+    "meta",
+    "threats"
+  ],
+  "properties": {
+    "meta": {
+      "$ref": "#/definitions/ThreatModelMeta"
+    },
+    "assets": {
+      "type": "array",
+      "items": {
+        "$ref": "#/definitions/Asset"
+      },
+      "default": []
+    },
+    "attackers": {
+      "type": "array",
+      "items": {
+        "$ref": "#/definitions/Attacker"
+      },
+      "default": []
+    },
+    "securityObjectives": {
+      "type": "array",
+      "items": {
+        "$ref": "#/definitions/SecurityObjective"
+      },
+      "default": []
+    },
+    "threats": {
+      "type": "array",
+      "items": {
+        "$ref": "#/definitions/Threat"
+      },
+      "default": []
+    }
+  },
+  "definitions": {
+    "ThreatModelMeta": {
+      "type": "object",
+      "required": [
+        "title",
+        "modelId",
+        "version",
+        "scope"
+      ],
+      "properties": {
+        "title": { "type": "string" },
+        "modelId": { "type": "string" },
+        "version": { "type": "string" },
+        "scope": { "type": "string" },
+        "owner": { "type": "string" },
+        "lastUpdated": { "type": "string" }
+      }
+    },
+    "Asset": {
+      "type": "object",
+      "required": [
+        "ID",
+        "name",
+        "type",
+        "dataFlows"
+      ],
+      "properties": {
+        "ID": { "type": "string" },
+        "name": { "type": "string" },
+        "type": { "type": "string" },
+        "description": { "type": "string" },
+        "trustZone": { "type": "string" },
+        "dataFlows": {
+          "type": "array",
+          "items": { "$ref": "#/definitions/DataFlow" }
+        }
+      }
+    },
+    "DataFlow": {
+      "type": "object",
+      "required": [
+        "ID",
+        "name",
+        "source",
+        "destination"
+      ],
+      "properties": {
+        "ID": { "type": "string" },
+        "name": { "type": "string" },
+        "source": { "type": "string" },
+        "destination": { "type": "string" },
+        "protocol": { "type": "string" },
+        "dataClassification": { "type": "string" },
+        "crossesTrustBoundary": { "type": "boolean", "default": false },
+        "trustBoundary": { "type": "string" }
+      }
+    },
+    "Attacker": {
+      "type": "object",
+      "required": [
+        "REFID",
+        "name"
+      ],
+      "properties": {
+        "REFID": { "type": "string" },
+        "name": { "type": "string" },
+        "description": { "type": "string" },
+        "motivation": { "type": "string" },
+        "capability": { "type": "string" }
+      }
+    },
+    "SecurityObjective": {
+      "type": "object",
+      "required": [
+        "ID",
+        "name",
+        "description"
+      ],
+      "properties": {
+        "ID": { "type": "string" },
+        "name": { "type": "string" },
+        "description": { "type": "string" },
+        "category": { "type": "string" }
+      }
+    },
+    "Threat": {
+      "type": "object",
+      "required": [
+        "ID",
+        "title",
+        "attack",
+        "threatType",
+        "impactDesc"
+      ],
+      "properties": {
+        "ID": { "type": "string" },
+        "title": { "type": "string" },
+        "attack": { "type": "string" },
+        "threatType": { "type": "string" },
+        "impactDesc": { "type": "string" },
+        "impactedSecObj": { "type": "array", "items": { "type": "string" } },
+        "attackers": { "type": "array", "items": { "type": "string" } },
+        "CVSS": { "$ref": "#/definitions/CVSSVector" },
+        "fullyMitigated": { "type": "boolean", "default": false },
+        "alwaysPresent": { "type": "boolean", "default": false },
+        "countermeasures": {
+          "type": "array",
+          "items": { "$ref": "#/definitions/Countermeasure" },
+          "default": []
+        },
+        "testPrerequisites": {
+          "type": "array",
+          "items": { "type": "string" },
+          "description": "Prerequisites for testing (e.g., access, credentials)."
+        },
+        "testSteps": {
+          "type": "array",
+          "items": { "type": "string" },
+          "description": "Step-by-step instructions to replicate the threat."
+        },
+        "testScripts": {
+          "type": "array",
+          "items": { "$ref": "#/definitions/TestScript" },
+          "description": "Automated scripts to demonstrate the threat."
+        },
+        "testTools": {
+          "type": "array",
+          "items": { "type": "string" },
+          "description": "Recommended tools for testing."
+        },
+        "expectedBehavior": {
+          "type": "string",
+          "description": "Expected vulnerable behavior."
+        },
+        "expectedMitigation": {
+          "type": "string",
+          "description": "Expected behavior when mitigated."
+        }
+      }
+    },
+    "CVSSVector": {
+      "type": "object",
+      "required": [
+        "vector"
+      ],
+      "properties": {
+        "vector": {
+          "type": "string",
+          "pattern": "^CVSS:3\\.1/.*"
+        },
+        "score": { "type": "number" },
+        "severity": { "type": "string" }
+      }
+    },
+    "Countermeasure": {
+      "type": "object",
+      "required": [
+        "ID",
+        "title",
+        "description",
+        "status"
+      ],
+      "properties": {
+        "ID": { "type": "string" },
+        "title": { "type": "string" },
+        "description": { "type": "string" },
+        "status": {
+          "type": "string",
+          "enum": [
+            "in_place",
+            "planned",
+            "not_started"
+          ]
+        }
+      }
+    },
+    "TestScript": {
+      "type": "object",
+      "required": [
+        "language",
+        "code"
+      ],
+      "properties": {
+        "language": {
+          "type": "string",
+          "description": "Programming or scripting language (e.g., bash, python)."
+        },
+        "code": {
+          "type": "string",
+          "description": "The executable code snippet."
+        },
+        "description": {
+          "type": "string",
+          "description": "Description of what the script does."
+        },
+        "requirements": {
+          "type": "array",
+          "items": { "type": "string" },
+          "description": "Dependencies required to run the script."
+        }
+      }
+    }
+  }
+}

@@ -137,6 +137,25 @@ Context: threat modeling and its terminology
         - ID
         - title
         - status (must be one of: in_place, planned, not_started)
-        - description (use "description", NOT "details")
+        - description  (use "description", NOT "details") — a one-sentence summary of what the control is
+        - why          (REQUIRED) — explain WHY this control specifically addresses the threat. Cover the causal
+                        link: what attack path does it break, and what would happen without it.
+                        Write 2-4 sentences, not bullet points. Be specific to the threat, not generic.
+                        Do NOT name specific vendor products or standards.
+        - implementation (REQUIRED) — list of 4–7 concrete, actionable steps to implement this control.
+                        Each step should be specific enough for an engineer to act on directly.
+                        Describe configuration intent and what to enforce — do NOT name specific vendor
+                        products, brand names, or standards documents.
+                        Example steps:
+                          - "Configure the MDM platform to detect jailbroken devices and mark them non-compliant immediately."
+                          - "Create a dedicated execution identity for the function scoped to read access on the quarantine prefix only."
+                          - "Enable number matching in the authenticator application for all users."
+        - effort       (REQUIRED) — one of: Low, Medium, High.
+                        Low   = configuration change, policy toggle, or straightforward library update.
+                        Medium = design change, new service integration, or coordination across teams required.
+                        High  = significant architectural change, new hardware/infrastructure, or long delivery timeline.
+
+        Important ordering: countermeasures is always the LAST attribute on a threat.
+        Do not add fullyMitigated or other fields after countermeasures.
 
 

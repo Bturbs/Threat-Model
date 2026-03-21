@@ -7,7 +7,7 @@ from pydantic import ValidationError
 
 from .schemas import (
     ThreatModel, ThreatModelMeta, Asset, Attacker,
-    SecurityObjective, Threat, DataFlow, Countermeasure,
+    SecurityObjective, Threat, DataFlow, Countermeasure, DiagramRef, ComposeEntry,
 )
 from .cvss_calculator import calculate_cvss_score
 
@@ -151,10 +151,29 @@ class ThreatModelParser:
         if security_objectives:
             self._validate_security_objective_references(threats, security_objectives)
         
-        return ThreatModel(
+        diagrams = self._load_diagrams(data.get('diagrams', []))
+
+        # Parse compose entries (if present) — list of sub-aspect directories
+        compose_entries: list[ComposeEntry] = []
+        for entry_data in data.get('compose', []):
+            try:
+                compose_entries.append(ComposeEntry(**entry_data))
+            except ValidationError as e:
+                raise ThreatModelParseError(f"Compose entry validation error: {e}")
+
+        root_model = ThreatModel(
             meta=meta, assets=assets, attackers=attackers,
-            securityObjectives=security_objectives, threats=threats
+            securityObjectives=security_objectives, threats=threats,
+            diagrams=diagrams, compose=compose_entries,
         )
+
+        # If compose entries exist, load each child model and merge into root
+        if compose_entries:
+            root_model = self._build_composed_model(
+                root_model, compose_entries, {self.model_path.resolve()}
+            )
+
+        return root_model
     
     def _expand_countermeasures(self, threat_data: dict, cm_lookup: dict, threat_id: str) -> list:
         expanded = []
@@ -235,9 +254,126 @@ class ThreatModelParser:
         if security_objectives:
             self._validate_security_objective_references(threats, security_objectives)
         
+        diagrams_data = self._load_yaml('diagrams.yaml') or {}
+        diagrams = self._load_diagrams(diagrams_data.get('diagrams', []))
+
         return ThreatModel(
             meta=meta, assets=assets, attackers=attackers,
-            securityObjectives=security_objectives, threats=threats
+            securityObjectives=security_objectives, threats=threats,
+            diagrams=diagrams,
+        )
+
+    def _load_diagrams(self, diagrams_data: list) -> list:
+        """Parse the diagrams list, resolve each file path, and load PUML content."""
+        diagrams = []
+        for diag_data in diagrams_data:
+            try:
+                # Don't pass 'content' from YAML (it's disk-loaded)
+                clean = {k: v for k, v in diag_data.items() if k != 'content'}
+                diag = DiagramRef(**clean)
+                puml_path = self.model_path / diag.file
+                if puml_path.exists():
+                    diag.content = puml_path.read_text(encoding='utf-8')
+                else:
+                    import warnings
+                    warnings.warn(
+                        f"Diagram file not found: {puml_path} (referenced as '{diag.file}')"
+                    )
+                diagrams.append(diag)
+            except ValidationError as e:
+                raise ThreatModelParseError(f"Diagram validation error: {e}")
+        return diagrams
+
+    def _build_composed_model(
+        self,
+        root: ThreatModel,
+        entries: list[ComposeEntry],
+        loaded_paths: set,
+    ) -> ThreatModel:
+        """Load each composed aspect sub-model and merge it into the root ThreatModel.
+
+        Merge rules:
+          - Assets  : all child assets are appended (tagged with aspect label).
+          - Threats : all child threats are appended (tagged with aspect label).
+          - Diagrams: all child diagrams are appended (tagged with aspect label).
+          - Attackers / SecurityObjectives : merged by ID — root / earlier entry wins
+            on collision so shared definitions are deduplicated.
+
+        After merging, attacker and security-objective cross-references are
+        re-validated against the full combined set.
+        """
+        merged_assets = list(root.assets)
+        merged_attackers: dict[str, Attacker] = {a.REFID: a for a in root.attackers}
+        merged_objectives: dict[str, SecurityObjective] = {o.ID: o for o in root.securityObjectives}
+        merged_threats = list(root.threats)
+        merged_diagrams = list(root.diagrams)
+
+        for entry in entries:
+            child_dir = (self.model_path / entry.path).resolve()
+
+            # Circular reference guard
+            if child_dir in loaded_paths:
+                raise ThreatModelParseError(
+                    f"Circular compose reference detected: {child_dir}"
+                )
+
+            if not child_dir.exists() or not child_dir.is_dir():
+                raise ThreatModelParseError(
+                    f"Composed aspect path does not exist: {child_dir} "
+                    f"(aspect '{entry.aspect}')"
+                )
+
+            try:
+                child_parser = ThreatModelParser(child_dir)
+                child_model = child_parser.parse()
+            except ThreatModelParseError as e:
+                raise ThreatModelParseError(
+                    f"Error loading aspect '{entry.aspect}' from {child_dir}: {e}"
+                )
+
+            label = entry.aspect
+
+            # Merge assets — all included, tagged with aspect
+            for asset in child_model.assets:
+                asset.source_aspect = label
+                merged_assets.append(asset)
+
+            # Merge attackers — deduplicate by REFID (root/earlier wins)
+            for attacker in child_model.attackers:
+                if attacker.REFID not in merged_attackers:
+                    attacker.source_aspect = label
+                    merged_attackers[attacker.REFID] = attacker
+
+            # Merge security objectives — deduplicate by ID (root/earlier wins)
+            for obj in child_model.securityObjectives:
+                if obj.ID not in merged_objectives:
+                    obj.source_aspect = label
+                    merged_objectives[obj.ID] = obj
+
+            # Merge threats — all included, tagged with aspect
+            for threat in child_model.threats:
+                threat.source_aspect = label
+                merged_threats.append(threat)
+
+            # Merge diagrams — all included, tagged with aspect
+            for diagram in child_model.diagrams:
+                diagram.source_aspect = label
+                merged_diagrams.append(diagram)
+
+        # Re-validate cross-references over the full merged set
+        all_attackers = list(merged_attackers.values())
+        all_objectives = list(merged_objectives.values())
+        self._validate_attacker_references(merged_threats, all_attackers)
+        self._validate_security_objective_references(merged_threats, all_objectives)
+
+        return ThreatModel(
+            meta=root.meta,
+            assets=merged_assets,
+            attackers=all_attackers,
+            securityObjectives=all_objectives,
+            threats=merged_threats,
+            diagrams=merged_diagrams,
+            compose=root.compose,
         )
 
 

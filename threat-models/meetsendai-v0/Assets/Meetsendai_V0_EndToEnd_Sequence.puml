@@ -1,0 +1,103 @@
+@startuml Meetsendai_V0_EndToEnd_Sequence
+title Meetsendai V0 - End-to-End Flow (Onboarding to Lead Capture)
+skinparam maxMessageSize 150
+skinparam BoxPadding 10
+
+legend top right
+  **Risk Levels (Transactions & Actor Swimlanes)**
+  |<#White> Black Arrow | Internal / Low Risk Operation |
+  |<#F2F9FF> Light Blue Box | Trusted Internal System Boundary |
+  |<#Orange> Orange Arrow | PII Processing / Auth (Medium Risk) |
+  |<#FFE6CC> Light Orange Box| Edge Transit / 3rd Party (Medium Risk) |
+  |<#Red> Red Arrow | External PII Ingress-Egress (High Risk) |
+  |<#FFCCCC> Light Red Box| Untrusted External Actors (High Risk) |
+endlegend
+
+box "Internal Operations" #E6F2FF
+actor "Sales / CRM" as CRM
+actor "Finance" as Finance
+end box
+
+box "Trusted Cloud Hub — EU Only (Low Risk Env)" #F2F9FF
+participant "CI/CD Pipeline" as Pipeline
+participant "Terraform (IaC)" as TF
+participant "Azure Infrastructure\n(EU Region)" as Azure
+participant "Azure Key Vault\n(TDE Key Management)" as KV
+participant "Azure App (Docker)" as Docker
+participant "Tenant SQL DB\n(EU, TLS 1.3 + TDE)" as DB
+participant "AI Engine\n(Whisper / OCR)" as AI
+end box
+
+box "Auth (Med Risk)" #FFE6CC
+participant "Auth0" as IDP
+end box
+
+box "External Actors (High Risk)" #FFCCCC
+actor "Client Tenant Admin" as Admin
+actor "Sales Rep (Event)" as Rep
+actor "Lead" as Lead
+end box
+
+== 1. Sales & Financial Approval ==
+CRM -> Finance: Sale Completed (Request Order Approval)
+activate Finance
+Finance -> Pipeline: Approves Order & Triggers Provisioning
+deactivate Finance
+
+== 2. Automated Infrastructure Provisioning (EU) ==
+activate Pipeline
+Pipeline -> TF: Execute Terraform Plan/Apply for New Tenant
+activate TF
+TF -> Azure: Provision isolated SQL Database (EU Region)
+TF -> KV: Create Tenant Key in Azure Key Vault (TDE)
+Azure --> TF: DB provisioned & encrypted (TLS 1.3 + TDE)
+TF -[#orange]-> IDP: Configure Tenant Auth (Auth0)
+IDP --[#orange]-> TF: Auth configured
+TF --> Pipeline: Provisioning Complete
+deactivate TF
+Pipeline -> CRM: Client Created & Infrastructure Ready
+deactivate Pipeline
+
+== 3. Client Tenant Event Setup ==
+Admin -[#orange]-> Docker: Login via Auth0
+Docker -[#orange]-> IDP: Validate Credentials
+IDP --[#orange]-> Docker: Auth Token
+Admin -[#orange]-> Docker: Upload Product Documentation
+Docker -> DB: Store Docs in Tenant DB
+Admin -[#orange]-> Docker: Create New Tracking Event
+
+== 4. Lead Capture Workflow (EU Processing) ==
+Rep -[#orange]-> IDP: Login via Auth0
+IDP --[#orange]-> Rep: Auth Token
+Rep -> Docker: Select Event
+note right
+  App passes signed location header
+  to indicate EU data context.
+  No external geo-routing in V0.
+end note
+Rep -[#red]-> Rep: Scan Business Card (OCR)\n& Record Voice Note
+Rep -[#red]-> Docker: Submit Lead Data (Photo + Audio)\nvia HTTPS / TLS 1.3
+
+activate Docker
+Docker -[#orange]-> AI: Pass Audio & Image for OCR + Transcription
+activate AI
+AI --[#orange]-> Docker: Extracted Contact Data & Voice Transcript
+deactivate AI
+Docker -> DB: Fetch Product Docs for Cross-Reference
+DB --> Docker: Product Docs
+Docker -[#orange]-> AI: Analyse Transcript vs Product Docs
+activate AI
+AI --[#orange]-> Docker: Generated Draft Email
+deactivate AI
+Docker -[#orange]-> DB: Store Lead PII & Draft (Encrypted via TDE)
+Docker --[#orange]-> Rep: Present Draft Email for Review
+deactivate Docker
+
+== 5. Human-in-the-Loop & Delivery ==
+Rep -[#orange]-> Docker: Review & Approve Draft
+Docker -[#red]-> Lead: Dispatch via Email
+
+== 6. Compliance / Admin ==
+Admin -[#orange]-> Docker: View Event Metrics (Scoped to Tenant)
+Admin -[#red]-> DB: Query/Delete Subject Data (GDPR Request)
+@enduml
