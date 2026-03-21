@@ -38,17 +38,42 @@ jobs:
 
       - name: Exclude composed model from deploy
         run: rm -rf threat-models/composed
+
+      - name: Clean GitHub Pages output folder
+        run: rm -rf threat-models/github-page
       
       - name: Generate all threat model reports
         run: |
-          python -m src.cli batch threat-models/ --output-dir ./reports-output
+          python -m src.cli batch threat-models/ --output-dir ./threat-models/github-page
       
-      - name: Set default homepage report
-        run: cp ./reports-output/meetsendai-V1/reports/threat-model.html ./reports-output/index.html
+      - name: Create homepage redirect to default report
+        run: |
+          if [ -f ./threat-models/github-page/meetsendai-V1/reports/threat-model.html ]; then
+            target="./meetsendai-V1/reports/threat-model.html"
+          elif [ -f ./threat-models/github-page/meetsendai/reports/threat-model.html ]; then
+            target="./meetsendai/reports/threat-model.html"
+          else
+            target="./meetsendai-v0/reports/threat-model.html"
+          fi
+
+          cat > ./threat-models/github-page/index.html <<EOF
+          <!doctype html>
+          <html lang="en">
+          <head>
+            <meta charset="utf-8" />
+            <meta http-equiv="refresh" content="0; url=$target" />
+            <meta name="viewport" content="width=device-width, initial-scale=1" />
+            <title>Threat Models</title>
+          </head>
+          <body>
+            <p>Redirecting to threat model report… <a href="$target">Continue</a></p>
+          </body>
+          </html>
+          EOF
       
       - name: Deploy to GitHub Pages
         uses: peaceiris/actions-gh-pages@v3
         with:
           github_token: ${{ secrets.GITHUB_TOKEN }}
-          publish_dir: ./reports-output
+          publish_dir: ./threat-models/github-page
           force_orphan: true
