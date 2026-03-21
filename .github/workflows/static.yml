@@ -46,27 +46,97 @@ jobs:
         run: |
           python -m src.cli batch threat-models/ --output-dir ./threat-models/github-page
       
-      - name: Create homepage redirect to default report
+      - name: Create single combined navigation page
         run: |
-          if [ -f ./threat-models/github-page/meetsendai-V1/reports/threat-model.html ]; then
-            target="./meetsendai-V1/reports/threat-model.html"
-          elif [ -f ./threat-models/github-page/meetsendai/reports/threat-model.html ]; then
-            target="./meetsendai/reports/threat-model.html"
-          else
-            target="./meetsendai-v0/reports/threat-model.html"
+          set -e
+          out="./threat-models/github-page/index.html"
+          mapfile -t report_files < <(find ./threat-models/github-page -type f -path '*/reports/threat-model.html' | sort)
+
+          if [ ${#report_files[@]} -eq 0 ]; then
+            echo "No report files found under threat-models/github-page" >&2
+            exit 1
           fi
 
-          cat > ./threat-models/github-page/index.html <<EOF
+          default_rel="${report_files[0]#./threat-models/github-page/}"
+
+          cat > "$out" <<EOF
           <!doctype html>
           <html lang="en">
           <head>
             <meta charset="utf-8" />
-            <meta http-equiv="refresh" content="0; url=$target" />
             <meta name="viewport" content="width=device-width, initial-scale=1" />
-            <title>Threat Models</title>
+            <title>Threat Models Portal</title>
+            <style>
+              :root { color-scheme: light dark; }
+              * { box-sizing: border-box; }
+              body { margin: 0; font-family: Segoe UI, Roboto, Arial, sans-serif; display: grid; grid-template-columns: 320px 1fr; height: 100vh; }
+              aside { border-right: 1px solid #d0d7de; padding: 16px; overflow: auto; background: #0f172a; color: #e5e7eb; }
+              .count { font-size: 12px; opacity: 0.85; margin-bottom: 12px; }
+              .item { display: block; padding: 10px 12px; margin-bottom: 8px; border-radius: 8px; color: #e5e7eb; text-decoration: none; background: rgba(148,163,184,.18); border: 1px solid rgba(148,163,184,.22); }
+              .item:hover { background: rgba(59,130,246,.35); }
+              .item.active { background: rgba(59,130,246,.55); border-color: rgba(59,130,246,.75); }
+              main { height: 100vh; }
+              iframe { width: 100%; height: 100%; border: 0; background: white; }
+            </style>
           </head>
           <body>
-            <p>Redirecting to threat model report… <a href="$target">Continue</a></p>
+            <aside>
+              <h2 style="margin:0 0 4px 0;">Threat Models</h2>
+              <div class="count">${#report_files[@]} report(s)</div>
+              <nav id="nav"></nav>
+            </aside>
+            <main>
+              <iframe id="viewer" src="$default_rel" title="Threat Model Report"></iframe>
+            </main>
+            <script>
+              const reports = [
+          EOF
+
+          first=1
+          for f in "${report_files[@]}"; do
+            rel="${f#./threat-models/github-page/}"
+            model="${rel%/reports/threat-model.html}"
+            label="$model"
+            if [ -f "./threat-models/$model/threat-model.yaml" ]; then
+              title_line=$(grep -m 1 '^  title:\|^title:' "./threat-models/$model/threat-model.yaml" || true)
+              if [ -n "$title_line" ]; then
+                label=$(echo "$title_line" | sed -E 's/^\s*title:\s*"?(.*?)"?\s*$/\1/')
+              fi
+            fi
+
+            if [ $first -eq 0 ]; then
+              echo "," >> "$out"
+            fi
+            first=0
+            printf '                {"name": "%s", "path": "%s"}' "$(printf '%s' "$label" | sed 's/"/\\"/g')" "$rel" >> "$out"
+          done
+
+          cat >> "$out" <<'EOF'
+              ];
+
+              const nav = document.getElementById('nav');
+              const viewer = document.getElementById('viewer');
+
+              function setActive(path) {
+                document.querySelectorAll('.item').forEach((el) => {
+                  el.classList.toggle('active', el.dataset.path === path);
+                });
+              }
+
+              reports.forEach((r, idx) => {
+                const a = document.createElement('a');
+                a.href = '#';
+                a.className = 'item' + (idx === 0 ? ' active' : '');
+                a.dataset.path = r.path;
+                a.textContent = r.name;
+                a.addEventListener('click', (e) => {
+                  e.preventDefault();
+                  viewer.src = r.path;
+                  setActive(r.path);
+                });
+                nav.appendChild(a);
+              });
+            </script>
           </body>
           </html>
           EOF
