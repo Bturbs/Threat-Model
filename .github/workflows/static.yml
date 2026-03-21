@@ -35,14 +35,16 @@ jobs:
       - name: Install Python dependencies
         run: |
           pip install -r requirements.txt
+
+      - name: Exclude composed model from deploy
+        run: rm -rf threat-models/composed
       
       - name: Generate all threat model reports
         run: |
           python -m src.cli batch threat-models/ --output-dir ./reports-output
       
-      - name: Generate composed homepage report
-        run: |
-          python -m src.cli report threat-models/composed --output ./reports-output/index.html
+      - name: Set default homepage report
+        run: cp ./reports-output/meetsendai-V1/reports/threat-model.html ./reports-output/index.html
       
       - name: Deploy to GitHub Pages
         uses: peaceiris/actions-gh-pages@v3
