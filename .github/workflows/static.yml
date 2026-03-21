@@ -100,7 +100,7 @@ jobs:
             if [ -f "./threat-models/$model/threat-model.yaml" ]; then
               title_line=$(grep -m 1 '^  title:\|^title:' "./threat-models/$model/threat-model.yaml" || true)
               if [ -n "$title_line" ]; then
-                label=$(echo "$title_line" | sed -E 's/^\s*title:\s*"?(.*?)"?\s*$/\1/')
+                label=$(echo "$title_line" | sed -E 's/^[[:space:]]*title:[[:space:]]*//; s/^"//; s/"[[:space:]]*$//')
               fi
             fi
 

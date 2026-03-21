@@ -21,7 +21,7 @@ diagrams:
       for strict localization laws (US Gov ITAR, China, India). Highlights PII
       risk levels per swimlane.
 meta:
-  title: "Meetsendai Lead-Capture Platform"
+  title: "Meetsendai (V1)"
   modelId: "TM-MEETSENDAI-001"
   version: "2.0"
   scope: >
