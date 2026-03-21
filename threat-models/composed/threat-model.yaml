@@ -19,7 +19,7 @@ compose:
     description: "Core lead-capture and AI enrichment platform. Angel funding scope."
 
   - aspect: "Control Center (V0)"
-    path: "../control-center-v0"
+    path: "../Meetsendai-Control-Center-V0"
     description: "Internal admin portal for tenant provisioning, governance, and lifecycle management."
 
   - aspect: "Meetsendai Platform (V1)"
