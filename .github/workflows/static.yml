@@ -46,15 +46,30 @@ jobs:
         run: |
           python -m src.cli batch threat-models/ --output-dir ./threat-models/github-page
       
-      - name: Set default homepage report (no extra portal panel)
+      - name: Set default homepage redirect
         run: |
           if [ -f ./threat-models/github-page/Meetsendai-Control-Center-V0/reports/threat-model.html ]; then
-            cp ./threat-models/github-page/Meetsendai-Control-Center-V0/reports/threat-model.html ./threat-models/github-page/index.html
+            target="./Meetsendai-Control-Center-V0/reports/threat-model.html"
           elif [ -f ./threat-models/github-page/meetsendai-v0/reports/threat-model.html ]; then
-            cp ./threat-models/github-page/meetsendai-v0/reports/threat-model.html ./threat-models/github-page/index.html
+            target="./meetsendai-v0/reports/threat-model.html"
           else
-            cp ./threat-models/github-page/meetsendai-V1/reports/threat-model.html ./threat-models/github-page/index.html
+            target="./meetsendai-V1/reports/threat-model.html"
           fi
+
+          cat > ./threat-models/github-page/index.html <<EOF
+          <!doctype html>
+          <html lang="en">
+          <head>
+            <meta charset="utf-8" />
+            <meta http-equiv="refresh" content="0; url=$target" />
+            <meta name="viewport" content="width=device-width, initial-scale=1" />
+            <title>Threat Models</title>
+          </head>
+          <body>
+            <p>Redirecting... <a href="$target">Continue</a></p>
+          </body>
+          </html>
+          EOF
       
       - name: Deploy to GitHub Pages
         uses: peaceiris/actions-gh-pages@v3
