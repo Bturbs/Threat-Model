@@ -1,0 +1,1359 @@
+meta:
+  title: BYOD Access Architecture
+  modelId: TM-BYOD-ARCH
+  version: "1.0"
+  scope: Enterprise BYOD Security Architecture
+  owner: Security Architecture Team
+  lastUpdated: "2026-01-24"
+
+assets:
+  - ID: A-BYOD-DEVICE
+    name: User Device (BYOD)
+    type: Client
+    description: Personally owned laptop or mobile device used to access corporate resources.
+    trustZone: Untrusted
+    dataFlows:
+      - ID: DF-01
+        name: Authentication Request
+        source: A-BYOD-DEVICE
+        destination: A-IDP
+        protocol: HTTPS
+        dataClassification: Restricted
+        crossesTrustBoundary: true
+      - ID: DF-02
+        name: Device Registration
+        source: A-BYOD-DEVICE
+        destination: A-MDM
+        protocol: HTTPS
+        dataClassification: Internal
+        crossesTrustBoundary: true
+      - ID: DF-03
+        name: Access Corporate Services
+        source: A-BYOD-DEVICE
+        destination: A-CORP-SERVICES
+        protocol: HTTPS
+        dataClassification: Confidential
+        crossesTrustBoundary: true
+
+  - ID: A-IDP
+    name: Identity Provider
+    type: Serverless Service
+    description: Central authentication and policy enforcement platform (Azure AD/Okta).
+    trustZone: Corporate Cloud
+    dataFlows:
+      - ID: DF-04
+        name: Identity Verification
+        source: A-IDP
+        destination: A-COND-ACCESS
+        protocol: Internal API
+        dataClassification: Restricted
+        crossesTrustBoundary: false
+      - ID: DF-05
+        name: Issue Access Token
+        source: A-IDP
+        destination: A-BYOD-DEVICE
+        protocol: HTTPS
+        dataClassification: Restricted
+        crossesTrustBoundary: true
+
+  - ID: A-MDM
+    name: Device Management Platform
+    type: Serverless Service
+    description: MDM/MAM platform managing device registration and compliance (Intune/Workspace ONE).
+    trustZone: Corporate Cloud
+    dataFlows:
+      - ID: DF-06
+        name: Device Compliance Report
+        source: A-MDM
+        destination: A-COND-ACCESS
+        protocol: Internal API
+        dataClassification: Internal
+        crossesTrustBoundary: false
+
+  - ID: A-COND-ACCESS
+    name: Conditional Access Engine
+    type: Compute
+    description: Evaluates access requests based on identity, device posture, and risk signals.
+    trustZone: Corporate Cloud
+    dataFlows:
+      - ID: DF-07
+        name: Access Decision
+        source: A-COND-ACCESS
+        destination: A-IDP
+        protocol: Internal API
+        dataClassification: Internal
+        crossesTrustBoundary: false
+
+  - ID: A-CORP-SERVICES
+    name: Corporate Cloud Services
+    type: Data Store
+    description: Email, file storage, and SaaS applications.
+    trustZone: Corporate Cloud
+    dataFlows:
+      - ID: DF-08
+        name: Audit Logs
+        source: A-CORP-SERVICES
+        destination: A-LOGGING
+        protocol: Syslog/API
+        dataClassification: Internal
+        crossesTrustBoundary: false
+
+  - ID: A-ENDPOINT-SEC
+    name: Endpoint Security Agent
+    type: Client Service
+    description: Antivirus/EDR agent on BYOD device for compliance reporting.
+    trustZone: Managed Container
+    dataFlows:
+      - ID: DF-09
+        name: Compliance Telemetry
+        source: A-ENDPOINT-SEC
+        destination: A-MDM
+        protocol: HTTPS
+        dataClassification: Internal
+        crossesTrustBoundary: true
+
+  - ID: A-LOGGING
+    name: Logging & Monitoring Platform
+    type: Database
+    description: SIEM/Log Analytics for authentication and access logs.
+    trustZone: Corporate Cloud
+    dataFlows: []
+
+attackers:
+  - REFID: ATT-EXT
+    name: External Attacker
+    description: Remote attacker targeting stolen credentials or phishing.
+    motivation: Data theft, corporate espionage.
+    capability: Advanced
+
+  - REFID: ATT-INSIDER
+    name: Malicious Insider
+    description: Employee attempting to abuse BYOD access for unauthorized purposes.
+    motivation: Data exfiltration, sabotage.
+    capability: Authenticated access
+
+  - REFID: ATT-DEVICE-OWNER
+    name: Negligent Device Owner
+    description: Legitimate user with poor security practices (weak passwords, no device lock).
+    motivation: Convenience over security.
+    capability: Legitimate access
+
+securityObjectives:
+  - ID: SO-CONF
+    name: Confidentiality
+    description: Ensure corporate data is only accessible to authorized users on compliant devices.
+    category: CIA
+  - ID: SO-INT
+    name: Integrity
+    description: Prevent unauthorized modification of corporate data or policies.
+    category: CIA
+  - ID: SO-AVAIL
+    name: Availability
+    description: Ensure legitimate users can access resources when needed.
+    category: CIA
+  - ID: SO-ACCOUNT
+    name: Accountability
+    description: Maintain audit trails for all access activities.
+    category: Governance
+
+threats:
+  - ID: T-01
+    title: Stolen Credentials Used from Unmanaged Device
+    threatType: Spoofing
+    attack: Attacker steals user credentials via phishing and authenticates from a non-compliant device.
+    impactDesc: Unauthorized access to corporate data from an untrusted device.
+    impactedSecObj:
+      - SO-CONF
+      - SO-ACCOUNT
+    attackers:
+      - ATT-EXT
+    CVSS:
+      vector: CVSS:3.1/AV:N/AC:L/PR:N/UI:R/S:U/C:H/I:H/A:N
+      score: 8.1
+      severity: High
+    testSteps:
+      - "Obtain valid user credentials via phishing simulation."
+      - "Attempt to authenticate from a device not enrolled in MDM."
+      - "Observe if conditional access blocks the attempt."
+    expectedBehavior: "Conditional access should deny login from unregistered device."
+    countermeasures:
+      - ID: CM-01
+        title: Device Compliance Enforcement
+        description: Require device enrollment and compliance before granting access.
+        status: in_place
+        effort: Medium
+        why: >
+          Stolen credentials alone are sufficient for access when there is no device control. Requiring the
+          device to be enrolled and compliant adds an independent factor that an attacker controlling only
+          credentials cannot satisfy. This turns a single-factor compromise into a dual-factor requirement.
+        implementation:
+          - "Create an access policy requiring devices to be enrolled and marked compliant before granting access."
+          - "Define baseline compliance rules: minimum OS version, disk encryption enabled, screen lock configured, endpoint protection running."
+          - "Set the policy action to block for non-compliant or unregistered devices."
+          - "Test monthly with a test account on a non-enrolled device and confirm the block is enforced."
+          - "Exclude break-glass accounts from the policy, secured with dedicated monitoring and alerting."
+      - ID: CM-02
+        title: MFA Enforcement
+        description: Require phishing-resistant MFA for all authentications.
+        status: in_place
+        effort: Low
+        why: >
+          Standard password phishing captures credentials but not the MFA factor. Phishing-resistant MFA is
+          cryptographically bound to the legitimate login origin — a fake login page cannot intercept it
+          because the authenticator verifies the relying party domain. Even if credentials are phished, the
+          attacker cannot complete authentication without the user's physical device.
+        implementation:
+          - "Enforce phishing-resistant MFA for all users via the access policy."
+          - "For roles that cannot yet use phishing-resistant MFA, enforce number-matching push MFA as an interim measure."
+          - "Block legacy authentication protocols that bypass MFA entirely."
+          - "Alert on MFA method registration changes — a new authenticator device being added is a common attacker step."
+          - "Run quarterly phishing simulations and track click rates to measure and reduce susceptibility."
+
+  - ID: T-02
+    title: Device ID Spoofing
+    threatType: Spoofing
+    attack: Attacker clones a compliant device ID to bypass device-based access controls.
+    impactDesc: Unauthorized device gains access by impersonating a registered device.
+    impactedSecObj:
+      - SO-CONF
+      - SO-INT
+    attackers:
+      - ATT-INSIDER
+    CVSS:
+      vector: CVSS:3.1/AV:N/AC:H/PR:L/UI:N/S:U/C:H/I:H/A:N
+      score: 6.8
+      severity: Medium
+    testSteps:
+      - "Extract device ID from a compliant enrolled device."
+      - "Attempt to replay or spoof the device ID from another device."
+      - "Test if conditional access validates device certificate or hardware binding."
+    expectedBehavior: "Access should be denied unless device presents valid certificate tied to hardware."
+    countermeasures:
+      - ID: CM-03
+        title: Hardware-Bound Device Certificates
+        description: Use hardware security module to bind device identity to hardware.
+        status: planned
+        effort: High
+        why: >
+          Device identifiers stored as software certificates or registry values can be extracted and replayed
+          from another device. Binding the device credential to a hardware security module generates a private
+          key that is non-exportable by design. An attacker who clones the device ID cannot construct a valid
+          authentication signature without the physical hardware.
+        implementation:
+          - "Ensure all managed devices use hardware-backed device certificates issued by the device management platform."
+          - "Configure certificate issuance policy to require hardware key attestation."
+          - "Enforce hardware-backed device identity as a condition in access policies."
+          - "Audit issued device certificates periodically and revoke certificates for retired or lost devices within 24 hours of report."
+          - "Document the hardware attestation requirement in the device procurement policy."
+      - ID: CM-04
+        title: Device Attestation
+        description: Verify device integrity signals at every authentication attempt.
+        status: planned
+        effort: High
+        why: >
+          A device certificate confirms enrollment identity but not current device health. Attestation
+          evaluates real-time device state signals at every authentication attempt. This closes the gap where
+          a device was compliant at enrollment but has since been compromised or had its security configuration
+          changed.
+        implementation:
+          - "Enable real-time device compliance evaluation in the access policy engine using live signals from the device management platform."
+          - "Configure compliance policies to evaluate secure boot state, encryption status, endpoint protection currency, and jailbreak indicators."
+          - "Integrate endpoint risk scores as a session condition — block or require step-up authentication on elevated risk devices."
+          - "Set a maximum token lifetime for device-based sessions to force periodic re-evaluation."
+          - "Alert when a device transitions from compliant to non-compliant state."
+
+  - ID: T-03
+    title: MFA Fatigue Attack
+    threatType: Spoofing
+    attack: Attacker bombards user with repeated MFA push notifications until user approves out of frustration.
+    impactDesc: Attacker gains access using stolen primary credentials and user's fatigued approval.
+    impactedSecObj:
+      - SO-CONF
+    attackers:
+      - ATT-EXT
+    CVSS:
+      vector: CVSS:3.1/AV:N/AC:L/PR:N/UI:R/S:U/C:H/I:H/A:N
+      score: 8.1
+      severity: High
+    testSteps:
+      - "Initiate multiple rapid authentication attempts with valid credentials."
+      - "Observe if rate limiting or anomaly detection blocks the attack."
+    expectedBehavior: "System should throttle MFA requests and alert on suspicious patterns."
+    countermeasures:
+      - ID: CM-05
+        title: MFA Rate Limiting
+        description: Limit number of MFA prompts within a time window.
+        status: in_place
+        effort: Low
+        why: >
+          MFA fatigue exploits human behaviour — a user receiving many push requests will often approve one
+          to stop the noise. Without rate limiting, this attack costs the attacker nothing and can run
+          indefinitely with valid credentials. Rate limiting creates friction that makes the attack
+          economically unviable and generates a detectable signal for security operations.
+        implementation:
+          - "Configure the identity provider to lock the account after repeated failed MFA attempts within a time window."
+          - "Enable anomaly-based MFA request monitoring for unusual sign-in patterns."
+          - "Create an alert for a high number of MFA push requests for a single user within a short period."
+          - "Configure automatic step-up to a stronger MFA method or temporary lockout after the threshold is breached."
+          - "Train users to report unexpected MFA prompts to the helpdesk immediately rather than approving them."
+      - ID: CM-06
+        title: Number Matching MFA
+        description: Use number-matching or phishing-resistant MFA instead of push-only.
+        status: planned
+        effort: Low
+        why: >
+          Standard push MFA shows only Approve or Deny — a user who approves without scrutiny grants access
+          to whoever triggered the request. Number matching requires the user to type a code visible on the
+          legitimate login screen into the authenticator, making it impossible to approve a prompt not
+          triggered by the user's own login. Hardware security keys eliminate push entirely and are
+          cryptographically phishing-resistant by design.
+        implementation:
+          - "Enable number matching in the authenticator application for all users."
+          - "Migrate privileged roles to hardware security keys as the primary MFA method."
+          - "Disable simple push approval for all users — allow only number-matching or time-based one-time passwords."
+          - "Run a phased rollout: pilot with the IT team first, collect feedback, then deploy broadly."
+          - "Communicate the change to users with clear guidance explaining why push-only is being replaced."
+
+  - ID: T-04
+    title: Manipulation of Device Compliance State
+    threatType: Tampering
+    attack: Attacker or user manipulates endpoint agent or MDM signals to report false compliance.
+    impactDesc: Non-compliant device appears compliant and gains unauthorized access.
+    impactedSecObj:
+      - SO-CONF
+      - SO-INT
+    attackers:
+      - ATT-INSIDER
+      - ATT-DEVICE-OWNER
+    CVSS:
+      vector: CVSS:3.1/AV:L/AC:H/PR:L/UI:N/S:U/C:H/I:H/A:N
+      score: 6.3
+      severity: Medium
+    testSteps:
+      - "Root or jailbreak a test device."
+      - "Attempt to bypass endpoint security agent or spoof compliance signals."
+      - "Check if MDM detects jailbreak/root or tampered agent."
+    expectedBehavior: "MDM should detect device tampering and mark device non-compliant."
+    countermeasures:
+      - ID: CM-07
+        title: Jailbreak/Root Detection
+        description: Detect and block rooted or jailbroken devices.
+        status: in_place
+        effort: Low
+        why: >
+          A jailbroken or rooted device has disabled the OS-enforced security model. Device management agents
+          can be bypassed, restrictions removed, and app sandboxing defeated with root access. Without
+          detecting this, a user can defeat every access control applied at the OS and app layer. Detection
+          at the compliance layer means access is revoked regardless of which specific bypass technique was used.
+        implementation:
+          - "Configure the device management platform to detect jailbroken iOS and rooted Android devices and mark them non-compliant immediately with zero grace period."
+          - "Use the OS-native platform integrity attestation API for root detection."
+          - "Configure the platform to trigger a selective wipe of all corporate data from any device detected as jailbroken or rooted."
+          - "Deploy endpoint protection on mobile devices for additional independent jailbreak detection coverage."
+          - "Alert the security team when a device transitions to a jailbroken or rooted state."
+      - ID: CM-08
+        title: Endpoint Agent Integrity Checks
+        description: Use hardware attestation to verify the endpoint agent has not been tampered with.
+        status: planned
+        effort: Medium
+        why: >
+          An attacker with elevated device privileges could disable or uninstall the compliance agent, causing
+          the device to silently stop reporting. Without agent integrity checks, the device appears to
+          disappear from management rather than transition to non-compliant, creating a blind spot. Hardware
+          OS attestation verifies device health outside the userland stack and is resistant to software tampering.
+        implementation:
+          - "Enable tamper protection on the endpoint security agent to prevent uninstallation or configuration changes without central authorisation."
+          - "Integrate hardware-level OS boot integrity reporting with the device compliance evaluation."
+          - "Configure a compliance policy rule that marks a device non-compliant if a health attestation report has not been received within 24 hours."
+          - "Alert on unexpected device unenrollment events — unenrollment without an IT-initiated offboarding workflow is an incident trigger."
+
+  - ID: T-05
+    title: Data Leakage via Screenshots or Copy-Paste
+    threatType: Information Disclosure
+    attack: User or malware captures corporate data via screenshots, copy-paste, or screen recording.
+    impactDesc: Confidential corporate data is exfiltrated to personal apps or cloud storage.
+    impactedSecObj:
+      - SO-CONF
+    attackers:
+      - ATT-INSIDER
+      - ATT-DEVICE-OWNER
+    CVSS:
+      vector: CVSS:3.1/AV:L/AC:L/PR:L/UI:N/S:U/C:H/I:N/A:N
+      score: 5.5
+      severity: Medium
+    testSteps:
+      - "Access corporate document in managed app."
+      - "Attempt to take screenshot or copy text."
+      - "Try to paste into personal messaging app."
+    expectedBehavior: "Managed app should block screenshots and restrict copy-paste to managed apps only."
+    countermeasures:
+      - ID: CM-09
+        title: DLP in Managed Apps
+        description: Enforce data loss prevention policies within managed application containers.
+        status: in_place
+        effort: Low
+        why: >
+          Without DLP policies, the OS clipboard and file system allow data to flow freely between managed
+          and personal apps. App-level DLP is the definitive technical barrier because it operates at the
+          data movement layer independently of device configuration, preventing corporate data from reaching
+          personal apps regardless of what the user attempts.
+        implementation:
+          - "Create app protection policies for all managed corporate apps covering email, messaging, and document collaboration."
+          - "Restrict cut, copy, and paste to managed apps only — block paste into personal applications."
+          - "Restrict save-as to managed cloud storage locations only — block saving to personal local storage or personal cloud drives."
+          - "Prevent app data from syncing to native personal contacts or calendar."
+          - "Require a PIN or biometric to open any managed app."
+      - ID: CM-10
+        title: Screen Capture Blocking
+        description: Prevent screenshots and screen recordings in managed apps.
+        status: in_place
+        effort: Low
+        why: >
+          Copy-paste DLP does not prevent screen capture, which is often the last-resort exfiltration method
+          when other data movement paths are blocked. App-level screen capture blocking renders the app
+          surface as blank when a capture is attempted, making the data invisible regardless of what capture
+          tool is used.
+        implementation:
+          - "Configure the device management app protection policy to block screen capture in Android managed apps."
+          - "Configure iOS managed apps to obscure content in the app switcher and block screen recording APIs."
+          - "Apply session-level download and print restrictions for corporate web apps accessed through a managed browser."
+          - "Validate the control on a test device by attempting a screenshot in a managed app and confirming the result is blank."
+
+  - ID: T-06
+    title: Token Theft via Malware on BYOD
+    threatType: Information Disclosure
+    attack: Malware on personal device steals OAuth access or refresh tokens.
+    impactDesc: Attacker uses stolen tokens to access corporate resources without re-authentication.
+    impactedSecObj:
+      - SO-CONF
+    attackers:
+      - ATT-EXT
+    CVSS:
+      vector: CVSS:3.1/AV:L/AC:L/PR:N/UI:R/S:U/C:H/I:H/A:N
+      score: 7.3
+      severity: High
+    testSteps:
+      - "Extract OAuth tokens from device storage or memory."
+      - "Replay tokens from different device or IP."
+      - "Test if token is bound to device or can be used elsewhere."
+    expectedBehavior: "Tokens should be short-lived, bound to device, and require re-authentication on anomalies."
+    countermeasures:
+      - ID: CM-11
+        title: Token Binding
+        description: Bind access tokens to device hardware and enable real-time revocation.
+        status: planned
+        effort: High
+        why: >
+          OAuth bearer tokens are not inherently bound to any device — a stolen token can be replayed from
+          anywhere. Continuous access evaluation makes tokens real-time revocable when a device's compliance
+          state changes or a risky sign-in is detected. Hardware-bound authentication tokens are non-exportable
+          from the device that created them, meaning theft requires also physically controlling the device.
+        implementation:
+          - "Enable continuous access evaluation so tokens are revoked in near-real-time on compliance or risk events."
+          - "Enable hardware-bound authentication tokens on managed devices using the available hardware security module."
+          - "Configure re-authentication frequency to require periodic re-authentication for sensitive application sessions."
+          - "Enable risk detection for anomalous token use and atypical travel — configure automatic block on high-risk events."
+          - "Monitor token replay anomalies in the security event log."
+      - ID: CM-12
+        title: Short Token Lifetimes
+        description: Use short-lived access tokens and require frequent re-authentication.
+        status: in_place
+        effort: Low
+        why: >
+          A stolen long-lived token gives an attacker an extended access window that persists even after the
+          compromise is discovered. Reducing the access token lifetime limits the attacker to that window
+          before the token expires. Combined with continuous access evaluation, the window is further
+          shortened when an anomaly is detected.
+        implementation:
+          - "Set access token maximum lifetime to 1 hour for standard users."
+          - "For privileged roles, enforce re-authentication every hour and disable persistent browser sessions."
+          - "Set refresh token maximum inactive time to 14 days — require full re-authentication after inactivity."
+          - "Enforce sign-in frequency for access to high-sensitivity applications."
+
+  - ID: T-07
+    title: Insecure Backup to Personal Cloud
+    threatType: Information Disclosure
+    attack: Corporate data cached on device is backed up to user's personal cloud storage.
+    impactDesc: Corporate data is stored in unmanaged personal cloud storage.
+    impactedSecObj:
+      - SO-CONF
+    attackers:
+      - ATT-DEVICE-OWNER
+    CVSS:
+      vector: CVSS:3.1/AV:N/AC:L/PR:L/UI:N/S:U/C:H/I:N/A:N
+      score: 6.5
+      severity: Medium
+    testSteps:
+      - "Enable device backup to personal cloud account."
+      - "Access corporate data in managed app."
+      - "Check if corporate data is included in device backup."
+    expectedBehavior: "Managed app data should be excluded from device backups or encrypted separately."
+    countermeasures:
+      - ID: CM-13
+        title: Managed App Backup Exclusion
+        description: Configure managed apps to exclude corporate data from device backups.
+        status: in_place
+        effort: Low
+        why: >
+          Device backups copy app data to personal cloud storage by default. Corporate data backed up to a
+          personal cloud account exits the organisation's control permanently with no audit trail or ability
+          to remote wipe. Blocking backup at the app policy layer prevents this at the data source,
+          regardless of the user's personal cloud configuration.
+        implementation:
+          - "Configure the app protection policy to block corporate app data from being included in device backups."
+          - "Restrict save-as to managed cloud storage locations only — block saving to the device's local file system or personal cloud drives."
+          - "Communicate to users that corporate documents must be saved to managed cloud storage, not personal storage."
+
+  - ID: T-08
+    title: Over-Permissive Access Policies
+    threatType: Elevation of Privilege
+    attack: Conditional access policy grants excessive access due to misconfiguration.
+    impactDesc: Users gain access to resources they should not have based on their role or device state.
+    impactedSecObj:
+      - SO-CONF
+      - SO-INT
+    attackers:
+      - ATT-INSIDER
+    CVSS:
+      vector: CVSS:3.1/AV:N/AC:L/PR:L/UI:N/S:U/C:H/I:H/A:N
+      score: 8.1
+      severity: High
+    testSteps:
+      - "Authenticate with low-privilege user account."
+      - "Attempt to access high-sensitivity resources."
+      - "Test if conditional access correctly enforces least privilege."
+    expectedBehavior: "Access should be denied based on role, device compliance, and data sensitivity."
+    countermeasures:
+      - ID: CM-14
+        title: Policy Review and Testing
+        description: Regularly review and test conditional access policies.
+        status: in_place
+        effort: Low
+        why: >
+          Access policies accumulate exceptions over time. Without periodic review, policy drift creates an
+          increasingly permissive posture that neither the security team nor the business fully understands.
+          Regular testing with real accounts validates that policies actually behave as documented, not just
+          as configured.
+        implementation:
+          - "Use the identity platform's policy simulation tool monthly with representative test user and device scenarios."
+          - "Maintain a policy register documenting: name, owner, business justification, date created, and last review date."
+          - "Conduct quarterly access reviews requiring manager re-approval for all high-privilege group memberships."
+          - "Test new policies in report-only mode for two weeks and review sign-in logs before enabling enforcement."
+          - "Track a policy compliance score as a security team KPI."
+      - ID: CM-15
+        title: Least Privilege by Default
+        description: Configure policies to deny by default, allow only necessary access.
+        status: in_place
+        effort: Medium
+        why: >
+          Default-allow policies grant access to any new resource unless explicitly denied, so misconfiguration
+          creates access by omission. Default-deny requires explicit authorisation for every access path, so
+          a misconfigured or missing policy results in a blocked access rather than a silent security breach.
+        implementation:
+          - "Create a baseline policy that blocks all access, then layer explicit allow policies for each required scenario."
+          - "Scope all allow policies to specific named applications — never use a wildcard target unless the policy is a baseline block rule."
+          - "Implement role-based access control for all applications — map roles to minimum required access and review quarterly."
+          - "Use just-in-time access for all privileged roles with approval workflows and time-limited activation."
+          - "Convert all permanent admin role assignments to eligible — require justification and approval for each activation."
+
+  - ID: T-09
+    title: Denial of Service via Compliance Lockout
+    threatType: Denial of Service
+    attack: Legitimate user's device becomes non-compliant and they are locked out of all corporate resources.
+    impactDesc: Productivity loss, user frustration, potential business disruption.
+    impactedSecObj:
+      - SO-AVAIL
+    attackers:
+      - ATT-DEVICE-OWNER
+    CVSS:
+      vector: CVSS:3.1/AV:N/AC:L/PR:N/UI:N/S:U/C:N/I:N/A:H
+      score: 7.5
+      severity: High
+    testSteps:
+      - "Simulate device compliance failure (e.g., outdated OS, missing patch)."
+      - "Attempt to access corporate services."
+      - "Verify grace period or fallback access mechanism exists."
+    expectedBehavior: "User should receive clear notification and grace period to remediate compliance issues."
+    countermeasures:
+      - ID: CM-16
+        title: Compliance Grace Period
+        description: Allow a short grace period for users to remediate non-compliance.
+        status: in_place
+        effort: Low
+        why: >
+          Zero-tolerance blocking for every compliance violation creates a self-inflicted availability problem
+          — a single pending OS update locks a user out until IT intervenes. A time-limited grace period
+          allows users to remediate minor issues independently while differentiating low-risk violations from
+          high-risk ones that warrant immediate block.
+        implementation:
+          - "Set a non-compliance grace period of 24–72 hours for low-risk rules such as a pending OS update or certificate renewal."
+          - "Set a zero grace period for critical rules: jailbreak or root detected, disk encryption disabled, endpoint protection not running."
+          - "Configure automated notifications to users the moment their device enters non-compliance, including the specific remediation step required."
+          - "Surface compliance status and the specific failing rule in the device self-service portal."
+          - "Track devices that fail to remediate within the grace period and generate a helpdesk case automatically."
+      - ID: CM-17
+        title: Self-Service Remediation
+        description: Provide clear guidance and tools for users to fix compliance issues independently.
+        status: in_place
+        effort: Low
+        why: >
+          If users cannot diagnose and fix compliance failures themselves, they will either raise helpdesk
+          tickets or attempt workarounds that bypass the device management platform. Clear self-service
+          guidance removes both failure modes. Tracking remediation ticket volume also provides a measurable
+          signal of whether the compliance policies are set at a level users can realistically maintain.
+        implementation:
+          - "Configure non-compliance notifications to display human-readable remediation instructions rather than error codes."
+          - "Publish an internal knowledge base article for each common compliance failure mode."
+          - "Create a limited remediation access policy: non-compliant devices can reach only the device management portal and OS update endpoint — nothing else."
+          - "Track helpdesk tickets tagged as device compliance monthly and set a target of reducing volume by 20% per quarter."
+
+    threatType: Spoofing
+    attack: Attacker steals user credentials via phishing and authenticates from a non-compliant device.
+    impactDesc: Unauthorized access to corporate data from an untrusted device.
+    impactedSecObj:
+      - SO-CONF
+      - SO-ACCOUNT
+    attackers:
+      - ATT-EXT
+    CVSS:
+      vector: CVSS:3.1/AV:N/AC:L/PR:N/UI:R/S:U/C:H/I:H/A:N
+      score: 8.1
+      severity: High
+    testSteps:
+      - "Obtain valid user credentials via phishing simulation."
+      - "Attempt to authenticate from a device not enrolled in MDM."
+      - "Observe if conditional access blocks the attempt."
+    expectedBehavior: "Conditional access should deny login from unregistered device."
+    countermeasures:
+      - ID: CM-01
+        title: Device Compliance Enforcement
+        description: Require device enrollment and compliance before granting access.
+        status: in_place
+        effort: Medium
+        why: >
+          Stolen credentials alone are sufficient for access when there is no device control.
+          Requiring the device to be enrolled and compliant adds a second independent factor that an attacker
+          controlling only credentials cannot satisfy — they would also need to control a registered, policy-compliant
+          device. This turns a single-factor compromise (credentials) into a dual-factor requirement.
+        implementation:
+          - "In Entra ID / Okta, create a Conditional Access policy with 'Require device to be marked as compliant' as a Grant control."
+          - "Define baseline MDM compliance rules in Intune: minimum OS version, disk encryption enabled, screen lock configured, AV agent running."
+          - "Set the policy action to 'Block' (not report-only) for non-compliant or unregistered devices."
+          - "Test monthly with a test account on a non-enrolled device and confirm the block is enforced."
+          - "Exclude break-glass accounts from the policy, secured with dedicated monitoring and MFA-only access."
+        references:
+          - "Microsoft: Require device to be marked as compliant - https://learn.microsoft.com/en-us/entra/identity/conditional-access/concept-conditional-access-grant#require-device-to-be-marked-as-compliant"
+          - "NIST SP 800-207: Zero Trust Architecture - Section 3.3"
+          - "CIS Control 4: Secure Configuration of Enterprise Assets"
+      - ID: CM-02
+        title: MFA Enforcement
+        description: Require phishing-resistant MFA for all authentications.
+        status: in_place
+        effort: Low
+        why: >
+          Standard password phishing captures credentials but not the MFA factor. Phishing-resistant MFA
+          (FIDO2 / passkeys) is cryptographically bound to the legitimate login origin — a fake login page
+          cannot intercept it because the authenticator verifies the relying party domain. This means even
+          if credentials are phished, the attacker cannot complete authentication without the user's physical
+          hardware key or device biometric.
+        implementation:
+          - "Enforce phishing-resistant MFA (FIDO2 / Windows Hello / Passkeys) via Conditional Access grant control for all users."
+          - "For roles that cannot yet use FIDO2, enforce number-matching push MFA as an interim measure."
+          - "Block legacy authentication protocols (Basic Auth, IMAP, POP3) via a dedicated Conditional Access policy — these bypass MFA entirely."
+          - "Alert on MFA method registration changes: a new authenticator device being added is a common attacker step."
+          - "Run quarterly phishing simulations and track click rates to measure and reduce susceptibility."
+        references:
+          - "CISA: Phishing-Resistant MFA Fact Sheet - https://www.cisa.gov/sites/default/files/publications/fact-sheet-implementing-phishing-resistant-mfa-508c.pdf"
+          - "OWASP Authentication Cheat Sheet - https://cheatsheetseries.owasp.org/cheatsheets/Authentication_Cheat_Sheet.html"
+          - "NIST SP 800-63B - AAL2/AAL3 requirements"
+
+  - ID: T-02
+    title: Device ID Spoofing
+    threatType: Spoofing
+    attack: Attacker clones a compliant device ID to bypass device-based access controls.
+    impactDesc: Unauthorized device gains access by impersonating a registered device.
+    impactedSecObj:
+      - SO-CONF
+      - SO-INT
+    attackers:
+      - ATT-INSIDER
+    CVSS:
+      vector: CVSS:3.1/AV:N/AC:H/PR:L/UI:N/S:U/C:H/I:H/A:N
+      score: 6.8
+      severity: Medium
+    testSteps:
+      - "Extract device ID from a compliant enrolled device."
+      - "Attempt to replay or spoof the device ID from another device."
+      - "Test if conditional access validates device certificate or hardware binding."
+    expectedBehavior: "Access should be denied unless device presents valid certificate tied to hardware."
+    countermeasures:
+      - ID: CM-03
+        title: Hardware-Bound Device Certificates
+        description: Use TPM or Secure Enclave to bind device identity to hardware.
+        status: planned
+        effort: High
+        why: >
+          Device identifiers stored as software certificates, cookies, or registry values can be extracted
+          from one device and replayed from another. Binding the device credential to a TPM or Secure Enclave
+          generates a private key that is non-exportable by design — it physically cannot leave the hardware.
+          An attacker who clones the device ID but not the hardware cannot construct a valid authentication
+          signature, making the credential useless on any other device.
+        implementation:
+          - "Enable Microsoft Entra Hybrid Join or Entra Join for managed Windows devices, which issues TPM-backed device certificates by default on TPM 2.0 hardware."
+          - "In Intune SCEP/NDES configuration, set the certificate issuance policy to require TPM key attestation (`ekType: tpmAttested`)."
+          - "In Conditional Access, require 'Hybrid Azure AD Joined' or 'Compliant' device state — both imply hardware-backed credentials in modern Entra configurations."
+          - "Periodically audit the list of issued device certificates and revoke certificates for retired or lost devices within 24 hours of report."
+          - "Document the hardware attestation requirement in device procurement policy — ensure all new devices have TPM 2.0."
+        references:
+          - "Microsoft: TPM key attestation - https://learn.microsoft.com/en-us/windows-server/identity/ad-ds/manage/component-updates/tpm-key-attestation"
+          - "NIST SP 800-116: A Recommendation for the Use of PIV Credentials"
+          - "CIS Control 1.1: Establish and Maintain Detailed Enterprise Asset Inventory"
+      - ID: CM-04
+        title: Device Attestation
+        description: Verify device integrity signals during authentication.
+        status: planned
+        effort: High
+        why: >
+          A device certificate confirms enrollment identity but not current device health. Attestation evaluates
+          real-time device state signals — secure boot, OS patch level, no-known-bad software — at every
+          authentication attempt. This closes the gap where a device was compliant at enrollment but has since
+          been compromised, jailbroken, or had its security configuration changed.
+        implementation:
+          - "Enable Microsoft Entra device compliance evaluation in Conditional Access using real-time compliance signals from Intune (requires Entra ID P2)."
+          - "Configure Intune compliance policies to evaluate: Secure Boot state, BitLocker enabled, AV signatures current, and no jailbreak indicators."
+          - "Integrate Defender for Endpoint risk scores as a session condition in Conditional Access — block or step up on Medium/High risk devices."
+          - "Set a maximum Conditional Access token lifetime of 1 hour for device-based sessions to force periodic re-evaluation."
+          - "Alert in your SIEM on devices whose compliance state transitions from Compliant to Non-compliant."
+        references:
+          - "Microsoft: Device filters in Conditional Access - https://learn.microsoft.com/en-us/entra/identity/conditional-access/concept-condition-filters-for-devices"
+          - "Google BeyondCorp Enterprise: Device Trust documentation"
+          - "NIST SP 800-207: Zero Trust Architecture - Section 2.1.2"
+
+  - ID: T-03
+    title: MFA Fatigue Attack
+    threatType: Spoofing
+    attack: Attacker bombards user with repeated MFA push notifications until user approves out of frustration.
+    impactDesc: Attacker gains access using stolen primary credentials and user's fatigued approval.
+    impactedSecObj:
+      - SO-CONF
+    attackers:
+      - ATT-EXT
+    CVSS:
+      vector: CVSS:3.1/AV:N/AC:L/PR:N/UI:R/S:U/C:H/I:H/A:N
+      score: 8.1
+      severity: High
+    testSteps:
+      - "Initiate multiple rapid authentication attempts with valid credentials."
+      - "Observe if rate limiting or anomaly detection blocks the attack."
+    expectedBehavior: "System should throttle MFA requests and alert on suspicious patterns."
+    countermeasures:
+      - ID: CM-05
+        title: MFA Rate Limiting
+        description: Limit number of MFA prompts within a time window.
+        status: in_place
+        effort: Low
+        why: >
+          MFA fatigue exploits human behaviour — a user who receives 20 push requests at 3am will often
+          approve one to stop the noise. Without rate limiting, this attack costs the attacker nothing and
+          can run indefinitely with valid credentials. Rate limiting creates friction that makes the attack
+          economically unviable and generates a detectable signal for security operations to investigate.
+        implementation:
+          - "Configure Entra ID Smart Lockout to lock the account after 10 failed MFA attempts per hour from the same source IP."
+          - "Enable Entra ID Protection anomaly-based MFA request monitoring (Risk Policy: 'Atypical travel', 'Unfamiliar sign-in properties')."
+          - "Create a SIEM alert for '10+ MFA push requests for a single user in 30 minutes' — route to a SOC queue."
+          - "Configure automatic step-up to FIDO2 or temporary account lockout after the threshold is breached."
+          - "Train users to report unexpected MFA prompts to the helpdesk immediately, not approve them."
+        references:
+          - "Microsoft Entra Smart Lockout - https://learn.microsoft.com/en-us/entra/identity/authentication/howto-password-smart-lockout"
+          - "CISA: MFA Fatigue Attack Advisory AA22-074A - https://www.cisa.gov/news-events/cybersecurity-advisories/aa22-074a"
+      - ID: CM-06
+        title: Number Matching MFA
+        description: Use number-matching or FIDO2 instead of push-only MFA.
+        status: planned
+        effort: Low
+        why: >
+          Standard push MFA shows only "Approve / Deny" — a user who approves without scrutiny grants
+          access to whoever triggered the request. Number matching requires the user to type a code visible
+          on the legitimate login screen into the authenticator app, making it impossible to approve a prompt
+          that was not triggered by the user's own login. FIDO2 hardware keys eliminate push entirely and are
+          cryptographically phishing-resistant by design.
+        implementation:
+          - "Enable number matching in Microsoft Authenticator: Authentication Methods > Microsoft Authenticator > Additional Settings > Number Matching = Enabled."
+          - "Migrate privileged roles (Global Admins, Security Admins, Finance) to FIDO2 security keys as the primary MFA method."
+          - "Disable simple push approval for all users via Authentication Methods policy — allow only number-matching or TOTP."
+          - "Run a phased rollout: pilot with IT team first, collect helpdesk feedback, then roll out to broader user base."
+          - "Communicate the change to users with a clear one-page guide explaining why push-only is being replaced."
+        references:
+          - "Microsoft: Number matching in Microsoft Authenticator - https://learn.microsoft.com/en-us/entra/identity/authentication/how-to-mfa-number-match"
+          - "FIDO Alliance: FIDO2 Specification - https://fidoalliance.org/fido2/"
+          - "NIST SP 800-63B: Digital Identity Guidelines - AAL2"
+
+  - ID: T-04
+    title: Manipulation of Device Compliance State
+    threatType: Tampering
+    attack: Attacker or user manipulates endpoint agent or MDM signals to report false compliance.
+    impactDesc: Non-compliant device appears compliant and gains unauthorized access.
+    impactedSecObj:
+      - SO-CONF
+      - SO-INT
+    attackers:
+      - ATT-INSIDER
+      - ATT-DEVICE-OWNER
+    CVSS:
+      vector: CVSS:3.1/AV:L/AC:H/PR:L/UI:N/S:U/C:H/I:H/A:N
+      score: 6.3
+      severity: Medium
+    testSteps:
+      - "Root or jailbreak a test device."
+      - "Attempt to bypass endpoint security agent or spoof compliance signals."
+      - "Check if MDM detects jailbreak/root or tampered agent."
+    expectedBehavior: "MDM should detect device tampering and mark device non-compliant."
+    countermeasures:
+      - ID: CM-07
+        title: Jailbreak/Root Detection
+        description: Detect and block rooted or jailbroken devices.
+        status: in_place
+        effort: Low
+        why: >
+          A jailbroken or rooted device has disabled the OS-enforced security model — MDM agents can be
+          bypassed, DLP restrictions removed, and app sandboxing defeated with root access. Without detecting
+          this, a user can deliberately degrade the security of their device to circumvent every DLP and access
+          control applied at the OS and app layer. Detection at the MDM compliance layer means access is
+          immediately revoked regardless of which specific bypass technique was used.
+        implementation:
+          - "In Intune iOS compliance policy: set 'Jailbroken devices' = 'Block'. Mark non-compliant immediately (zero grace period)."
+          - "In Intune Android compliance policy: set 'Rooted devices' = 'Block' and enable Google Play Integrity API (formerly SafetyNet Attestation)."
+          - "Configure Intune to trigger a selective wipe of all corporate data and managed app configurations from any device that is detected as jailbroken/rooted."
+          - "Enable Microsoft Defender for Endpoint on mobile devices for additional independent jailbreak detection coverage."
+          - "Alert the security team when a device transitions to a jailbroken state — investigate as a potential policy violation."
+        references:
+          - "Microsoft Intune iOS compliance settings - https://learn.microsoft.com/en-us/mem/intune/protect/compliance-policy-create-ios"
+          - "Google Play Integrity API - https://developer.android.com/google/play/integrity"
+          - "CIS Benchmark for Mobile Devices"
+      - ID: CM-08
+        title: Endpoint Agent Integrity Checks
+        description: Use attestation to verify agent has not been tampered with.
+        status: planned
+        effort: Medium
+        why: >
+          An attacker or motivated user with elevated device privileges could disable or uninstall the MDM
+          compliance agent, causing the device to silently stop reporting. Without agent integrity checks,
+          the device appears to disappear from management rather than transition to non-compliant — creating
+          a blind spot. TPM-based OS attestation verifies device health from outside the userland OS stack,
+          making it resistant to software-level tampering.
+        implementation:
+          - "Enable Microsoft Defender for Endpoint Tamper Protection — prevents agent uninstallation or configuration changes without cloud-side authorisation."
+          - "Enable Windows Health Attestation Service (HAS) integration with Intune to receive TPM-based boot integrity reports independent of the running OS."
+          - "Configure an Intune compliance policy rule that marks a device non-compliant if a health attestation report has not been received within 24 hours."
+          - "Alert on unexpected MDM unenrollment events in your SIEM — unenrollment without an IT-initiated offboarding workflow is an incident trigger."
+        references:
+          - "Microsoft: Tamper Protection in Defender for Endpoint - https://learn.microsoft.com/en-us/defender-endpoint/prevent-changes-to-security-settings-with-tamper-protection"
+          - "NIST SP 800-155: BIOS Integrity Measurement Guidelines"
+          - "NIST SP 800-147: BIOS Protection Guidelines"
+
+  - ID: T-05
+    title: Data Leakage via Screenshots or Copy-Paste
+    threatType: Information Disclosure
+    attack: User or malware captures corporate data via screenshots, copy-paste, or screen recording.
+    impactDesc: Confidential corporate data is exfiltrated to personal apps or cloud storage.
+    impactedSecObj:
+      - SO-CONF
+    attackers:
+      - ATT-INSIDER
+      - ATT-DEVICE-OWNER
+    CVSS:
+      vector: CVSS:3.1/AV:L/AC:L/PR:L/UI:N/S:U/C:H/I:N/A:N
+      score: 5.5
+      severity: Medium
+    testSteps:
+      - "Access corporate document in managed app."
+      - "Attempt to take screenshot or copy text."
+      - "Try to paste into personal messaging app."
+    expectedBehavior: "Managed app should block screenshots and restrict copy-paste to managed apps only."
+    countermeasures:
+      - ID: CM-09
+        title: DLP in Managed Apps
+        description: Enforce data loss prevention policies within managed application containers.
+        status: in_place
+        effort: Low
+        why: >
+          Mobile Application Management (MAM) wraps corporate apps in a policy-enforced container. Without
+          DLP policies, the OS clipboard and file system allow data to flow freely between managed and personal
+          apps. App-level DLP is the definitive technical barrier because it operates at the data movement
+          layer, independently of what the user's device configuration is or whether the device is enrolled
+          in full MDM.
+        implementation:
+          - "In Intune, create an App Protection Policy (APP) for all managed corporate apps: Outlook, Teams, SharePoint, OneDrive."
+          - "Set 'Restrict cut, copy, and paste with other apps' to 'Policy managed apps' — this blocks paste into WhatsApp, Notes, personal email."
+          - "Set 'Save copies of org data' to 'Block' or restrict to OneDrive for Business and SharePoint only."
+          - "Set 'Sync policy managed app data with native apps' to 'Block' to prevent contacts/calendars syncing to the personal address book."
+          - "Require a PIN or biometric (minimum 6-digit PIN or fingerprint) to open any managed app."
+        references:
+          - "Microsoft: App Protection Policies overview - https://learn.microsoft.com/en-us/mem/intune/apps/app-protection-policy"
+          - "NIST SP 800-124r2: Guidelines for Managing BYOD Security - Section 4.3"
+      - ID: CM-10
+        title: Screen Capture Blocking
+        description: Prevent screenshots and screen recordings in managed apps.
+        status: in_place
+        effort: Low
+        why: >
+          Copy-paste DLP policies do not prevent screen capture, which is often the last-resort exfiltration
+          method when all other data movement paths are blocked. An attacker or insider can photograph a screen
+          or use screen recording tools to capture displayed content. App-level screen capture blocking is
+          programmatic — the OS renders the app surface as a blank or obscured region when a capture is
+          attempted, making the data invisible regardless of what tool is used.
+        implementation:
+          - "In Intune App Protection Policy for Android: set 'Screen capture and Google Assistant' = 'Block'."
+          - "For iOS managed apps: set 'Org data notifications' = 'Block org data' — this obscures content in app switcher previews and blocks screen recording APIs."
+          - "For corporate web apps accessed via Microsoft Edge (Managed Browser): create a Defender for Cloud Apps session policy with 'Block download, cut, copy, and print' for sensitive app sessions."
+          - "Validate the control: on a test device with the policy applied, attempt a screenshot in Teams — confirm the result is blank."
+        references:
+          - "Microsoft: Android app protection policy settings - https://learn.microsoft.com/en-us/mem/intune/apps/app-protection-policy-settings-android"
+          - "OWASP Mobile Application Security Verification Standard (MASVS) - MSTG-STORAGE-9"
+
+  - ID: T-06
+    title: Token Theft via Malware on BYOD
+    threatType: Information Disclosure
+    attack: Malware on personal device steals OAuth access or refresh tokens.
+    impactDesc: Attacker uses stolen tokens to access corporate resources without re-authentication.
+    impactedSecObj:
+      - SO-CONF
+    attackers:
+      - ATT-EXT
+    CVSS:
+      vector: CVSS:3.1/AV:L/AC:L/PR:N/UI:R/S:U/C:H/I:H/A:N
+      score: 7.3
+      severity: High
+    testSteps:
+      - "Extract OAuth tokens from device storage or memory."
+      - "Replay tokens from different device or IP."
+      - "Test if token is bound to device or can be used elsewhere."
+    expectedBehavior: "Tokens should be short-lived, bound to device, and require re-authentication on anomalies."
+    countermeasures:
+      - ID: CM-11
+        title: Token Binding
+        description: Bind access tokens to device hardware or certificate.
+        status: planned
+        effort: High
+        why: >
+          OAuth bearer tokens are not inherently bound to any device — a stolen token can be replayed from
+          anywhere. Continuous Access Evaluation (CAE) makes tokens real-time revocable: when a device's
+          compliance state changes or a risky sign-in is detected, Entra ID pushes a revocation signal to
+          the resource server within seconds. TPM-bound Primary Refresh Tokens (PRTs) are non-exportable
+          from the hardware that created them, meaning token theft requires also compromising the physical device.
+        implementation:
+          - "Enable Continuous Access Evaluation (CAE) in Entra ID — tokens issued to CAE-capable clients are revoked in near-real-time on compliance or risk events."
+          - "Enable device-bound PRTs via TPM on Windows (requires Entra Joined or Hybrid Joined devices with TPM 2.0)."
+          - "Configure Conditional Access sign-in frequency to force re-authentication every 1 hour for sensitive application sessions."
+          - "Enable Entra ID Protection risk detections: 'Anomalous token' and 'Atypical travel' — configure automatic block response on High risk."
+          - "Monitor token replay anomalies (sign-in from IP different from token issuance IP) in your SIEM."
+        references:
+          - "Microsoft CAE documentation - https://learn.microsoft.com/en-us/entra/identity/conditional-access/concept-continuous-access-evaluation"
+          - "RFC 8705: OAuth 2.0 Mutual TLS Client Authentication and Certificate-Bound Access Tokens"
+          - "NIST SP 800-63C: Federation and Assertions"
+      - ID: CM-12
+        title: Short Token Lifetimes
+        description: Use short-lived access tokens and require frequent re-authentication.
+        status: in_place
+        effort: Low
+        why: >
+          A stolen long-lived token gives an attacker an extended window of access that persists even after
+          the compromise is discovered. Reducing the access token lifetime to 1 hour limits the attacker to
+          that window before the token expires naturally. Combined with CAE, this means the window is further
+          shortened to seconds when an anomaly is detected — but even without CAE, expiry is the last line of
+          defence against a stolen token that was not immediately detected.
+        implementation:
+          - "In Entra ID token lifetime policy, set access token maximum age to 1 hour for standard users."
+          - "For privileged roles (Global Admin, Security Admin), set sign-in frequency to 1 hour and disable persistent browser sessions in Conditional Access."
+          - "Set refresh token maximum inactive time to 14 days — require full re-authentication after 2 weeks of inactivity."
+          - "Use Conditional Access session controls to enforce sign-in frequency = 1 hour for access to high-sensitivity applications."
+        references:
+          - "Microsoft: Configurable token lifetimes - https://learn.microsoft.com/en-us/entra/identity/conditional-access/concept-token-lifetime"
+          - "OWASP Session Management Cheat Sheet - https://cheatsheetseries.owasp.org/cheatsheets/Session_Management_Cheat_Sheet.html"
+          - "NIST SP 800-63B - Section 4.3: Reauthentication"
+
+  - ID: T-07
+    title: Insecure Backup to Personal Cloud
+    threatType: Information Disclosure
+    attack: Corporate data cached on device is backed up to user's personal iCloud or Google Drive.
+    impactDesc: Corporate data is stored in unmanaged personal cloud storage.
+    impactedSecObj:
+      - SO-CONF
+    attackers:
+      - ATT-DEVICE-OWNER
+    CVSS:
+      vector: CVSS:3.1/AV:N/AC:L/PR:L/UI:N/S:U/C:H/I:N/A:N
+      score: 6.5
+      severity: Medium
+    testSteps:
+      - "Enable device backup to personal cloud account."
+      - "Access corporate data in managed app."
+      - "Check if corporate data is included in device backup."
+    expectedBehavior: "Managed app data should be excluded from device backups or encrypted separately."
+    countermeasures:
+      - ID: CM-13
+        title: Managed App Backup Exclusion
+        description: Configure managed apps to exclude data from device backups.
+        status: in_place
+        effort: Low
+        why: >
+          iOS and Android device backups copy app data containers to the user's personal cloud storage by
+          default. Corporate data backed up to iCloud or Google Drive exits the organization's control
+          permanently — it is stored under the user's personal account with no corporate audit trail or ability
+          to remote wipe. Blocking backup at the MAM policy layer prevents this at the data source, regardless
+          of the user's personal cloud configuration.
+        implementation:
+          - "In Intune App Protection Policy for iOS: set 'Backup org data to iTunes/iCloud backups' = 'Block'."
+          - "In Intune App Protection Policy for Android: set 'Android backup service' = 'Block'."
+          - "Set 'Save copies of org data' in App Protection Policy to restrict only to OneDrive for Business and SharePoint — personal local storage is blocked."
+          - "Communicate to users that corporate documents must be saved to OneDrive for Business, not to the device's local file system or personal cloud drives."
+        references:
+          - "Microsoft: iOS/iPadOS app protection policy settings - https://learn.microsoft.com/en-us/mem/intune/apps/app-protection-policy-settings-ios"
+          - "NIST SP 800-124r2: Guidelines for Managing the Security of Mobile Devices - Section 4.3"
+
+  - ID: T-08
+    title: Over-Permissive Access Policies
+    threatType: Elevation of Privilege
+    attack: Conditional access policy grants excessive access due to misconfiguration.
+    impactDesc: Users gain access to resources they should not have based on their role or device state.
+    impactedSecObj:
+      - SO-CONF
+      - SO-INT
+    attackers:
+      - ATT-INSIDER
+    CVSS:
+      vector: CVSS:3.1/AV:N/AC:L/PR:L/UI:N/S:U/C:H/I:H/A:N
+      score: 8.1
+      severity: High
+    testSteps:
+      - "Authenticate with low-privilege user account."
+      - "Attempt to access high-sensitivity resources."
+      - "Test if conditional access correctly enforces least privilege."
+    expectedBehavior: "Access should be denied based on role, device compliance, and data sensitivity."
+    countermeasures:
+      - ID: CM-14
+        title: Policy Review and Testing
+        description: Regularly review and test conditional access policies.
+        status: in_place
+        effort: Low
+        why: >
+          Conditional Access policies accumulate exceptions over time — a break-glass exclusion added for an
+          emergency becomes permanent, a legacy app exclusion never gets removed. Without periodic review,
+          policy drift creates an increasingly permissive access control posture that neither the security
+          team nor the business fully understands. Regular testing with real accounts validates that policies
+          actually behave as documented, not just as configured.
+        implementation:
+          - "Run the Entra ID Conditional Access 'What If' tool monthly with representative test user/device scenarios to verify expected policy outcomes."
+          - "Maintain a policy register documenting: policy name, owner, business justification, date created, and last review date."
+          - "Conduct quarterly access reviews using Entra ID Access Reviews — require manager re-approval for all high-privilege group memberships."
+          - "Test new policies in 'Report-only' mode for 2 weeks and review sign-in logs before switching to 'On' (enforcing)."
+          - "Subscribe to Microsoft Secure Score and track Conditional Access recommendation score as a team KPI."
+        references:
+          - "Microsoft: What If tool for Conditional Access - https://learn.microsoft.com/en-us/entra/identity/conditional-access/troubleshoot-conditional-access-what-if"
+          - "NIST SP 800-53 CA-7: Continuous Monitoring"
+          - "CIS Control 5: Account Management"
+      - ID: CM-15
+        title: Least Privilege by Default
+        description: Configure policies to deny by default, allow only necessary access.
+        status: in_place
+        effort: Medium
+        why: >
+          Default-allow policies grant access to any new resource unless explicitly denied, meaning
+          misconfiguration or an overlooked exception creates access by omission. Default-deny requires
+          explicit authorization for every access path, so a misconfigured or missing policy results in
+          a blocked access rather than an open one. This is the fundamental principle that makes policy
+          drift a service disruption rather than a silent security breach.
+        implementation:
+          - "Create a baseline Conditional Access policy that blocks all access, then layer explicit allow policies for each required scenario."
+          - "Scope all allow policies to specific named applications — never use 'All cloud apps' as the target unless the policy is for a baseline block rule."
+          - "Implement RBAC for all corporate applications — map roles to the minimum required access level and review assignments quarterly."
+          - "Use Privileged Identity Management (PIM) for all admin roles: require just-in-time activation with approval workflow and maximum 8-hour time limits."
+          - "Convert all permanent admin role assignments to 'eligible' in PIM — require justification and approval for each activation."
+        references:
+          - "Microsoft PIM - https://learn.microsoft.com/en-us/entra/id-governance/privileged-identity-management/pim-configure"
+          - "NIST SP 800-53 AC-6: Least Privilege"
+          - "CIS Control 6: Access Control Management"
+
+  - ID: T-09
+    title: Denial of Service via Compliance Lockout
+    threatType: Denial of Service
+    attack: Legitimate user's device becomes non-compliant and they are locked out of all corporate resources.
+    impactDesc: Productivity loss, user frustration, potential business disruption.
+    impactedSecObj:
+      - SO-AVAIL
+    attackers:
+      - ATT-DEVICE-OWNER
+    CVSS:
+      vector: CVSS:3.1/AV:N/AC:L/PR:N/UI:N/S:U/C:N/I:N/A:H
+      score: 7.5
+      severity: High
+    testSteps:
+      - "Simulate device compliance failure (e.g., outdated OS, missing patch)."
+      - "Attempt to access corporate services."
+      - "Verify grace period or fallback access mechanism exists."
+    expectedBehavior: "User should receive clear notification and grace period to remediate compliance issues."
+    countermeasures:
+      - ID: CM-16
+        title: Compliance Grace Period
+        description: Allow short grace period for users to remediate non-compliance.
+        status: in_place
+        effort: Low
+        why: >
+          Zero-tolerance blocking for every compliance violation creates a self-inflicted availability problem:
+          a single pending OS update locks a user out of all corporate resources until IT intervenes. A
+          time-limited grace period allows users to remediate minor issues independently while the system
+          continues to monitor for resolution. The key is differentiating low-risk violations (OS update
+          pending) from high-risk ones (jailbreak detected) which warrant immediate block.
+        implementation:
+          - "In Intune compliance policy, set a non-compliance grace period of 24–72 hours for low-risk rules: OS version behind by one minor release, certificate renewal pending."
+          - "Set a zero grace period for critical rules: jailbreak/root detected, disk encryption disabled, AV agent not running."
+          - "Configure automated email notifications to users the moment their device enters non-compliance, including the exact remediation step required."
+          - "Surface compliance status and the specific failing rule in the Intune Company Portal app so users can see what needs fixing."
+          - "Track grace period expiry in your SIEM: devices that fail to remediate within the window should generate a case for the IT helpdesk."
+        references:
+          - "Microsoft: Create a compliance policy in Microsoft Intune - https://learn.microsoft.com/en-us/mem/intune/protect/create-compliance-policy"
+          - "NIST SP 800-124r2: Guidelines for Managing the Security of Mobile Devices - Section 4.1"
+      - ID: CM-17
+        title: Self-Service Remediation
+        description: Provide clear guidance and tools for users to fix compliance issues.
+        status: in_place
+        effort: Low
+        why: >
+          If users cannot diagnose and fix compliance failures themselves, they will either raise helpdesk
+          tickets (support cost) or attempt workarounds that bypass MDM (security risk). Clear self-service
+          guidance removes both failure modes: a user who can remediate a missed OS update in five minutes
+          has no reason to seek an unofficial bypass. Tracking remediation ticket volume also provides a
+          measurable signal of whether the compliance policies are set at a level users can realistically maintain.
+        implementation:
+          - "In the Intune Company Portal, configure non-compliance notifications to display human-readable remediation instructions — not error codes."
+          - "Publish an internal knowledge base article for each common compliance failure mode: 'OS update required', 'BitLocker not enabled', 'Certificate expired', 'Defender not running'."
+          - "Create a limited 'remediation access' Conditional Access policy: non-compliant devices can reach only the Company Portal, Windows Update, and the Intune management endpoint — nothing else."
+          - "Track helpdesk tickets tagged 'device compliance' monthly. Set a target of reducing ticket volume by 20% per quarter as self-service improves."
+        references:
+          - "Microsoft: Company Portal app - https://learn.microsoft.com/en-us/mem/intune/user-help/use-managed-devices-to-get-work-done"
+          - "NIST SP 800-124r2: Guidelines for Managing the Security of Mobile Devices in the Enterprise"
+
+
+  - ID: T-02
+    title: Device ID Spoofing
+    threatType: Spoofing
+    attack: Attacker clones a compliant device ID to bypass device-based access controls.
+    impactDesc: Unauthorized device gains access by impersonating a registered device.
+    impactedSecObj:
+      - SO-CONF
+      - SO-INT
+    attackers:
+      - ATT-INSIDER
+    CVSS:
+      vector: CVSS:3.1/AV:N/AC:H/PR:L/UI:N/S:U/C:H/I:H/A:N
+      score: 6.8
+      severity: Medium
+    testSteps:
+      - "Extract device ID from a compliant enrolled device."
+      - "Attempt to replay or spoof the device ID from another device."
+      - "Test if conditional access validates device certificate or hardware binding."
+    expectedBehavior: "Access should be denied unless device presents valid certificate tied to hardware."
+    countermeasures:
+      - ID: CM-03
+        title: Hardware-Bound Device Certificates
+        description: Use TPM or Secure Enclave to bind device identity to hardware.
+        status: planned
+      - ID: CM-04
+        title: Device Attestation
+        description: Verify device integrity signals during authentication.
+        status: planned
+
+  - ID: T-03
+    title: MFA Fatigue Attack
+    threatType: Spoofing
+    attack: Attacker bombards user with repeated MFA push notifications until user approves out of frustration.
+    impactDesc: Attacker gains access using stolen primary credentials and user's fatigued approval.
+    impactedSecObj:
+      - SO-CONF
+    attackers:
+      - ATT-EXT
+    CVSS:
+      vector: CVSS:3.1/AV:N/AC:L/PR:N/UI:R/S:U/C:H/I:H/A:N
+      score: 8.1
+      severity: High
+    testSteps:
+      - "Initiate multiple rapid authentication attempts with valid credentials."
+      - "Observe if rate limiting or anomaly detection blocks the attack."
+    expectedBehavior: "System should throttle MFA requests and alert on suspicious patterns."
+    countermeasures:
+      - ID: CM-05
+        title: MFA Rate Limiting
+        description: Limit number of MFA prompts within a time window.
+        status: in_place
+      - ID: CM-06
+        title: Number Matching MFA
+        description: Use number-matching or FIDO2 instead of push-only MFA.
+        status: planned
+
+  - ID: T-04
+    title: Manipulation of Device Compliance State
+    threatType: Tampering
+    attack: Attacker or user manipulates endpoint agent or MDM signals to report false compliance.
+    impactDesc: Non-compliant device appears compliant and gains unauthorized access.
+    impactedSecObj:
+      - SO-CONF
+      - SO-INT
+    attackers:
+      - ATT-INSIDER
+      - ATT-DEVICE-OWNER
+    CVSS:
+      vector: CVSS:3.1/AV:L/AC:H/PR:L/UI:N/S:U/C:H/I:H/A:N
+      score: 6.3
+      severity: Medium
+    testSteps:
+      - "Root or jailbreak a test device."
+      - "Attempt to bypass endpoint security agent or spoof compliance signals."
+      - "Check if MDM detects jailbreak/root or tampered agent."
+    expectedBehavior: "MDM should detect device tampering and mark device non-compliant."
+    countermeasures:
+      - ID: CM-07
+        title: Jailbreak/Root Detection
+        description: Detect and block rooted or jailbroken devices.
+        status: in_place
+      - ID: CM-08
+        title: Endpoint Agent Integrity Checks
+        description: Use attestation to verify agent has not been tampered with.
+        status: planned
+
+  - ID: T-05
+    title: Data Leakage via Screenshots or Copy-Paste
+    threatType: Information Disclosure
+    attack: User or malware captures corporate data via screenshots, copy-paste, or screen recording.
+    impactDesc: Confidential corporate data is exfiltrated to personal apps or cloud storage.
+    impactedSecObj:
+      - SO-CONF
+    attackers:
+      - ATT-INSIDER
+      - ATT-DEVICE-OWNER
+    CVSS:
+      vector: CVSS:3.1/AV:L/AC:L/PR:L/UI:N/S:U/C:H/I:N/A:N
+      score: 5.5
+      severity: Medium
+    testSteps:
+      - "Access corporate document in managed app."
+      - "Attempt to take screenshot or copy text."
+      - "Try to paste into personal messaging app."
+    expectedBehavior: "Managed app should block screenshots and restrict copy-paste to managed apps only."
+    countermeasures:
+      - ID: CM-09
+        title: DLP in Managed Apps
+        description: Enforce data loss prevention policies within managed application containers.
+        status: in_place
+      - ID: CM-10
+        title: Screen Capture Blocking
+        description: Prevent screenshots and screen recordings in managed apps.
+        status: in_place
+
+  - ID: T-06
+    title: Token Theft via Malware on BYOD
+    threatType: Information Disclosure
+    attack: Malware on personal device steals OAuth access or refresh tokens.
+    impactDesc: Attacker uses stolen tokens to access corporate resources without re-authentication.
+    impactedSecObj:
+      - SO-CONF
+    attackers:
+      - ATT-EXT
+    CVSS:
+      vector: CVSS:3.1/AV:L/AC:L/PR:N/UI:R/S:U/C:H/I:H/A:N
+      score: 7.3
+      severity: High
+    testSteps:
+      - "Extract OAuth tokens from device storage or memory."
+      - "Replay tokens from different device or IP."
+      - "Test if token is bound to device or can be used elsewhere."
+    expectedBehavior: "Tokens should be short-lived, bound to device, and require re-authentication on anomalies."
+    countermeasures:
+      - ID: CM-11
+        title: Token Binding
+        description: Bind access tokens to device hardware or certificate.
+        status: planned
+      - ID: CM-12
+        title: Short Token Lifetimes
+        description: Use short-lived access tokens and require frequent re-authentication.
+        status: in_place
+
+  - ID: T-07
+    title: Insecure Backup to Personal Cloud
+    threatType: Information Disclosure
+    attack: Corporate data cached on device is backed up to user's personal iCloud or Google Drive.
+    impactDesc: Corporate data is stored in unmanaged personal cloud storage.
+    impactedSecObj:
+      - SO-CONF
+    attackers:
+      - ATT-DEVICE-OWNER
+    CVSS:
+      vector: CVSS:3.1/AV:N/AC:L/PR:L/UI:N/S:U/C:H/I:N/A:N
+      score: 6.5
+      severity: Medium
+    testSteps:
+      - "Enable device backup to personal cloud account."
+      - "Access corporate data in managed app."
+      - "Check if corporate data is included in device backup."
+    expectedBehavior: "Managed app data should be excluded from device backups or encrypted separately."
+    countermeasures:
+      - ID: CM-13
+        title: Managed App Backup Exclusion
+        description: Configure managed apps to exclude data from device backups.
+        status: in_place
+
+  - ID: T-08
+    title: Over-Permissive Access Policies
+    threatType: Elevation of Privilege
+    attack: Conditional access policy grants excessive access due to misconfiguration.
+    impactDesc: Users gain access to resources they should not have based on their role or device state.
+    impactedSecObj:
+      - SO-CONF
+      - SO-INT
+    attackers:
+      - ATT-INSIDER
+    CVSS:
+      vector: CVSS:3.1/AV:N/AC:L/PR:L/UI:N/S:U/C:H/I:H/A:N
+      score: 8.1
+      severity: High
+    testSteps:
+      - "Authenticate with low-privilege user account."
+      - "Attempt to access high-sensitivity resources."
+      - "Test if conditional access correctly enforces least privilege."
+    expectedBehavior: "Access should be denied based on role, device compliance, and data sensitivity."
+    countermeasures:
+      - ID: CM-14
+        title: Policy Review and Testing
+        description: Regularly review and test conditional access policies.
+        status: in_place
+      - ID: CM-15
+        title: Least Privilege by Default
+        description: Configure policies to deny by default, allow only necessary access.
+        status: in_place
+
+  - ID: T-09
+    title: Denial of Service via Compliance Lockout
+    threatType: Denial of Service
+    attack: Legitimate user's device becomes non-compliant and they are locked out of all corporate resources.
+    impactDesc: Productivity loss, user frustration, potential business disruption.
+    impactedSecObj:
+      - SO-AVAIL
+    attackers:
+      - ATT-DEVICE-OWNER
+    CVSS:
+      vector: CVSS:3.1/AV:N/AC:L/PR:N/UI:N/S:U/C:N/I:N/A:H
+      score: 7.5
+      severity: High
+    testSteps:
+      - "Simulate device compliance failure (e.g., outdated OS, missing patch)."
+      - "Attempt to access corporate services."
+      - "Verify grace period or fallback access mechanism exists."
+    expectedBehavior: "User should receive clear notification and grace period to remediate compliance issues."
+    countermeasures:
+      - ID: CM-16
+        title: Compliance Grace Period
+        description: Allow short grace period for users to remediate non-compliance.
+        status: in_place
+      - ID: CM-17
+        title: Self-Service Remediation
+        description: Provide clear guidance and tools for users to fix compliance issues.
+        status: in_place
