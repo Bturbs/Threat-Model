@@ -39,9 +39,6 @@ jobs:
       - name: Exclude composed model from deploy
         run: rm -rf threat-models/composed
 
-      - name: Exclude Meetsendai V0 from deploy
-        run: rm -rf threat-models/meetsendai-v0
-
       - name: Clean GitHub Pages output folder
         run: rm -rf threat-models/github-page
       
@@ -51,12 +48,12 @@ jobs:
       
       - name: Set default homepage report (no extra portal panel)
         run: |
-          if [ -f ./threat-models/github-page/meetsendai-V1/reports/threat-model.html ]; then
-            cp ./threat-models/github-page/meetsendai-V1/reports/threat-model.html ./threat-models/github-page/index.html
-          elif [ -f ./threat-models/github-page/Meetsendai-Control-Center-V0/reports/threat-model.html ]; then
+          if [ -f ./threat-models/github-page/Meetsendai-Control-Center-V0/reports/threat-model.html ]; then
             cp ./threat-models/github-page/Meetsendai-Control-Center-V0/reports/threat-model.html ./threat-models/github-page/index.html
-          else
+          elif [ -f ./threat-models/github-page/meetsendai-v0/reports/threat-model.html ]; then
             cp ./threat-models/github-page/meetsendai-v0/reports/threat-model.html ./threat-models/github-page/index.html
+          else
+            cp ./threat-models/github-page/meetsendai-V1/reports/threat-model.html ./threat-models/github-page/index.html
           fi
       
       - name: Deploy to GitHub Pages

@@ -2,6 +2,7 @@
 
 import sys
 import json
+import re
 from pathlib import Path
 from datetime import datetime
 import click
@@ -234,6 +235,17 @@ def batch(models_root: str, output_dir: str, manifest: str, verbose: bool):
         except ThreatModelParseError as e:
             click.echo(click.style(f'Skipping {model_info["path"]}: {e}', fg='yellow'))
     
+    # Keep report navigation in a predictable product-order:
+    # all V0 models first (Control Center first), then V1, then others.
+    def _model_nav_sort_key(model_info: dict):
+        title = str(model_info.get('title', ''))
+        match = re.search(r'\(V(\d+)\)', title, re.IGNORECASE)
+        version_rank = int(match.group(1)) if match else 99
+        control_center_rank = 0 if 'control center' in title.lower() else 1
+        return (version_rank, control_center_rank, title.lower())
+
+    all_models.sort(key=_model_nav_sort_key)
+
     generator = ReportGenerator()
     generated_reports = []
     
