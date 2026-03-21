@@ -40,8 +40,9 @@ jobs:
         run: |
           python -m src.cli batch threat-models/ --output-dir ./reports-output
       
-      - name: Set composed report as homepage
-        run: cp ./reports-output/composed/reports/threat-model.html ./reports-output/index.html
+      - name: Generate composed homepage report
+        run: |
+          python -m src.cli report threat-models/composed --output ./reports-output/index.html
       
       - name: Deploy to GitHub Pages
         uses: peaceiris/actions-gh-pages@v3
