@@ -39,6 +39,9 @@ jobs:
       - name: Exclude composed model from deploy
         run: rm -rf threat-models/composed
 
+      - name: Exclude Meetsendai V0 from deploy
+        run: rm -rf threat-models/meetsendai-v0
+
       - name: Clean GitHub Pages output folder
         run: rm -rf threat-models/github-page
       
