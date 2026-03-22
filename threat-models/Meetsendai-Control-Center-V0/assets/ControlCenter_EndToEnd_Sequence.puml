@@ -27,7 +27,7 @@ end box
 
 box "Cloud Infrastructure (Trusted Internal)" #F2F9FF
 participant "Azure Infrastructure\n& Key Vault (TDE)" as Azure
-participant "Tenant SQL DB\n(Newly Provisioned)" as DB
+participant "PostgreSQL DB\n(Dedicated or Shared+RLS)" as DB
 participant "Email Service\n(Azure Communication)" as Email
 end box
 
@@ -45,7 +45,7 @@ Initiator -[#orange]-> EntraCC: Authenticate (MFA Required)
 EntraCC --[#orange]-> Initiator: CC Session Token (CC-Initiator Role)
 
 == 2a. Tenant Creation — Initiation ==
-Initiator -[#orange]-> CC: Submit New Tenant Request\n(Name, Region, Seat Limit, Lead Threshold, Auth Type)
+Initiator -[#orange]-> CC: Submit New Tenant Request\n(Name, Tier, Region, Seat Limit, Lead Threshold,\nRetention Period if Enterprise)
 activate CC
 CC -[#orange]-> Audit: Register Pending Request\n(Initiator locked from self-verifying)
 CC -[#orange]-> Verifier: Dispatch Verification Notification
@@ -65,12 +65,12 @@ CC -> Pipeline: Trigger Terraform Plan/Apply
 activate Pipeline
 Pipeline -> TF: Execute Terraform for New Tenant
 activate TF
-TF -[#orange]-> Azure: Provision Isolated SQL Database\n(EU Region — Azure West Europe)
-TF -[#orange]-> Azure: Configure Azure Key Vault TDE\n(Tenant Database Encryption)
+TF -[#orange]-> Azure: Provision PostgreSQL DB\n(Enterprise: dedicated instance;\nSolo/Starter/Growth: RLS policy on shared instance)
+TF -[#orange]-> Azure: Configure Azure Key Vault TDE\n(Enterprise: dedicated key; Shared tiers: shared key)
 Azure --[#orange]-> TF: DB Provisioned & Encrypted
 TF -[#orange]-> TenantIDP: Provision Auth0 Application\n(Tenant Authentication)
 TenantIDP --[#orange]-> TF: Auth0 Tenant Configured
-TF -[#orange]-> DB: Write Tenant Config\n(Seat Limit, Lead Threshold, EU Region Lock)
+TF -[#orange]-> DB: Write Tenant Config\n(Tier, Seat Limit, Lead Threshold,\nRetention Period, EU Region Lock)
 TF --> Pipeline: Provisioning Complete
 deactivate TF
 Pipeline -[#orange]-> Email: Dispatch Welcome Email\n(Primary Contact Address)
@@ -82,7 +82,7 @@ Pipeline --> Initiator: Tenant Live Notification
 deactivate Pipeline
 
 == 3. Tenant Limit Modification (Single Admin) ==
-Initiator -[#orange]-> CC: Update Seat Limit or Lead Threshold
+Initiator -[#orange]-> CC: Update Seat Limit, Lead Threshold,\nor Enterprise Retention Period
 CC -[#orange]-> DB: Apply Updated Config
 CC -[#orange]-> Audit: Log Limit Change\n(Initiator, Timestamp, Old/New Values)
 
@@ -115,8 +115,8 @@ end note
 CC -[#red]-> Pipeline: Trigger Terraform Destroy after Retention Period
 activate Pipeline
 Pipeline -> TF: Terraform Destroy — Tenant Scope
-TF -[#red]-> DB: Purge Tenant SQL Database
-TF -[#red]-> Azure: Invalidate Azure Key Vault TDE Key
+TF -[#red]-> DB: Enterprise: Purge Dedicated PostgreSQL Instance\nShared Tiers: Delete Tenant Rows + Remove RLS Policy
+TF -[#red]-> Azure: Enterprise: Invalidate Dedicated TDE Key\nShared Tiers: No key action required
 TF -[#red]-> TenantIDP: Deprovision Auth0 Tenant Application
 TF --> Pipeline: Destruction Complete
 deactivate Pipeline

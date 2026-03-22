@@ -50,7 +50,7 @@ end note
 :Fetch Tenant Product Docs from SQL DB;
 :AI Cross-References Transcript\nvs Product Documentation; <<#Orange>>
 :Generate Personalised Draft Email; <<#Orange>>
-:Store Lead PII & Draft in EU Tenant SQL DB\n(TDE via Azure Key Vault, TLS 1.3 in transit); <<#Orange>>
+:Store Lead PII & Draft in EU PostgreSQL DB\n(TDE via Azure Key Vault, TLS 1.3 in transit,\nRLS enforces tenant_id isolation); <<#Orange>>
 
 |#FFCCCC|Sales Rep|
 :Human-in-the-Loop:\nReview & Approve Draft Email;
@@ -63,9 +63,16 @@ note right
   global statistics dashboard in V0.
 end note
 
+note right
+  Automated retention purge (meetsendai-api):
+  Solo/Starter/Growth - hard delete leads
+  90 days after capture date.
+  Enterprise - hard delete after configurable
+  retention period set at provisioning.
+end note
 if (GDPR Data Subject Request?) then (Query / Delete)
     :Identify Subject Records in Tenant DB; <<#Orange>>
-    :Execute Query or Full Deletion\nin EU Tenant SQL DB; <<#Orange>>
+    :Execute Query or Full Deletion\nin EU PostgreSQL DB; <<#Orange>>
 endif
 
 stop

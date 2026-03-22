@@ -1,18 +1,39 @@
 meta:
-  title: "Meetsendai (V0)"
+  title: "Meetsendai User Center (V0)"
   modelId: "TM-MSV0-20260321"
   version: "1.1"
   scope: >
     EU-only lead capture, AI processing, and Auth0 authentication for sales event
     teams. Covers mobile/web client PII capture, Auth0 username/password login,
     Azure-hosted Docker application, OpenAI Whisper voice transcription, OCR
-    processing, per-tenant SQL database isolation (TDE via Azure Key Vault), and
+    processing, tiered Azure Database for PostgreSQL Flexible Server isolation
+    (Enterprise: dedicated instance + dedicated Key Vault TDE key; Solo/Starter/Growth:
+    shared instance with PostgreSQL Row Level Security scoped to tenant_id), and
     email-only follow-up delivery. No Cloudflare edge network, no SSO, EU region
     only (Azure West Europe / North Europe).
   owner: "Security Team"
-  lastUpdated: "2026-03-21"
+  lastUpdated: "2026-03-22"
 
-diagrams: []
+diagrams:
+  - id: "DIAGRAM_01"
+    title: "V0 End-to-End Sequence — Onboarding to Lead Capture"
+    file: "../../V0/Meetsendai_V0_EndToEnd_Sequence.puml"
+    type: "sequence"
+    placement: "before_attack_tree"
+    description: >
+      Full provisioning and lead capture flow from financial approval through
+      CI/CD Terraform provisioning, Auth0 setup, event creation, lead OCR/voice
+      capture, AI processing, human review, and email dispatch.
+
+  - id: "DIAGRAM_02"
+    title: "V0 Data Capture Workflow — EU Processing"
+    file: "../../V0/Meetsendai_V0_DataCapture_Workflow.puml"
+    type: "activity"
+    placement: "before_attack_tree"
+    description: >
+      Step-by-step activity diagram of the lead data capture workflow highlighting
+      EU-only processing, signed location headers, AI pipeline, and GDPR
+      compliance paths.
 
 assets:
   - ID: A_CLIENT
@@ -84,13 +105,17 @@ assets:
         trustBoundary: External / Trusted Internal
 
   - ID: A_DB
-    name: Tenant SQL Databases (EU)
+    name: Tenant PostgreSQL Databases (EU)
     type: Data Store
     description: >
-      Per-tenant isolated SQL databases in EU Azure region. Stores lead PII,
-      voice transcripts, product documentation, email drafts, and event metrics.
-      Encrypted at rest via Azure Transparent Data Encryption (TDE) with keys
-      managed in Azure Key Vault.
+      Azure Database for PostgreSQL Flexible Server (EU region). Database model is
+      determined by Subscription Tier: Enterprise tenants receive a dedicated Flexible
+      Server instance with a dedicated Azure Key Vault TDE key; Solo, Starter, and
+      Growth tenants share a single Flexible Server instance with PostgreSQL Row Level
+      Security (RLS) policies scoped per tenant_id providing DB-level data isolation.
+      Stores lead PII, voice transcripts, product documentation, email drafts, and
+      event metrics. All data encrypted at rest via Azure Transparent Data Encryption
+      (TDE) with keys managed in Azure Key Vault.
     trustZone: Trusted Internal
     dataFlows: []
 
@@ -115,15 +140,17 @@ assets:
     type: Infrastructure Component
     description: >
       Automated provisioning pipeline triggered on sale approval. Executes
-      Terraform to provision per-tenant Azure SQL databases, configure Azure Key
-      Vault TDE keys, and set up Auth0 tenant authentication. Holds or generates
-      privileged Azure cloud credentials during execution.
+      Terraform to provision tiered PostgreSQL infrastructure (Enterprise: dedicated
+      Azure Database for PostgreSQL Flexible Server instance + dedicated Key Vault TDE
+      key; Solo/Starter/Growth: RLS policy on the shared Flexible Server instance),
+      configure Azure Key Vault TDE keys, and set up Auth0 tenant authentication.
+      Holds or generates privileged Azure cloud credentials during execution.
     trustZone: Privileged Internal
     dataFlows:
       - ID: DF-TF-PROVISION
         name: Terraform Provisioning Actions
         source: A_PIPELINE
-        destination: A_APP
+        destination: A_DB
         crossesTrustBoundary: false
 
   - ID: A_EMAIL
@@ -1362,12 +1389,12 @@ threats:
         implementation:
           - "Add tfsec and checkov as pipeline steps triggered on pull_request events"
           - "Block merges on any HIGH severity finding"
-          - "Add custom policy checks: TDE enabled on all SQL DBs, Key Vault firewall enabled, no public storage access, private endpoints configured"
+          - "Add custom policy checks: TDE/encryption enabled on all PostgreSQL Flexible Server instances, Key Vault firewall enabled, no public storage access, private endpoints configured"
           - "Require minimum two reviewer approvals before 'terraform apply' is executed"
 
   # ─────────────────────────────────────────────────────────────────────────────
   # T_010 — Key Vault Privilege Escalation → Storage Dump
-  # Stage: Data at rest (Azure SQL + Key Vault)
+  # Stage: Data at rest (PostgreSQL + Key Vault)
   # ─────────────────────────────────────────────────────────────────────────────
   - ID: T_010_STORAGE_DUMP
     title: "Database Decryption via Azure Key Vault Over-Privileged Access"
@@ -1375,10 +1402,11 @@ threats:
     attack: >
       An attacker with overly broad Azure RBAC permissions or a misconfigured
       Managed Identity that has 'get' rights on Key Vault secrets and keys can
-      retrieve TDE encryption keys. Combined with access to Azure SQL automated
-      backup blobs (stored in Azure Blob Storage), the attacker can decrypt
-      database backup files offline, bypassing all application-level access controls
-      entirely.
+      retrieve TDE encryption keys. Combined with access to PostgreSQL backup storage
+      blobs (pg_dump archives for Enterprise tenants, or filtered tenant pg_dump
+      outputs for shared-tier backups, stored in Azure Blob Storage), the attacker
+      can decrypt database backup files offline, bypassing all application-level
+      access controls entirely.
     impactDesc: >
       Full decryption of all tenant database backups. Complete exposure of lead PII,
       voice transcripts, product documentation, and email drafts across all tenants
@@ -1404,13 +1432,13 @@ threats:
       - "Run: az keyvault show --name <vault-name> -- check access policies for over-provisioned identities"
       - "Verify the application Managed Identity has only wrapKey/unwrapKey permissions, not 'get' or 'list'"
       - "Check whether Key Vault firewall is enabled and restricts access to private endpoint only"
-      - "Enumerate SQL backup storage accounts: az storage account list -- verify no public network access"
+      - "Enumerate PostgreSQL backup storage accounts: az storage account list -- verify no public network access and confirm pg_dump backups are present"
       - "Confirm Key Vault soft delete and purge protection are enabled (prevents key deletion)"
       - "Review Azure Monitor Key Vault diagnostic logs — verify all key operations are captured"
       - "Check whether any Key Vault access policy grants 'All' permissions to broad service principals"
 
     testTools:
-      - "Azure CLI (az keyvault, az sql, az storage)"
+      - "Azure CLI (az keyvault, az postgres, az storage)"
       - "Microsoft Defender for Cloud (Key Vault recommendations)"
       - "tfsec (Key Vault Terraform configuration review)"
 
@@ -1446,9 +1474,9 @@ threats:
           - "Enable Purge Protection and Soft Delete (90-day retention) on all Key Vault instances"
 
       - ID: CM_010_PRIVATE_ENDPOINT
-        title: "Restrict Key Vault and SQL Backup Storage to Azure Private Endpoints Only"
+        title: "Restrict Key Vault and PostgreSQL Backup Storage to Azure Private Endpoints Only"
         description: >
-          Configure both Azure Key Vault and SQL backup storage accounts to deny
+          Configure both Azure Key Vault and PostgreSQL backup storage accounts to deny
           all public internet access, permitting only private endpoint traffic.
         status: "not_started"
         effort: "Medium"
@@ -1460,7 +1488,7 @@ threats:
           - "Enable Key Vault firewall: 'Allow access from selected virtual networks and IP addresses' — deny public"
           - "Create a private endpoint for Key Vault within the application VNet"
           - "Configure private DNS zone: privatelink.vaultcore.azure.net"
-          - "Configure SQL backup storage accounts with 'Deny' public network access"
+          - "Configure PostgreSQL backup storage accounts with 'Deny' public network access"
           - "Verify Terraform configuration enforces private endpoints via tfsec custom rules"
 
   # ─────────────────────────────────────────────────────────────────────────────
@@ -1506,7 +1534,7 @@ threats:
       - "Attempt to call the deletion endpoint directly via curl: DELETE /api/compliance/leads/{id}"
       - "Verify the server returns HTTP 403 Forbidden for Member-role callers"
       - "Attempt a bulk operation: DELETE /api/compliance/leads?event_id=<event_id>"
-      - "Check whether deletion is a hard SQL DELETE or a soft-delete (is_deleted flag)"
+      - "Check whether deletion is a hard DELETE or a soft-delete (is_deleted flag)"
       - "Verify whether a confirmation step or re-authentication challenge is required for bulk deletions"
       - "Confirm that each deletion operation creates an immutable audit log entry"
 
@@ -1548,7 +1576,7 @@ threats:
 
     expectedBehavior: >
       The deletion endpoint accepts requests from any authenticated user regardless
-      of role. Deletions are immediate hard SQL DELETEs with no confirmation step.
+      of role. Deletions are immediate hard DELETEs with no confirmation step.
       No audit log entry is created, and the operation is irreversible.
 
     expectedMitigation: >
@@ -1721,7 +1749,7 @@ threats:
       A malicious insider deletes lead records, modifies email drafts, approves
       and dispatches unauthorised emails, or executes GDPR deletion requests without
       leaving any tamper-evident record. If audit logs are stored in the same tenant
-      SQL database as operational data, they are destroyed alongside the records they
+      PostgreSQL database as operational data, they are destroyed alongside the records they
       document. An insider can claim no knowledge of an action that cannot be disproved,
       and the organisation cannot demonstrate GDPR compliance for data processing
       activities to a supervisory authority.
@@ -1750,7 +1778,7 @@ threats:
 
     testSteps:
       - "Perform a sequence of security-relevant actions: login, create lead, approve email draft, delete lead"
-      - "Query the tenant SQL database directly — check if audit log records are co-located with operational data"
+      - "Query the tenant PostgreSQL database directly — check if audit log records are co-located with operational data"
       - "Delete a lead record via the application and verify whether the audit log entry for its creation persists"
       - "Attempt to delete records from any audit_log table via the application API"
       - "Verify that Azure Monitor receives structured security events in real time for all logged actions"
@@ -1763,15 +1791,15 @@ threats:
       - "Azure CLI: az monitor log-analytics workspace table list"
 
     expectedBehavior: >
-      Audit logs are stored in the tenant SQL database. Deleting operational data also
-      destroys the corresponding audit records. No Azure Monitor integration exists.
-      No immutability policy is configured. Security events cannot be reconstructed
-      after the fact.
+      Audit logs are stored in the same tenant PostgreSQL database as operational data.
+      Deleting operational data also destroys the corresponding audit records. No Azure
+      Monitor integration exists. No immutability policy is configured. Security events
+      cannot be reconstructed after the fact.
 
     expectedMitigation: >
       All security-relevant events are written to Azure Monitor Log Analytics in real
       time with an immutability policy preventing deletion. The audit store is separate
-      from the tenant SQL database and inaccessible to application or tenant admin code.
+      from the tenant PostgreSQL database and inaccessible to application or tenant admin code.
       Retention is 2 years minimum. Anomaly alerts fire on bulk operations, after-hours
       access, and mass deletions.
 
@@ -1814,3 +1842,171 @@ threats:
           - "Enable distributed tracing across all outbound calls: AI engine, database, email provider"
           - "Set sampling rate to 100% for all security-relevant operations (auth, deletions, dispatch)"
           - "Verify correlation IDs link all sub-operations of a single lead capture end-to-end"
+
+  # ─────────────────────────────────────────────────────────────────────────────
+  # T_014 — RLS Misconfiguration: Cross-Tenant Data Exposure on Shared PostgreSQL Instance
+  # Stage: Database Layer — Shared Instance (Solo / Starter / Growth Tiers)
+  # Introduced by: PostgreSQL tiered model (Solo/Starter/Growth on shared instance)
+  # ─────────────────────────────────────────────────────────────────────────────
+  - ID: T_014_RLS_MISCONFIGURATION
+    title: "PostgreSQL RLS Misconfiguration Enabling Cross-Tenant Data Exposure on Shared Instance"
+    threatType: "Information Disclosure"
+    attack: >
+      Solo, Starter, and Growth tenants share a single Azure Database for PostgreSQL Flexible
+      Server instance. Their only database-layer isolation boundary is PostgreSQL Row Level
+      Security (RLS) — policies scoped to each tenant's tenant_id. Three distinct failure modes
+      can break this isolation independently of the application-layer tenant binding enforced by
+      CM_001_TENANT_BINDING:
+      (1) A database migration introduces a new tenant data table (leads, drafts, events,
+      documents) without ENABLE ROW LEVEL SECURITY — all tenant rows in that table are
+      immediately visible to any tenant's application session.
+      (2) The @meetsendai/db-client reuses a pooled connection without calling SET LOCAL
+      app.current_tenant_id before executing a query — the RLS USING clause evaluates to
+      null, potentially returning no rows (silent failure) or, in permissive configurations,
+      all rows from all tenants on that connection.
+      (3) FORCE ROW LEVEL SECURITY is not set on a table — the migration service account
+      (table owner role) can bypass the policy entirely, exposing all tenant rows to any
+      process running with that role, including a compromised migration runner.
+      An attacker who achieves SQL injection against the application — independently of
+      the application-layer IDOR mitigations in T_001 — would reach the database directly;
+      without RLS the injected query returns all-tenant data.
+    impactDesc: >
+      Cross-tenant exposure of lead PII — names, employers, titles, email addresses, phone
+      numbers, and voice transcripts owned by other tenants on the same shared instance.
+      For Solo, Starter, and Growth tenants RLS is the only database-layer isolation
+      boundary; a single misconfiguration affects all shared-tier tenants simultaneously.
+      GDPR Article 5(1)(f) violation (integrity and confidentiality). Mandatory breach
+      notification to all affected tenants under GDPR Article 33 (72-hour window).
+      This risk class is absent for Enterprise tier tenants who receive a dedicated
+      isolated instance — its existence for shared tiers makes RLS correctness a
+      critical ongoing compliance obligation.
+    impactedSecObj:
+      - SO-CONF
+      - SO-AUTH
+      - SO-COMP
+    attackers:
+      - ATT_TENANT
+      - ATT_INSIDER
+    CVSS:
+      vector: "CVSS:3.1/AV:N/AC:H/PR:L/UI:N/S:C/C:H/I:L/A:N"
+      score: 7.7
+      severity: "High"
+    fullyMitigated: false
+    alwaysPresent: true
+
+    testPrerequisites:
+      - "Two separate tenant accounts (Tenant A and Tenant B) on the shared PostgreSQL instance"
+      - "Direct PostgreSQL session access via a standard tenant application role (not superuser)"
+      - "Knowledge of both tenant_id UUID values"
+
+    testSteps:
+      - "Connect as a standard tenant application role; execute SELECT * FROM leads without setting app.current_tenant_id — verify zero rows or error returned (NOT all rows)"
+      - "SET app.current_tenant_id = '<tenant_A_id>'; SELECT * FROM leads — verify only Tenant A rows are returned"
+      - "SET app.current_tenant_id = '<tenant_B_id>'; SELECT * FROM leads — verify only Tenant B rows are returned, none from Tenant A"
+      - "Connect as the migration service account (table owner role); SELECT * FROM leads without setting tenant_id — verify FORCE ROW LEVEL SECURITY blocks access even for the owner"
+      - "Apply a test migration creating a new table without ENABLE ROW LEVEL SECURITY — verify all tenant rows in that table are visible to any session"
+      - "Verify the CI migration linter detects the missing RLS policy and fails the build before reaching production"
+      - "Simulate a SQL injection payload that omits the tenant_id WHERE clause — verify RLS prevents cross-tenant row access independently of the application-layer filter"
+
+    testScripts:
+      - language: "sql"
+        description: "Audit all shared-instance tables for missing or incomplete RLS configuration"
+        code: |
+          -- Run as database admin on the shared PostgreSQL instance
+          -- Any row with rls_enabled = FALSE is a complete isolation failure
+          -- Any row with rls_forced = FALSE is bypassable by the table owner role
+          SELECT
+            n.nspname          AS schema,
+            c.relname          AS table_name,
+            c.relrowsecurity   AS rls_enabled,
+            c.relforcerowsecurity AS rls_forced
+          FROM pg_class c
+          JOIN pg_namespace n ON n.oid = c.relnamespace
+          WHERE n.nspname NOT IN ('pg_catalog', 'information_schema')
+            AND c.relkind = 'r'
+          ORDER BY rls_enabled ASC, rls_forced ASC, c.relname;
+        requirements: []
+
+      - language: "sql"
+        description: "Verify RLS policies exist and are correctly scoped on all tenant data tables"
+        code: |
+          -- Confirms a tenant_isolation policy exists for each key tenant data table
+          -- and correctly references the app.current_tenant_id session variable
+          SELECT
+            schemaname,
+            tablename,
+            policyname,
+            permissive,
+            roles,
+            cmd,
+            qual
+          FROM pg_policies
+          WHERE tablename IN ('leads', 'drafts', 'events', 'documents', 'email_connections', 'invitations')
+          ORDER BY tablename, cmd;
+          -- Expected: for each table, policies covering SELECT, INSERT, UPDATE, DELETE
+          -- with qual = (tenant_id = (current_setting('app.current_tenant_id'))::uuid)
+        requirements: []
+
+    testTools:
+      - "psql (direct PostgreSQL query execution against shared instance)"
+      - "pg_catalog views pg_class and pg_policies (RLS coverage audit)"
+      - "Burp Suite (simulate SQL injection to validate RLS as independent enforcement layer)"
+
+    expectedBehavior: >
+      A newly migrated table lacks an RLS policy — all tenant rows are immediately visible
+      to any session. The migration service account bypasses RLS because FORCE ROW LEVEL
+      SECURITY is not set. A db-client connection that skips SET LOCAL app.current_tenant_id
+      silently returns an empty result set, masking the misconfiguration in application logs.
+      The absence of RLS means SQL injection bypasses application-layer tenant isolation entirely.
+
+    expectedMitigation: >
+      ENABLE ROW LEVEL SECURITY and FORCE ROW LEVEL SECURITY are set on all tenant data tables.
+      Every RLS policy uses: USING (tenant_id = current_setting('app.current_tenant_id')::uuid).
+      A CI migration linter fails the build if any new table lacks these flags. The
+      @meetsendai/db-client calls SET LOCAL app.current_tenant_id in every transaction.
+      CM_001_TENANT_BINDING provides an independent app-layer WHERE clause as defence-in-depth,
+      ensuring both the application layer and the database layer must fail simultaneously
+      for cross-tenant data access to occur.
+
+    countermeasures:
+      - ID: CM_014_RLS_COVERAGE
+        title: "Enforce RLS on Every Tenant Data Table — CI Migration Linter Blocks Uncovered Tables"
+        description: >
+          Apply ENABLE ROW LEVEL SECURITY and FORCE ROW LEVEL SECURITY to all tables on the
+          shared PostgreSQL instance that contain tenant-scoped data. A CI migration linter runs
+          in the build pipeline and fails if any new migration introduces a table without both
+          flags and a tenant_isolation policy.
+        status: "not_started"
+        effort: "Medium"
+        why: >
+          A single table without RLS is a complete isolation failure affecting every shared-tier
+          tenant simultaneously. A CI linter catches this at code review before it reaches
+          the production database — the cheapest fix point in the entire lifecycle.
+        implementation:
+          - "In every migration file that creates a tenant-data table, include: ALTER TABLE <name> ENABLE ROW LEVEL SECURITY; ALTER TABLE <name> FORCE ROW LEVEL SECURITY;"
+          - "Apply the standard policy template: CREATE POLICY tenant_isolation ON <table> USING (tenant_id = current_setting('app.current_tenant_id')::uuid) WITH CHECK (tenant_id = current_setting('app.current_tenant_id')::uuid);"
+          - "Write a CI linter that applies pending migrations to a test DB and queries pg_class: fail if any row has relrowsecurity = FALSE or relforcerowsecurity = FALSE"
+          - "Add a quarterly manual audit: run the SQL audit script above against the production shared instance — record result in LEARNING_LOG.md"
+          - "On any audit failure: treat as a P1 security incident; apply the missing RLS policy as an emergency hotfix before next business day"
+
+      - ID: CM_014_DB_CLIENT_SET
+        title: "Enforce SET LOCAL app.current_tenant_id in @meetsendai/db-client on Every Transaction"
+        description: >
+          The @meetsendai/db-client must call SET LOCAL app.current_tenant_id = $1 within every
+          database transaction before executing any query. SET LOCAL scopes the variable to the
+          current transaction, preventing session variable bleed on connection pool reuse.
+        status: "not_started"
+        effort: "Medium"
+        why: >
+          Connection pool reuse is the most common RLS failure mode in production. A pooled
+          connection that last served Tenant A still holds app.current_tenant_id = tenant_A if
+          SET LOCAL is not used, potentially exposing Tenant A's data to Tenant B's subsequent
+          query on the same connection. This is the most operationally likely path to a
+          cross-tenant breach on the shared instance.
+        implementation:
+          - "In the db-client transaction factory: execute SET LOCAL app.current_tenant_id = $1 immediately after BEGIN and before any application query"
+          - "Use SET LOCAL (not SET SESSION) to ensure the variable auto-resets on COMMIT or ROLLBACK"
+          - "Assert that app.current_tenant_id is unset on pooled connection return — log a security warning if it persists after commit"
+          - "Add a unit test: acquire a pooled connection without setting tenant_id, SELECT from leads — assert zero rows returned (RLS blocks)"
+          - "Add an integration test: SET Tenant A's ID, insert a lead row, SET Tenant B's ID in same test, SELECT — assert the row is not visible to Tenant B"
+          - "Note: CM_001_TENANT_BINDING (app-layer WHERE tenant_id filter) provides a second independent isolation layer — both controls must fail simultaneously for a breach to occur"
