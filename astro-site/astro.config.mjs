@@ -4,6 +4,6 @@ import { defineConfig } from 'astro/config';
 // For local dev, defaults to localhost root.
 export default defineConfig({
   output: 'static',
-  site: process.env.SITE || 'http://localhost:4321',
-  base: process.env.BASE || '/',
+  site: process.env.SITE || 'https://bturbs.github.io',
+  base: process.env.BASE || '/Threat-Model',
 });
