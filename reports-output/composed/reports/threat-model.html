@@ -4,7 +4,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Meetsendai Platform — Full Threat Model - Threat Model</title>
+    <title>SignalCaptureAI Platform — Full Threat Model - Threat Model</title>
     <script>document.documentElement.classList.remove('no-js');</script>
     <style>
         :root {
@@ -2560,10 +2560,10 @@ body.print-mode .interactive-diagram .plantuml-diagram {
             
                 
                 
-                <a href="../../Meetsendai-Control-Center-V0/reports/threat-model.html" class="model-item-link">
+                <a href="../../SignalCaptureAI-Control-Center-V0/reports/threat-model.html" class="model-item-link">
                     <div class="model-item">
                         <div class="model-icon">TM</div>
-                        <div class="model-name">Meetsendai Control Center (V0 — Angel Funding)</div>
+                        <div class="model-name">SignalCaptureAI Control Center (V0 — Angel Funding)</div>
                     </div>
                 </a>
                 
@@ -2571,24 +2571,24 @@ body.print-mode .interactive-diagram .plantuml-diagram {
                 
                 <div class="model-item current">
                     <div class="model-icon">TM</div>
-                    <div class="model-name">Meetsendai Platform — Full Threat Model</div>
+                    <div class="model-name">SignalCaptureAI Platform — Full Threat Model</div>
                 </div>
                 
                 
                 
-                <a href="../../meetsendai-V1/reports/threat-model.html" class="model-item-link">
+                <a href="../../signalcaptureai-V1/reports/threat-model.html" class="model-item-link">
                     <div class="model-item">
                         <div class="model-icon">TM</div>
-                        <div class="model-name">Meetsendai Lead-Capture Platform</div>
+                        <div class="model-name">SignalCaptureAI Lead-Capture Platform</div>
                     </div>
                 </a>
                 
                 
                 
-                <a href="../../meetsendai-v0/reports/threat-model.html" class="model-item-link">
+                <a href="../../signalcaptureai-v0/reports/threat-model.html" class="model-item-link">
                     <div class="model-item">
                         <div class="model-icon">TM</div>
-                        <div class="model-name">Meetsendai (V0)</div>
+                        <div class="model-name">SignalCaptureAI (V0)</div>
                     </div>
                 </a>
                 
@@ -2708,9 +2708,9 @@ body.print-mode .interactive-diagram .plantuml-diagram {
     <main class="main-content">
         <!-- Header -->
         <header class="header">
-            <h1>Meetsendai Platform — Full Threat Model</h1>
+            <h1>SignalCaptureAI Platform — Full Threat Model</h1>
             <div class="meta">
-                Model ID: TM-MEETSENDAI-COMPOSED | Version: 1.0 | Generated: 2026-03-21 17:10:33 UTC
+                Model ID: TM-SIGNALCAPTUREAI-COMPOSED | Version: 1.0 | Generated: 2026-03-21 17:10:33 UTC
             </div>
         </header>
 
@@ -3977,7 +3977,7 @@ body.print-mode .interactive-diagram .plantuml-diagram {
     <section id="scope">
         <h2>Scope</h2>
         <div class="scope-text">
-            Comprehensive threat model covering the full Meetsendai platform and operational infrastructure. Composes all system aspects: the core lead-capture and AI enrichment platform (V0), the Control Center admin portal for tenant lifecycle management, the BYOD access architecture, and the serverless file upload and processing pipeline. EU-only deployment (Azure West Europe).
+            Comprehensive threat model covering the full SignalCaptureAI platform and operational infrastructure. Composes all system aspects: the core lead-capture and AI enrichment platform (V0), the Control Center admin portal for tenant lifecycle management, the BYOD access architecture, and the serverless file upload and processing pipeline. EU-only deployment (Azure West Europe).
 
         </div>
 
@@ -4053,7 +4053,7 @@ body.print-mode .interactive-diagram .plantuml-diagram {
         <div class="diagram-container attack-tree-container"><div class="mermaid" data-diagram-id="attack-tree-mermaid">graph LR
 
     %% Model Root
-    ROOT["Meetsendai Platform — Full Threat Model"]
+    ROOT["SignalCaptureAI Platform — Full Threat Model"]
 
     %% Assets
     A_A_CLIENT["Sales Rep Mobile Client"]
@@ -4401,7 +4401,7 @@ body.print-mode .interactive-diagram .plantuml-diagram {
                 <button class="copy-btn" onclick="copyArchSource('DIAGRAM_01')">Copy PlantUML</button>
             </div>
             <pre class="puml-source"><code id="arch-source-code-DIAGRAM_01">@startuml ControlCenter_EndToEnd_Sequence
-title Meetsendai Control Center - End-to-End Tenant Lifecycle V0 (Initiator + Verifier)
+title SignalCaptureAI Control Center - End-to-End Tenant Lifecycle V0 (Initiator + Verifier)
 skinparam maxMessageSize 150
 skinparam BoxPadding 10
 
@@ -4415,7 +4415,7 @@ legend top right
   |&lt;#FFCCCC&gt; Light Red Box| High-Privilege Internal Admin (High Risk) |
 endlegend
 
-box &#34;Meetsendai Internal Admins (High Privilege)&#34; #FFCCCC
+box &#34;SignalCaptureAI Internal Admins (High Privilege)&#34; #FFCCCC
 actor &#34;CC-Initiator&#34; as Initiator
 actor &#34;CC-Verifier&#34; as Verifier
 end box
@@ -4477,7 +4477,7 @@ TF --&gt; Pipeline: Provisioning Complete
 deactivate TF
 Pipeline -[#orange]-&gt; Email: Dispatch Welcome Email\n(Primary Contact Address)
 activate Email
-Email --[#orange]-&gt; PrimaryContact: Your Meetsendai workspace is live!\nhttps://[slug].meetsendai.com\nFirst user to register = Tenant Admin\nSetup checklist included
+Email --[#orange]-&gt; PrimaryContact: Your SignalCaptureAI workspace is live!\nhttps://[slug].signalcaptureai.com\nFirst user to register = Tenant Admin\nSetup checklist included
 deactivate Email
 Pipeline -[#orange]-&gt; Audit: Write Provisioning Receipt to Audit Log
 Pipeline --&gt; Initiator: Tenant Live Notification
@@ -4536,7 +4536,7 @@ Pipeline --&gt; Initiator: Tenant Deletion Confirmed
             <div class="arch-diagram-title-row">
                 <h4>End-to-End Flow (Onboarding to Lead Capture)</h4>
                 <span class="arch-type-badge">sequence</span>
-                <span class="arch-source-path">📄 assets/Meetsendai_EndToEnd_Sequence.puml</span>
+                <span class="arch-source-path">📄 assets/SignalCaptureAI_EndToEnd_Sequence.puml</span>
             </div>
             <p class="arch-diagram-desc">Full lifecycle sequence from Finance approval through CI/CD tenant provisioning, Sales Rep SSO login, lead capture (OCR + Voice), Cloudflare geo-routing to EU/regional hubs, AI processing, human-in-the-loop approval, and compliance deletion.</p>
         </div>
@@ -4561,11 +4561,11 @@ Pipeline --&gt; Initiator: Tenant Deletion Confirmed
         </div>
         <div class="arch-tab-content" id="source-END_TO_END_SEQ" style="display:none;">
             <div class="arch-source-toolbar">
-                <span class="arch-source-label">Source: <code>assets/Meetsendai_EndToEnd_Sequence.puml</code></span>
+                <span class="arch-source-label">Source: <code>assets/SignalCaptureAI_EndToEnd_Sequence.puml</code></span>
                 <button class="copy-btn" onclick="copyArchSource('END_TO_END_SEQ')">Copy PlantUML</button>
             </div>
-            <pre class="puml-source"><code id="arch-source-code-END_TO_END_SEQ">@startuml Meetsendai_EndToEnd_Sequence
-title Meetsendai - End-to-End Flow (Onboarding to Lead Capture)
+            <pre class="puml-source"><code id="arch-source-code-END_TO_END_SEQ">@startuml SignalCaptureAI_EndToEnd_Sequence
+title SignalCaptureAI - End-to-End Flow (Onboarding to Lead Capture)
 skinparam maxMessageSize 150
 skinparam BoxPadding 10
 
@@ -4678,7 +4678,7 @@ Admin -[#red]-&gt; DB: Query/Delete Subject Data (upon request)
             <div class="arch-diagram-title-row">
                 <h4>Data Capture &amp; Geo-routing Workflow</h4>
                 <span class="arch-type-badge">activity</span>
-                <span class="arch-source-path">📄 assets/Meetsendai_Georouting_Workflow.puml</span>
+                <span class="arch-source-path">📄 assets/SignalCaptureAI_Georouting_Workflow.puml</span>
             </div>
             <p class="arch-diagram-desc">Activity diagram showing the geo-routing decision at Cloudflare: default EU Privacy Hub processing for US/UK/Canada/EU vs. regional sovereign spokes for strict localization laws (US Gov ITAR, China, India). Highlights PII risk levels per swimlane.</p>
         </div>
@@ -4703,11 +4703,11 @@ Admin -[#red]-&gt; DB: Query/Delete Subject Data (upon request)
         </div>
         <div class="arch-tab-content" id="source-GEO_ROUTING_FLOW" style="display:none;">
             <div class="arch-source-toolbar">
-                <span class="arch-source-label">Source: <code>assets/Meetsendai_Georouting_Workflow.puml</code></span>
+                <span class="arch-source-label">Source: <code>assets/SignalCaptureAI_Georouting_Workflow.puml</code></span>
                 <button class="copy-btn" onclick="copyArchSource('GEO_ROUTING_FLOW')">Copy PlantUML</button>
             </div>
-            <pre class="puml-source"><code id="arch-source-code-GEO_ROUTING_FLOW">@startuml Meetsendai_Georouting_Workflow
-title Meetsendai - Data Capture Workflow (Risk Highlighted)
+            <pre class="puml-source"><code id="arch-source-code-GEO_ROUTING_FLOW">@startuml SignalCaptureAI_Georouting_Workflow
+title SignalCaptureAI - Data Capture Workflow (Risk Highlighted)
 skinparam style strictuml
 skinparam wrapWidth 200
 
@@ -4723,7 +4723,7 @@ endlegend
 
 |#FFCCCC|Sales Rep|
 start
-:Access Meetsendai Platform;
+:Access SignalCaptureAI Platform;
 
 |#FFE6CC|Cloudflare (Geo-Barrier)|
 :Detect Initial Request Geolocation;
@@ -4821,7 +4821,7 @@ stop
         <div class="components-grid">
             
             <div class="component-card">
-                <h4>Meetsendai Core Platform (V0)</h4>
+                <h4>SignalCaptureAI Core Platform (V0)</h4>
                 <div class="component-desc">Core lead-capture and AI enrichment platform. Angel funding scope.</div>
                 <div class="component-stats">
                     <span class="component-stat threats">13 threats</span>
@@ -4847,7 +4847,7 @@ stop
             </div>
             
             <div class="component-card">
-                <h4>Meetsendai Platform (V1)</h4>
+                <h4>SignalCaptureAI Platform (V1)</h4>
                 <div class="component-desc">End-to-end onboarding to lead capture flow with georouting and AI enrichment.</div>
                 <div class="component-stats">
                     <span class="component-stat threats">9 threats</span>
@@ -5129,7 +5129,7 @@ stop
             
             <div id="threat-T_004_BRUTE_FORCE" class="threat-card">
                 <div class="threat-card-header">
-                    <h4>Credential Brute Force and Credential Stuffing via Auth0 Login <span class="threat-id">( T_004_BRUTE_FORCE )</span><span class="aspect-badge">Meetsendai Core Platform (V0)</span></h4>
+                    <h4>Credential Brute Force and Credential Stuffing via Auth0 Login <span class="threat-id">( T_004_BRUTE_FORCE )</span><span class="aspect-badge">SignalCaptureAI Core Platform (V0)</span></h4>
                 </div>
                 <div class="threat-card-body">
                     
@@ -5918,7 +5918,7 @@ stop
                         
                         <div class="detail-row">
                             <div class="detail-label">Threat Description</div>
-                            <div class="detail-value">An attacker obtains a CC administrator&#39;s username and password through a credential stuffing campaign (reusing leaked credentials from unrelated breaches) or a targeted spear-phishing email impersonating Meetsendai internal notifications. If MFA is not enforced at the Auth0 application level — or if the attacker captures a real-time OTP via an adversary-in-the-middle phishing kit — they obtain a valid CC session token with Initiator or Verifier privileges.
+                            <div class="detail-value">An attacker obtains a CC administrator&#39;s username and password through a credential stuffing campaign (reusing leaked credentials from unrelated breaches) or a targeted spear-phishing email impersonating SignalCaptureAI internal notifications. If MFA is not enforced at the Auth0 application level — or if the attacker captures a real-time OTP via an adversary-in-the-middle phishing kit — they obtain a valid CC session token with Initiator or Verifier privileges.
 </div>
                         </div>
                         
@@ -5996,7 +5996,7 @@ stop
                             <!-- Attack Node -->
                             <div class="vt-node vt-attack">
                                 <div class="vt-attack-label">Attack</div>
-                                <div>An attacker obtains a CC administrator&#39;s username and password through a credential stuffing campaign (reusing leaked credentials from unrelated breaches) or a targeted spear-phishing email impersonating Meetsendai internal notifications. If MFA is not enforced at the Auth0 application level — or if the attacker captures a real-time OTP via an adversary-in-the-middle phishing kit — they obtain a valid CC session token with Initiator or Verifier privileges.
+                                <div>An attacker obtains a CC administrator&#39;s username and password through a credential stuffing campaign (reusing leaked credentials from unrelated breaches) or a targeted spear-phishing email impersonating SignalCaptureAI internal notifications. If MFA is not enforced at the Auth0 application level — or if the attacker captures a real-time OTP via an adversary-in-the-middle phishing kit — they obtain a valid CC session token with Initiator or Verifier privileges.
 </div>
                             </div>
                             
@@ -6210,7 +6210,7 @@ stop
                             <div class="detail-value">
                                 <ul style="margin: 5px 0 0 20px; padding: 0;">
                                     
-                                    <li>Unauthorized cloud infrastructure provisioned under Meetsendai&#39;s Azure subscription at the attacker&#39;s direction. Cloud cost fraud. Platform security posture weakened by additional unmonitored infrastructure. If the rogue tenant&#39;s Auth0 application is misconfigured</li>
+                                    <li>Unauthorized cloud infrastructure provisioned under SignalCaptureAI&#39;s Azure subscription at the attacker&#39;s direction. Cloud cost fraud. Platform security posture weakened by additional unmonitored infrastructure. If the rogue tenant&#39;s Auth0 application is misconfigured</li>
                                     
                                     <li>it could issue tokens that the platform application mistakenly accepts.</li>
                                     
@@ -6332,7 +6332,7 @@ stop
                             <div class="cm-impl-label">How to implement</div>
                             <ol>
                                 
-                                <li>After successful Terraform provisioning, trigger an email to: cc-provisioning-notify@meetsendai.com (includes finance + founders)</li>
+                                <li>After successful Terraform provisioning, trigger an email to: cc-provisioning-notify@signalcaptureai.com (includes finance + founders)</li>
                                 
                                 <li>Include: tenant name, slug, seat limit, lead limit, Initiator identity, Verifier identity, provisioning timestamp</li>
                                 
@@ -6404,7 +6404,7 @@ stop
             
             <div id="threat-T_011_BULK_DELETION" class="threat-card">
                 <div class="threat-card-header">
-                    <h4>Unauthorized Bulk GDPR Deletion via Insufficient Role Enforcement <span class="threat-id">( T_011_BULK_DELETION )</span><span class="aspect-badge">Meetsendai Core Platform (V0)</span></h4>
+                    <h4>Unauthorized Bulk GDPR Deletion via Insufficient Role Enforcement <span class="threat-id">( T_011_BULK_DELETION )</span><span class="aspect-badge">SignalCaptureAI Core Platform (V0)</span></h4>
                 </div>
                 <div class="threat-card-body">
                     
@@ -6897,7 +6897,7 @@ stop
             
             <div id="threat-T_06_MALICIOUS_DELETION" class="threat-card">
                 <div class="threat-card-header">
-                    <h4>Unverified Bulk Data Subject Deletions <span class="threat-id">( T_06_MALICIOUS_DELETION )</span><span class="aspect-badge">Meetsendai Platform (V1)</span></h4>
+                    <h4>Unverified Bulk Data Subject Deletions <span class="threat-id">( T_06_MALICIOUS_DELETION )</span><span class="aspect-badge">SignalCaptureAI Platform (V1)</span></h4>
                 </div>
                 <div class="threat-card-body">
                     
@@ -7036,7 +7036,7 @@ stop
             
             <div id="threat-T_009_PIPELINE_POISON" class="threat-card">
                 <div class="threat-card-header">
-                    <h4>CI/CD Pipeline Poisoning via Terraform State or Credential Compromise <span class="threat-id">( T_009_PIPELINE_POISON )</span><span class="aspect-badge">Meetsendai Core Platform (V0)</span></h4>
+                    <h4>CI/CD Pipeline Poisoning via Terraform State or Credential Compromise <span class="threat-id">( T_009_PIPELINE_POISON )</span><span class="aspect-badge">SignalCaptureAI Core Platform (V0)</span></h4>
                 </div>
                 <div class="threat-card-body">
                     
@@ -7313,7 +7313,7 @@ stop
             
             <div id="threat-T_07_JWT_THEFT" class="threat-card">
                 <div class="threat-card-header">
-                    <h4>JWT Session Token Theft at IDP Boundary <span class="threat-id">( T_07_JWT_THEFT )</span><span class="aspect-badge">Meetsendai Platform (V1)</span></h4>
+                    <h4>JWT Session Token Theft at IDP Boundary <span class="threat-id">( T_07_JWT_THEFT )</span><span class="aspect-badge">SignalCaptureAI Platform (V1)</span></h4>
                 </div>
                 <div class="threat-card-body">
                     
@@ -7657,7 +7657,7 @@ stop
                                 
                                 <li>Configure the Auth0 SDK to use cookie-based session storage instead of localStorage</li>
                                 
-                                <li>Set the session cookie attributes: HttpOnly, Secure, SameSite=Strict, Path=/, Domain=control-center.meetsendai.com</li>
+                                <li>Set the session cookie attributes: HttpOnly, Secure, SameSite=Strict, Path=/, Domain=control-center.signalcaptureai.com</li>
                                 
                                 <li>Set the cookie Max-Age to match the Auth0 session token expiry (900 seconds)</li>
                                 
@@ -7729,7 +7729,7 @@ stop
             
             <div id="threat-T_08_IAC_MISCONFIG" class="threat-card">
                 <div class="threat-card-header">
-                    <h4>Terraform IaC Misconfiguration Collapses Tenant Isolation <span class="threat-id">( T_08_IAC_MISCONFIG )</span><span class="aspect-badge">Meetsendai Platform (V1)</span></h4>
+                    <h4>Terraform IaC Misconfiguration Collapses Tenant Isolation <span class="threat-id">( T_08_IAC_MISCONFIG )</span><span class="aspect-badge">SignalCaptureAI Platform (V1)</span></h4>
                 </div>
                 <div class="threat-card-body">
                     
@@ -7872,7 +7872,7 @@ stop
             
             <div id="threat-T_09_AI_PII_EXFIL" class="threat-card">
                 <div class="threat-card-header">
-                    <h4>PII Exfiltration via Third-Party AI Service (Whisper / OCR) <span class="threat-id">( T_09_AI_PII_EXFIL )</span><span class="aspect-badge">Meetsendai Platform (V1)</span></h4>
+                    <h4>PII Exfiltration via Third-Party AI Service (Whisper / OCR) <span class="threat-id">( T_09_AI_PII_EXFIL )</span><span class="aspect-badge">SignalCaptureAI Platform (V1)</span></h4>
                 </div>
                 <div class="threat-card-body">
                     
@@ -8041,7 +8041,7 @@ stop
                                     
                                     <li>access any pre-loaded documentation</li>
                                     
-                                    <li>and deny access to the legitimate client. Requires a complete Meetsendai-initiated tenant deletion and re-provisioning to remediate. Client trust severely damaged. Potential data exposure if the client uploads sensitive product documentation before detecting the compromise.</li>
+                                    <li>and deny access to the legitimate client. Requires a complete SignalCaptureAI-initiated tenant deletion and re-provisioning to remediate. Client trust severely damaged. Potential data exposure if the client uploads sensitive product documentation before detecting the compromise.</li>
                                     
                                 </ul>
                             </div>
@@ -8209,7 +8209,7 @@ stop
                                 
                                 <li>Generate a HMAC-signed token: sign(tenant_slug + primary_contact_email + expiry_timestamp) with a server-side secret</li>
                                 
-                                <li>Embed the token in the welcome email URL: https://[slug].meetsendai.com/register?token=&lt;signed_token&gt;</li>
+                                <li>Embed the token in the welcome email URL: https://[slug].signalcaptureai.com/register?token=&lt;signed_token&gt;</li>
                                 
                                 <li>On registration: validate the token signature, check expiry, and confirm the registering email matches the token payload</li>
                                 
@@ -8235,7 +8235,7 @@ stop
             
             <div id="threat-T_005_JWT_THEFT" class="threat-card">
                 <div class="threat-card-header">
-                    <h4>JWT Session Token Theft and Replay Attack <span class="threat-id">( T_005_JWT_THEFT )</span><span class="aspect-badge">Meetsendai Core Platform (V0)</span></h4>
+                    <h4>JWT Session Token Theft and Replay Attack <span class="threat-id">( T_005_JWT_THEFT )</span><span class="aspect-badge">SignalCaptureAI Core Platform (V0)</span></h4>
                 </div>
                 <div class="threat-card-body">
                     
@@ -8480,11 +8480,11 @@ stop
                             <div class="cm-impl-label">How to implement</div>
                             <ol>
                                 
-                                <li>Set Allowed Callback URLs in Auth0 to &#39;https://app.meetsendai.com/callback&#39; only</li>
+                                <li>Set Allowed Callback URLs in Auth0 to &#39;https://app.signalcaptureai.com/callback&#39; only</li>
                                 
-                                <li>Set Allowed Logout URLs to &#39;https://app.meetsendai.com&#39; only</li>
+                                <li>Set Allowed Logout URLs to &#39;https://app.signalcaptureai.com&#39; only</li>
                                 
-                                <li>Remove all wildcard patterns (*.meetsendai.com) and localhost entries from the production tenant</li>
+                                <li>Remove all wildcard patterns (*.signalcaptureai.com) and localhost entries from the production tenant</li>
                                 
                                 <li>Test that Auth0 rejects requests with arbitrary redirect_uri values</li>
                                 
@@ -8506,7 +8506,7 @@ stop
             
             <div id="threat-T_04_STORAGE_DUMP" class="threat-card">
                 <div class="threat-card-header">
-                    <h4>Data at Rest Extraction (Storage Attack) <span class="threat-id">( T_04_STORAGE_DUMP )</span><span class="aspect-badge">Meetsendai Platform (V1)</span></h4>
+                    <h4>Data at Rest Extraction (Storage Attack) <span class="threat-id">( T_04_STORAGE_DUMP )</span><span class="aspect-badge">SignalCaptureAI Platform (V1)</span></h4>
                 </div>
                 <div class="threat-card-body">
                     
@@ -8865,7 +8865,7 @@ stop
             
             <div id="threat-T_001_IDOR" class="threat-card">
                 <div class="threat-card-header">
-                    <h4>Cross-Tenant Data Exposure via Insecure Direct Object Reference <span class="threat-id">( T_001_IDOR )</span><span class="aspect-badge">Meetsendai Core Platform (V0)</span></h4>
+                    <h4>Cross-Tenant Data Exposure via Insecure Direct Object Reference <span class="threat-id">( T_001_IDOR )</span><span class="aspect-badge">SignalCaptureAI Core Platform (V0)</span></h4>
                 </div>
                 <div class="threat-card-body">
                     
@@ -9087,7 +9087,7 @@ stop
             
             <div id="threat-T_008_DOC_POISON" class="threat-card">
                 <div class="threat-card-header">
-                    <h4>Knowledge Base Poisoning via Malicious Document Upload <span class="threat-id">( T_008_DOC_POISON )</span><span class="aspect-badge">Meetsendai Core Platform (V0)</span></h4>
+                    <h4>Knowledge Base Poisoning via Malicious Document Upload <span class="threat-id">( T_008_DOC_POISON )</span><span class="aspect-badge">SignalCaptureAI Core Platform (V0)</span></h4>
                 </div>
                 <div class="threat-card-body">
                     
@@ -9301,7 +9301,7 @@ stop
             
             <div id="threat-T_01_IDOR" class="threat-card">
                 <div class="threat-card-header">
-                    <h4>Cross-Tenant Data Exposure via IDOR <span class="threat-id">( T_01_IDOR )</span><span class="aspect-badge">Meetsendai Platform (V1)</span></h4>
+                    <h4>Cross-Tenant Data Exposure via IDOR <span class="threat-id">( T_01_IDOR )</span><span class="aspect-badge">SignalCaptureAI Platform (V1)</span></h4>
                 </div>
                 <div class="threat-card-body">
                     
@@ -9438,7 +9438,7 @@ stop
             
             <div id="threat-T_03_GEO_SPOOFING" class="threat-card">
                 <div class="threat-card-header">
-                    <h4>Geo-Location Bypass via Header Spoofing <span class="threat-id">( T_03_GEO_SPOOFING )</span><span class="aspect-badge">Meetsendai Platform (V1)</span></h4>
+                    <h4>Geo-Location Bypass via Header Spoofing <span class="threat-id">( T_03_GEO_SPOOFING )</span><span class="aspect-badge">SignalCaptureAI Platform (V1)</span></h4>
                 </div>
                 <div class="threat-card-body">
                     
@@ -9573,7 +9573,7 @@ stop
             
             <div id="threat-T_02_WIFI_INTERCEPT" class="threat-card">
                 <div class="threat-card-header">
-                    <h4>Interception of Unencrypted PII over Untrusted Event Networks <span class="threat-id">( T_02_WIFI_INTERCEPT )</span><span class="aspect-badge">Meetsendai Platform (V1)</span></h4>
+                    <h4>Interception of Unencrypted PII over Untrusted Event Networks <span class="threat-id">( T_02_WIFI_INTERCEPT )</span><span class="aspect-badge">SignalCaptureAI Platform (V1)</span></h4>
                 </div>
                 <div class="threat-card-body">
                     
@@ -9706,7 +9706,7 @@ stop
             
             <div id="threat-T_002_WIFI_INTERCEPT" class="threat-card">
                 <div class="threat-card-header">
-                    <h4>PII Interception over Untrusted Event Network (Evil Twin / MITM) <span class="threat-id">( T_002_WIFI_INTERCEPT )</span><span class="aspect-badge">Meetsendai Core Platform (V0)</span></h4>
+                    <h4>PII Interception over Untrusted Event Network (Evil Twin / MITM) <span class="threat-id">( T_002_WIFI_INTERCEPT )</span><span class="aspect-badge">SignalCaptureAI Core Platform (V0)</span></h4>
                 </div>
                 <div class="threat-card-body">
                     
@@ -9926,7 +9926,7 @@ stop
             
             <div id="threat-T_003_HEADER_FORGE" class="threat-card">
                 <div class="threat-card-header">
-                    <h4>Signed Location Header Forgery Leading to Geo-Compliance Bypass <span class="threat-id">( T_003_HEADER_FORGE )</span><span class="aspect-badge">Meetsendai Core Platform (V0)</span></h4>
+                    <h4>Signed Location Header Forgery Leading to Geo-Compliance Bypass <span class="threat-id">( T_003_HEADER_FORGE )</span><span class="aspect-badge">SignalCaptureAI Core Platform (V0)</span></h4>
                 </div>
                 <div class="threat-card-body">
                     
@@ -10432,7 +10432,7 @@ stop
             
             <div id="threat-T_012_EMAIL_INJECT" class="threat-card">
                 <div class="threat-card-header">
-                    <h4>Email Header Injection via Unsanitized AI-Generated Draft Content <span class="threat-id">( T_012_EMAIL_INJECT )</span><span class="aspect-badge">Meetsendai Core Platform (V0)</span></h4>
+                    <h4>Email Header Injection via Unsanitized AI-Generated Draft Content <span class="threat-id">( T_012_EMAIL_INJECT )</span><span class="aspect-badge">SignalCaptureAI Core Platform (V0)</span></h4>
                 </div>
                 <div class="threat-card-body">
                     
@@ -10620,7 +10620,7 @@ stop
                                 
                                 <li>Enable DKIM signing in the transactional email provider dashboard and publish the DNS DKIM TXT record</li>
                                 
-                                <li>Publish DMARC policy: v=DMARC1; p=quarantine; rua=mailto:security@meetsendai.com</li>
+                                <li>Publish DMARC policy: v=DMARC1; p=quarantine; rua=mailto:security@signalcaptureai.com</li>
                                 
                                 <li>Verify all three using MXToolbox and mail-tester.com</li>
                                 
@@ -10644,7 +10644,7 @@ stop
             
             <div id="threat-T_006_PROMPT_INJECTION" class="threat-card">
                 <div class="threat-card-header">
-                    <h4>AI Prompt Injection via Adversarial Business Card or Voice Note <span class="threat-id">( T_006_PROMPT_INJECTION )</span><span class="aspect-badge">Meetsendai Core Platform (V0)</span></h4>
+                    <h4>AI Prompt Injection via Adversarial Business Card or Voice Note <span class="threat-id">( T_006_PROMPT_INJECTION )</span><span class="aspect-badge">SignalCaptureAI Core Platform (V0)</span></h4>
                 </div>
                 <div class="threat-card-body">
                     
@@ -10866,7 +10866,7 @@ stop
             
             <div id="threat-T_05_PROMPT_INJECTION" class="threat-card">
                 <div class="threat-card-header">
-                    <h4>AI Prompt Injection via Voice / OCR Payloads <span class="threat-id">( T_05_PROMPT_INJECTION )</span><span class="aspect-badge">Meetsendai Platform (V1)</span></h4>
+                    <h4>AI Prompt Injection via Voice / OCR Payloads <span class="threat-id">( T_05_PROMPT_INJECTION )</span><span class="aspect-badge">SignalCaptureAI Platform (V1)</span></h4>
                 </div>
                 <div class="threat-card-body">
                     
@@ -11052,7 +11052,7 @@ stop
             
             <div id="threat-T_010_STORAGE_DUMP" class="threat-card">
                 <div class="threat-card-header">
-                    <h4>Database Decryption via Azure Key Vault Over-Privileged Access <span class="threat-id">( T_010_STORAGE_DUMP )</span><span class="aspect-badge">Meetsendai Core Platform (V0)</span></h4>
+                    <h4>Database Decryption via Azure Key Vault Over-Privileged Access <span class="threat-id">( T_010_STORAGE_DUMP )</span><span class="aspect-badge">SignalCaptureAI Core Platform (V0)</span></h4>
                 </div>
                 <div class="threat-card-body">
                     
@@ -11343,7 +11343,7 @@ stop
             
             <div id="threat-T_007_WHISPER_EGRESS" class="threat-card">
                 <div class="threat-card-header">
-                    <h4>GDPR Violation via EU PII Transmission to External OpenAI Whisper API <span class="threat-id">( T_007_WHISPER_EGRESS )</span><span class="aspect-badge">Meetsendai Core Platform (V0)</span></h4>
+                    <h4>GDPR Violation via EU PII Transmission to External OpenAI Whisper API <span class="threat-id">( T_007_WHISPER_EGRESS )</span><span class="aspect-badge">SignalCaptureAI Core Platform (V0)</span></h4>
                 </div>
                 <div class="threat-card-body">
                     
@@ -11585,7 +11585,7 @@ stop
                             <div class="detail-value">
                                 <ul style="margin: 5px 0 0 20px; padding: 0;">
                                     
-                                    <li>Meetsendai cannot provision new tenants during a sales period</li>
+                                    <li>SignalCaptureAI cannot provision new tenants during a sales period</li>
                                     
                                     <li>directly impacting revenue. Emergency tenant deletion requests (e.g.</li>
                                     
@@ -11751,7 +11751,7 @@ stop
                             <div class="cm-impl-label">How to implement</div>
                             <ol>
                                 
-                                <li>In Azure App Service access restrictions: limit inbound connections to Meetsendai office IP ranges for the CC login endpoint</li>
+                                <li>In Azure App Service access restrictions: limit inbound connections to SignalCaptureAI office IP ranges for the CC login endpoint</li>
                                 
                                 <li>For external admin access (remote work): require VPN connection before CC is accessible — restrict CC to VPN egress IPs only</li>
                                 
@@ -11779,7 +11779,7 @@ stop
             
             <div id="threat-T_013_REPUDIATION" class="threat-card">
                 <div class="threat-card-header">
-                    <h4>Repudiation of Security-Relevant Actions via Insufficient Audit Logging <span class="threat-id">( T_013_REPUDIATION )</span><span class="aspect-badge">Meetsendai Core Platform (V0)</span></h4>
+                    <h4>Repudiation of Security-Relevant Actions via Insufficient Audit Logging <span class="threat-id">( T_013_REPUDIATION )</span><span class="aspect-badge">SignalCaptureAI Core Platform (V0)</span></h4>
                 </div>
                 <div class="threat-card-body">
                     
@@ -12154,7 +12154,7 @@ stop
                         <pre><code id="script-T_001_IDOR_1">import requests
 import sys
 
-BASE_URL = sys.argv[1]   # e.g., https://app.meetsendai.com
+BASE_URL = sys.argv[1]   # e.g., https://app.signalcaptureai.com
 TOKEN    = sys.argv[2]   # JWT for Tenant A
 MY_TENANT = sys.argv[3]  # known tenant_id for Tenant A
 
@@ -12244,7 +12244,7 @@ for resource_id in range(1, 200):
                     <h5>⚙️ Prerequisites</h5>
                     <ul>
                         
-                        <li>A test device running the Meetsendai client application</li>
+                        <li>A test device running the SignalCaptureAI client application</li>
                         
                         <li>Burp Suite or mitmproxy configured as intercepting proxy on a local network</li>
                         
@@ -12282,7 +12282,7 @@ for resource_id in range(1, 200):
                         
                         <li>Install Burp&#39;s CA certificate on the test device as a trusted root</li>
                         
-                        <li>Launch the Meetsendai application and attempt a full lead capture submission</li>
+                        <li>Launch the SignalCaptureAI application and attempt a full lead capture submission</li>
                         
                         <li>Observe whether Burp Suite can intercept and read the plaintext request body (photo + audio)</li>
                         
@@ -12309,7 +12309,7 @@ for resource_id in range(1, 200):
                         <div class="test-script-description">Verify TLS version enforcement and HSTS header presence on the application endpoint</div>
                         
                         <pre><code id="script-T_002_WIFI_INTERCEPT_1">#!/bin/bash
-HOST=&#34;$1&#34;   # e.g., app.meetsendai.com
+HOST=&#34;$1&#34;   # e.g., app.signalcaptureai.com
 PORT=&#34;${2:-443}&#34;
 
 echo &#34;[*] Testing TLS configuration for $HOST:$PORT&#34;
@@ -12634,7 +12634,7 @@ print(&#34;[*] Also run: gitleaks detect --source . --verbose&#34;)
                         <div class="test-script-description">Rate limit detection — 15 rapid failed auth attempts; observe if lockout or throttling activates</div>
                         
                         <pre><code id="script-T_004_BRUTE_FORCE_1">#!/bin/bash
-AUTH0_DOMAIN=&#34;$1&#34;   # e.g., meetsendai.eu.auth0.com
+AUTH0_DOMAIN=&#34;$1&#34;   # e.g., signalcaptureai.eu.auth0.com
 CLIENT_ID=&#34;$2&#34;
 TEST_EMAIL=&#34;$3&#34;
 WRONG_PASS=&#34;InvalidPassword_Test_123&#34;
@@ -12732,7 +12732,7 @@ echo &#34;[*] If all return 401 without lockout, Attack Protection is NOT config
                         
                         <li>A browser with developer tools</li>
                         
-                        <li>Access to the Meetsendai web application</li>
+                        <li>Access to the SignalCaptureAI web application</li>
                         
                         <li>Burp Suite for XSS injection testing</li>
                         
@@ -13567,7 +13567,7 @@ echo &#34;[*] Recommended: run &#39;gitleaks detect --source $REPO_PATH --verbos
                         <div class="test-script-description">Test whether a Member-role JWT can invoke the compliance deletion endpoint</div>
                         
                         <pre><code id="script-T_011_BULK_DELETION_1">#!/bin/bash
-BASE_URL=&#34;$1&#34;       # e.g., https://app.meetsendai.com
+BASE_URL=&#34;$1&#34;       # e.g., https://app.signalcaptureai.com
 MEMBER_TOKEN=&#34;$2&#34;   # JWT for a Member-role user
 TEST_LEAD_ID=&#34;$3&#34;   # ID of a non-critical test lead record
 
@@ -13882,7 +13882,7 @@ fi
             <div class="test-case-body" style="display: none;">
                 <div class="test-objective">
                     <div class="test-objective-label">Test Objective</div>
-                    <p>Verify that the system is protected against: <strong>An attacker obtains a CC administrator&#39;s username and password through a credential stuffing campaign (reusing leaked credentials from unrelated breaches) or a targeted spear-phishing email impersonating Meetsendai internal notifications. If MFA is not enforced at the Auth0 application level — or if the attacker captures a real-time OTP via an adversary-in-the-middle phishing kit — they obtain a valid CC session token with Initiator or Verifier privileges.
+                    <p>Verify that the system is protected against: <strong>An attacker obtains a CC administrator&#39;s username and password through a credential stuffing campaign (reusing leaked credentials from unrelated breaches) or a targeted spear-phishing email impersonating SignalCaptureAI internal notifications. If MFA is not enforced at the Auth0 application level — or if the attacker captures a real-time OTP via an adversary-in-the-middle phishing kit — they obtain a valid CC session token with Initiator or Verifier privileges.
 </strong></p>
                 </div>
                 
@@ -13966,11 +13966,11 @@ CLIENT_ID    = &#34;REPLACE_WITH_CC_CLIENT_ID&#34;
 URL = f&#34;https://{AUTH0_DOMAIN}/oauth/token&#34;
 
 test_pairs = [
-    (&#34;admin@meetsendai.com&#34;, &#34;password123&#34;),
-    (&#34;admin@meetsendai.com&#34;, &#34;Summer2024!&#34;),
-    (&#34;admin@meetsendai.com&#34;, &#34;Meetsendai1&#34;),
-    (&#34;admin@meetsendai.com&#34;, &#34;qwerty123456&#34;),
-    (&#34;admin@meetsendai.com&#34;, &#34;Welcome2025&#34;),
+    (&#34;admin@signalcaptureai.com&#34;, &#34;password123&#34;),
+    (&#34;admin@signalcaptureai.com&#34;, &#34;Summer2024!&#34;),
+    (&#34;admin@signalcaptureai.com&#34;, &#34;SignalCaptureAI1&#34;),
+    (&#34;admin@signalcaptureai.com&#34;, &#34;qwerty123456&#34;),
+    (&#34;admin@signalcaptureai.com&#34;, &#34;Welcome2025&#34;),
 ]
 
 for email, pwd in test_pairs:
@@ -14754,7 +14754,7 @@ for res in state.get(&#39;resources&#39;, []):
                         
                         <li>Provision a test tenant and capture the welcome email</li>
                         
-                        <li>Before the primary contact registers, attempt to access the tenant login URL directly: https://[slug].meetsendai.com</li>
+                        <li>Before the primary contact registers, attempt to access the tenant login URL directly: https://[slug].signalcaptureai.com</li>
                         
                         <li>Attempt to register a new account at the URL — verify whether the first registration is indeed granted admin</li>
                         
@@ -15001,7 +15001,7 @@ for res in state.get(&#39;resources&#39;, []):
                         <div class="test-script-description">Check Content Security Policy header on CC application login and dashboard endpoints</div>
                         
                         <pre><code id="script-T_009_SESSION_HIJACK_1">#!/bin/bash
-CC_URL=&#34;$1&#34;  # e.g., https://control-center.meetsendai.com
+CC_URL=&#34;$1&#34;  # e.g., https://control-center.signalcaptureai.com
 
 echo &#34;[*] Checking security headers on $CC_URL&#34;
 echo &#34;&#34;
@@ -15937,7 +15937,7 @@ curl -sc /dev/null -sI &#34;$CC_URL/login&#34; | grep -i &#34;set-cookie&#34;
         <!-- Footer -->
         <footer class="footer">
             <p>Generated by Threat Model Tool | 2026-03-21 17:10:33 UTC</p>
-            <p>Meetsendai Platform — Full Threat Model | TM-MEETSENDAI-COMPOSED v1.0</p>
+            <p>SignalCaptureAI Platform — Full Threat Model | TM-SIGNALCAPTUREAI-COMPOSED v1.0</p>
         </footer>
     </main>
 
@@ -16084,8 +16084,8 @@ curl -sc /dev/null -sI &#34;$CC_URL/login&#34; | grep -i &#34;set-cookie&#34;
         
         // PlantUML rendering using online service
         // Store PUML source without HTML escaping (using tojson for proper JS string escaping)
-        const pumlComponentSource = "@startuml\n\ntitle Meetsendai Platform \u2014 Full Threat Model - Data Flow Diagram\n\n!define CRITICAL_COLOR #FF6B6B\n!define HIGH_COLOR #FFA500\n!define MEDIUM_COLOR #FFD93D\n!define LOW_COLOR #6BCB77\n!define TRUST_BOUNDARY_COLOR #E8E8E8\n\nskinparam {\n    BackgroundColor white\n    ArrowColor #333333\n    ArrowFontSize 10\n    ParticipantBorderColor #2c3e50\n    ParticipantBackgroundColor #ecf0f1\n    ParticipantFontColor #2c3e50\n    NoteBackgroundColor #fffde7\n    NoteBorderColor #ffc107\n    RectangleBorderColor #2c3e50\n    RectangleBorderStyle dashed\n}\n\n\u0027 === TRUST ZONES AND PARTICIPANTS ===\nrectangle \"External End-User\" as zone_External_End_User \u003c\u003ctrust_zone\u003e\u003e {\n    component \"Sales Rep Mobile Client\" as A_CLIENT\n    component \"Sales Rep Mobile Client\" as A_CLIENT\n}\n\nrectangle \"Edge / Third-Party\" as zone_Edge___Third_Party \u003c\u003ctrust_zone\u003e\u003e {\n    component \"Auth0 Identity Provider\" as A_AUTH0\n    component \"Auth0 (CC Admin Authentication)\" as A_CC_AUTH0\n    component \"Auth0 (Tenant Authentication)\" as A_TENANT_IDP\n}\n\nrectangle \"Trusted Internal\" as zone_Trusted_Internal \u003c\u003ctrust_zone\u003e\u003e {\n    component \"Azure Application (Docker)\" as A_APP\n    component \"Tenant SQL Databases\" as A_DB\n    component \"Azure Key Vault\" as A_KEYVAULT MEDIUM_COLOR\n    component \"Approval and Audit Engine\" as A_AUDIT\n    cloud \"Azure Infrastructure and Key Vault\" as A_AZURE\n    component \"Azure Application (Docker)\" as A_APP\n    component \"Tenant SQL Databases\" as A_DB\n    component \"AI Engine (Whisper / OCR)\" as A_AI\n    component \"CI/CD Pipeline \u0026 Terraform (IaC)\" as A_PIPELINE\n}\n\nrectangle \"External / Untrusted\" as zone_External___Untrusted \u003c\u003ctrust_zone\u003e\u003e {\n    component \"AI Engine (OpenAI Whisper + OCR)\" as A_AI_ENGINE\n}\n\nrectangle \"Privileged Internal\" as zone_Privileged_Internal \u003c\u003ctrust_zone\u003e\u003e {\n    component \"CI/CD Pipeline \u0026 Terraform (IaC)\" as A_PIPELINE\n    component \"CI/CD Pipeline \u0026 Terraform (IaC)\" as A_PIPELINE\n}\n\nrectangle \"External / Third-Party\" as zone_External___Third_Party \u003c\u003ctrust_zone\u003e\u003e {\n    component \"Email Delivery Service (Azure Communication)\" as A_EMAIL\n    component \"Email Delivery Service (Azure Communication)\" as A_EMAIL\n}\n\nrectangle \"Trusted Internal (High Privilege)\" as zone_Trusted_Internal__High_Privilege_ \u003c\u003ctrust_zone\u003e\u003e {\n    component \"Control Center Application\" as A_CC_APP\n}\n\nrectangle \"High-Privilege Internal\" as zone_High_Privilege_Internal \u003c\u003ctrust_zone\u003e\u003e {\n    component \"Control Center Administrator (Human Actor)\" as A_ADMIN\n}\n\nrectangle \"Edge Gateway\" as zone_Edge_Gateway \u003c\u003ctrust_zone\u003e\u003e {\n    component \"Cloudflare Edge Gateway\" as A_CLOUDFLARE\n}\n\nrectangle \"Edge / Iam\" as zone_Edge___IAM \u003c\u003ctrust_zone\u003e\u003e {\n    actor \"Identity Provider (Auth0 / Entra ID)\" as A_IDP\n}\n\n\u0027 === DATA FLOWS ===\nA_CLIENT --\u003e A_APP : PII Capture \u0026 Upload (Photo + Audio)\nA_AUTH0 --\u003e A_CLIENT : JWT Issuance to Client\nA_APP --\u003e A_DB : DB Read/Write (Lead PII, Docs, Drafts)\nA_AI_ENGINE --\u003e A_APP : Transcript and Extracted Contact Data Response\nA_APP --\u003e A_KEYVAULT : TDE Key Retrieval / Secret Access\nA_PIPELINE --\u003e A_APP : Terraform Provisioning Actions\nA_APP --\u003e A_EMAIL : Approved Email Dispatch to Lead\nA_ADMIN --\u003e A_CC_AUTH0 : CC Admin Login Request\nA_ADMIN --\u003e A_CC_APP : Tenant Lifecycle Request Submission\nA_CC_AUTH0 --\u003e A_CC_APP : CC Session JWT Issuance\nA_ADMIN --\u003e A_CC_APP : Verifier Approval or Rejection\nA_CC_APP --\u003e A_AUDIT : Audit Log Write\nA_AUDIT --\u003e A_CC_APP : Audit Log Export / Viewer\nA_CC_APP --\u003e A_PIPELINE : Pipeline Trigger from CC\nA_PIPELINE --\u003e A_AZURE : Terraform Provisioning Actions\nA_PIPELINE --\u003e A_AZURE : Tenant SQL Database Provisioning\nA_PIPELINE --\u003e A_AZURE : Key Vault TDE Key Provisioning\nA_PIPELINE --\u003e A_TENANT_IDP : Tenant Auth0 Application Provisioning\nA_PIPELINE --\u003e A_EMAIL : Welcome Email Dispatch\nA_PIPELINE --\u003e A_DB : Tenant DB \u0026 PKI Provisioning (Azure Resource Manager API)\nA_APP -[#FFA500]-\u003e A_DB : \u003ccolor:orange\u003eDB Read/Write (Lead PII, Product Docs, Drafts)\u003c/color\u003e (SQL/TLS)\\n[Confidential]\nA_APP -[#FFA500]-\u003e A_AI : \u003ccolor:orange\u003eAudio \u0026 OCR Payload to AI Engine\u003c/color\u003e (Internal API)\\n[Confidential]\nA_AI -[#FFA500]-\u003e A_APP : \u003ccolor:orange\u003eExtracted Text \u0026 Voice Transcript Return\u003c/color\u003e (Internal API)\\n[Confidential]\nA_APP -[#FF0000,bold]-\u003e A_AI_ENGINE : \u003ccolor:red\u003e\u003cb\u003eAudio / Image Submission to AI Engine\u003c/b\u003e\u003c/color\u003e\\n!! CROSSES BOUNDARY\nA_CLIENT -[#FF0000,bold]-\u003e A_IDP : \u003ccolor:red\u003e\u003cb\u003eSSO Login Request (OAuth2 / PKCE)\u003c/b\u003e\u003c/color\u003e (HTTPS/OAuth2)\\n!! CROSSES BOUNDARY [External End-User / IAM]\nA_CLIENT -[#FF0000,bold]-\u003e A_CLOUDFLARE : \u003ccolor:red\u003e\u003cb\u003ePII Capture \u0026 Upload (Photo + Audio)\u003c/b\u003e\u003c/color\u003e (HTTPS)\\n!! CROSSES BOUNDARY [External / Edge Gateway]\nA_CLOUDFLARE -[#FF0000,bold]-\u003e A_APP : \u003ccolor:red\u003e\u003cb\u003eEdge Routing to Azure Docker Hub\u003c/b\u003e\u003c/color\u003e (HTTPS)\\n!! CROSSES BOUNDARY [Edge / Trusted Internal]\nA_APP -[#FF0000,bold]-\u003e A_CLIENT : \u003ccolor:red\u003e\u003cb\u003eApproved Draft Dispatch (Email / WhatsApp)\u003c/b\u003e\u003c/color\u003e (HTTPS / SMTP / WhatsApp API)\\n!! CROSSES BOUNDARY [Trusted Internal / External]\nA_IDP -[#FF0000,bold]-\u003e A_CLIENT : \u003ccolor:red\u003e\u003cb\u003eAuth Token Issuance to Sales Rep\u003c/b\u003e\u003c/color\u003e (HTTPS/OAuth2)\\n!! CROSSES BOUNDARY [IAM / External End-User]\nA_IDP -[#FF0000,bold]-\u003e A_APP : \u003ccolor:red\u003e\u003cb\u003eToken Validation \u0026 SCIM Sync\u003c/b\u003e\u003c/color\u003e (HTTPS/SCIM)\\n!! CROSSES BOUNDARY [IAM / Trusted Internal]\nA_PIPELINE -[#FF0000,bold]-\u003e A_IDP : \u003ccolor:red\u003e\u003cb\u003eTenant Auth \u0026 SCIM Configuration\u003c/b\u003e\u003c/color\u003e (HTTPS/SCIM)\\n!! CROSSES BOUNDARY [Trusted Internal / IAM]\n\n\u0027 === LEGEND ===\nlegend right\n    |= Color |= Meaning |\n    | \u003cback:CRITICAL_COLOR\u003e    \u003c/back\u003e | Critical Risk (CVSS 9.0+) |\n    | \u003cback:HIGH_COLOR\u003e    \u003c/back\u003e | High Risk (CVSS 7.0-8.9) |\n    | \u003cback:MEDIUM_COLOR\u003e    \u003c/back\u003e | Medium Risk (CVSS 4.0-6.9) |\n    | \u003cback:LOW_COLOR\u003e    \u003c/back\u003e | Low Risk (CVSS \u003c 4.0) |\n    | \u003ccolor:red\u003e\u2014\u2014\u003e\u003c/color\u003e | Crosses Trust Boundary |\n    | \u003ccolor:orange\u003e\u2014\u2014\u003e\u003c/color\u003e | Sensitive Data Flow |\nendlegend\n\nfooter Generated from TM-MEETSENDAI-COMPOSED v1.0\n\n@enduml";
-        const pumlSequenceSource = "@startuml\n\ntitle Meetsendai Platform \u2014 Full Threat Model - Dataflow Sequence\n\nskinparam {\n    ParticipantBorderColor #2c3e50\n    ParticipantBackgroundColor #ecf0f1\n    SequenceArrowColor #333333\n    SequenceLifeLineBorderColor #bdc3c7\n    NoteBackgroundColor #fff3cd\n    NoteBorderColor #ffc107\n}\n\nbox \"External End-User\" #d4edda\n    participant \"Sales Rep Mobile Client\" as A_CLIENT\n    participant \"Sales Rep Mobile Client\" as A_CLIENT\nend box\n\nbox \"Edge / Third-Party\" #d4edda\n    participant \"Auth0 Identity Provider\" as A_AUTH0\n    participant \"Auth0 (CC Admin Authentication)\" as A_CC_AUTH0\n    participant \"Auth0 (Tenant Authentication)\" as A_TENANT_IDP\nend box\n\nbox \"Trusted Internal\" #d4edda\n    participant \"Azure Application (Docker)\" as A_APP\n    participant \"Tenant SQL Databases\" as A_DB\n    participant \"Azure Key Vault\" as A_KEYVAULT\n    participant \"Approval and Audit Engine\" as A_AUDIT\n    participant \"Azure Infrastructure and Key Vault\" as A_AZURE\n    participant \"Azure Application (Docker)\" as A_APP\n    participant \"Tenant SQL Databases\" as A_DB\n    participant \"AI Engine (Whisper / OCR)\" as A_AI\n    participant \"CI/CD Pipeline \u0026 Terraform (IaC)\" as A_PIPELINE\nend box\n\nbox \"External / Untrusted\" #d4edda\n    participant \"AI Engine (OpenAI Whisper + OCR)\" as A_AI_ENGINE\nend box\n\nbox \"Privileged Internal\" #d4edda\n    participant \"CI/CD Pipeline \u0026 Terraform (IaC)\" as A_PIPELINE\n    participant \"CI/CD Pipeline \u0026 Terraform (IaC)\" as A_PIPELINE\nend box\n\nbox \"External / Third-Party\" #d4edda\n    participant \"Email Delivery Service (Azure Communication)\" as A_EMAIL\n    participant \"Email Delivery Service (Azure Communication)\" as A_EMAIL\nend box\n\nbox \"Trusted Internal (High Privilege)\" #d4edda\n    participant \"Control Center Application\" as A_CC_APP\nend box\n\nbox \"High-Privilege Internal\" #d4edda\n    participant \"Control Center Administrator (Human Actor)\" as A_ADMIN\nend box\n\nbox \"Edge Gateway\" #d4edda\n    participant \"Cloudflare Edge Gateway\" as A_CLOUDFLARE\nend box\n\nbox \"Edge / Iam\" #d4edda\n    actor \"Identity Provider (Auth0 / Entra ID)\" as A_IDP\nend box\n\n== Data Flow Interactions ==\n\nA_CLIENT -[#FF0000]\u003e A_CLOUDFLARE: \u003ccolor:red\u003e\u003cb\u003ePII Capture \u0026 Upload (Photo + Audio)\u003c/b\u003e\u003c/color\u003e\\n(HTTPS)\nnote right #FFCCCC\n    **\u26a0 CROSSES TRUST BOUNDARY**\n    Classification: Confidential\n    Boundary: External / Edge Gateway\nend note\nA_CLOUDFLARE -[#FF0000]\u003e A_APP: \u003ccolor:red\u003e\u003cb\u003eEdge Routing to Azure Docker Hub\u003c/b\u003e\u003c/color\u003e\\n(HTTPS)\nnote right #FFCCCC\n    **\u26a0 CROSSES TRUST BOUNDARY**\n    Classification: Confidential\n    Boundary: Edge / Trusted Internal\nend note\nA_APP -[#FF0000]\u003e A_CLIENT: \u003ccolor:red\u003e\u003cb\u003eApproved Draft Dispatch (Email / WhatsApp)\u003c/b\u003e\u003c/color\u003e\\n(HTTPS / SMTP / WhatsApp API)\nnote right #FFCCCC\n    **\u26a0 CROSSES TRUST BOUNDARY**\n    Classification: Confidential\n    Boundary: Trusted Internal / External\nend note\nA_APP -[#FF0000]\u003e A_AI_ENGINE: \u003ccolor:red\u003e\u003cb\u003eAudio / Image Submission to AI Engine\u003c/b\u003e\u003c/color\u003e\\n(N/A)\nnote right #FFCCCC\n    **\u26a0 CROSSES TRUST BOUNDARY**\n    Classification: unclassified\nend note\nA_CLIENT -[#FF0000]\u003e A_IDP: \u003ccolor:red\u003e\u003cb\u003eSSO Login Request (OAuth2 / PKCE)\u003c/b\u003e\u003c/color\u003e\\n(HTTPS/OAuth2)\nnote right #FFCCCC\n    **\u26a0 CROSSES TRUST BOUNDARY**\n    Classification: Restricted\n    Boundary: External End-User / IAM\nend note\nA_IDP -[#FF0000]\u003e A_CLIENT: \u003ccolor:red\u003e\u003cb\u003eAuth Token Issuance to Sales Rep\u003c/b\u003e\u003c/color\u003e\\n(HTTPS/OAuth2)\nnote right #FFCCCC\n    **\u26a0 CROSSES TRUST BOUNDARY**\n    Classification: Restricted\n    Boundary: IAM / External End-User\nend note\nA_IDP -[#FF0000]\u003e A_APP: \u003ccolor:red\u003e\u003cb\u003eToken Validation \u0026 SCIM Sync\u003c/b\u003e\u003c/color\u003e\\n(HTTPS/SCIM)\nnote right #FFCCCC\n    **\u26a0 CROSSES TRUST BOUNDARY**\n    Classification: Restricted\n    Boundary: IAM / Trusted Internal\nend note\nA_PIPELINE -[#FF0000]\u003e A_IDP: \u003ccolor:red\u003e\u003cb\u003eTenant Auth \u0026 SCIM Configuration\u003c/b\u003e\u003c/color\u003e\\n(HTTPS/SCIM)\nnote right #FFCCCC\n    **\u26a0 CROSSES TRUST BOUNDARY**\n    Classification: Restricted\n    Boundary: Trusted Internal / IAM\nend note\nA_APP -[#FFA500]\u003e A_DB: \u003ccolor:orange\u003eDB Read/Write (Lead PII, Product Docs, Drafts)\u003c/color\u003e\\n(SQL/TLS)\nnote right #FFF3CD\n    Classification: Confidential\nend note\nA_APP -[#FFA500]\u003e A_AI: \u003ccolor:orange\u003eAudio \u0026 OCR Payload to AI Engine\u003c/color\u003e\\n(Internal API)\nnote right #FFF3CD\n    Classification: Confidential\nend note\nA_AI -[#FFA500]\u003e A_APP: \u003ccolor:orange\u003eExtracted Text \u0026 Voice Transcript Return\u003c/color\u003e\\n(Internal API)\nnote right #FFF3CD\n    Classification: Confidential\nend note\nA_CLIENT -\u003e A_APP: PII Capture \u0026 Upload (Photo + Audio)\\n(N/A)\nA_AUTH0 -\u003e A_CLIENT: JWT Issuance to Client\\n(N/A)\nA_APP -\u003e A_DB: DB Read/Write (Lead PII, Docs, Drafts)\\n(N/A)\nA_AI_ENGINE -\u003e A_APP: Transcript and Extracted Contact Data Response\\n(N/A)\nA_APP -\u003e A_KEYVAULT: TDE Key Retrieval / Secret Access\\n(N/A)\nA_PIPELINE -\u003e A_APP: Terraform Provisioning Actions\\n(N/A)\nA_APP -\u003e A_EMAIL: Approved Email Dispatch to Lead\\n(N/A)\nA_ADMIN -\u003e A_CC_AUTH0: CC Admin Login Request\\n(N/A)\nA_ADMIN -\u003e A_CC_APP: Tenant Lifecycle Request Submission\\n(N/A)\nA_CC_AUTH0 -\u003e A_CC_APP: CC Session JWT Issuance\\n(N/A)\nA_ADMIN -\u003e A_CC_APP: Verifier Approval or Rejection\\n(N/A)\nA_CC_APP -\u003e A_AUDIT: Audit Log Write\\n(N/A)\nA_AUDIT -\u003e A_CC_APP: Audit Log Export / Viewer\\n(N/A)\nA_CC_APP -\u003e A_PIPELINE: Pipeline Trigger from CC\\n(N/A)\nA_PIPELINE -\u003e A_AZURE: Terraform Provisioning Actions\\n(N/A)\nA_PIPELINE -\u003e A_AZURE: Tenant SQL Database Provisioning\\n(N/A)\nA_PIPELINE -\u003e A_AZURE: Key Vault TDE Key Provisioning\\n(N/A)\nA_PIPELINE -\u003e A_TENANT_IDP: Tenant Auth0 Application Provisioning\\n(N/A)\nA_PIPELINE -\u003e A_EMAIL: Welcome Email Dispatch\\n(N/A)\nA_PIPELINE -\u003e A_DB: Tenant DB \u0026 PKI Provisioning\\n(Azure Resource Manager API)\n\n== High-Risk Areas ==\n\nfooter Model: TM-MEETSENDAI-COMPOSED | Version: 1.0\n\n@enduml";
+        const pumlComponentSource = "@startuml\n\ntitle SignalCaptureAI Platform \u2014 Full Threat Model - Data Flow Diagram\n\n!define CRITICAL_COLOR #FF6B6B\n!define HIGH_COLOR #FFA500\n!define MEDIUM_COLOR #FFD93D\n!define LOW_COLOR #6BCB77\n!define TRUST_BOUNDARY_COLOR #E8E8E8\n\nskinparam {\n    BackgroundColor white\n    ArrowColor #333333\n    ArrowFontSize 10\n    ParticipantBorderColor #2c3e50\n    ParticipantBackgroundColor #ecf0f1\n    ParticipantFontColor #2c3e50\n    NoteBackgroundColor #fffde7\n    NoteBorderColor #ffc107\n    RectangleBorderColor #2c3e50\n    RectangleBorderStyle dashed\n}\n\n\u0027 === TRUST ZONES AND PARTICIPANTS ===\nrectangle \"External End-User\" as zone_External_End_User \u003c\u003ctrust_zone\u003e\u003e {\n    component \"Sales Rep Mobile Client\" as A_CLIENT\n    component \"Sales Rep Mobile Client\" as A_CLIENT\n}\n\nrectangle \"Edge / Third-Party\" as zone_Edge___Third_Party \u003c\u003ctrust_zone\u003e\u003e {\n    component \"Auth0 Identity Provider\" as A_AUTH0\n    component \"Auth0 (CC Admin Authentication)\" as A_CC_AUTH0\n    component \"Auth0 (Tenant Authentication)\" as A_TENANT_IDP\n}\n\nrectangle \"Trusted Internal\" as zone_Trusted_Internal \u003c\u003ctrust_zone\u003e\u003e {\n    component \"Azure Application (Docker)\" as A_APP\n    component \"Tenant SQL Databases\" as A_DB\n    component \"Azure Key Vault\" as A_KEYVAULT MEDIUM_COLOR\n    component \"Approval and Audit Engine\" as A_AUDIT\n    cloud \"Azure Infrastructure and Key Vault\" as A_AZURE\n    component \"Azure Application (Docker)\" as A_APP\n    component \"Tenant SQL Databases\" as A_DB\n    component \"AI Engine (Whisper / OCR)\" as A_AI\n    component \"CI/CD Pipeline \u0026 Terraform (IaC)\" as A_PIPELINE\n}\n\nrectangle \"External / Untrusted\" as zone_External___Untrusted \u003c\u003ctrust_zone\u003e\u003e {\n    component \"AI Engine (OpenAI Whisper + OCR)\" as A_AI_ENGINE\n}\n\nrectangle \"Privileged Internal\" as zone_Privileged_Internal \u003c\u003ctrust_zone\u003e\u003e {\n    component \"CI/CD Pipeline \u0026 Terraform (IaC)\" as A_PIPELINE\n    component \"CI/CD Pipeline \u0026 Terraform (IaC)\" as A_PIPELINE\n}\n\nrectangle \"External / Third-Party\" as zone_External___Third_Party \u003c\u003ctrust_zone\u003e\u003e {\n    component \"Email Delivery Service (Azure Communication)\" as A_EMAIL\n    component \"Email Delivery Service (Azure Communication)\" as A_EMAIL\n}\n\nrectangle \"Trusted Internal (High Privilege)\" as zone_Trusted_Internal__High_Privilege_ \u003c\u003ctrust_zone\u003e\u003e {\n    component \"Control Center Application\" as A_CC_APP\n}\n\nrectangle \"High-Privilege Internal\" as zone_High_Privilege_Internal \u003c\u003ctrust_zone\u003e\u003e {\n    component \"Control Center Administrator (Human Actor)\" as A_ADMIN\n}\n\nrectangle \"Edge Gateway\" as zone_Edge_Gateway \u003c\u003ctrust_zone\u003e\u003e {\n    component \"Cloudflare Edge Gateway\" as A_CLOUDFLARE\n}\n\nrectangle \"Edge / Iam\" as zone_Edge___IAM \u003c\u003ctrust_zone\u003e\u003e {\n    actor \"Identity Provider (Auth0 / Entra ID)\" as A_IDP\n}\n\n\u0027 === DATA FLOWS ===\nA_CLIENT --\u003e A_APP : PII Capture \u0026 Upload (Photo + Audio)\nA_AUTH0 --\u003e A_CLIENT : JWT Issuance to Client\nA_APP --\u003e A_DB : DB Read/Write (Lead PII, Docs, Drafts)\nA_AI_ENGINE --\u003e A_APP : Transcript and Extracted Contact Data Response\nA_APP --\u003e A_KEYVAULT : TDE Key Retrieval / Secret Access\nA_PIPELINE --\u003e A_APP : Terraform Provisioning Actions\nA_APP --\u003e A_EMAIL : Approved Email Dispatch to Lead\nA_ADMIN --\u003e A_CC_AUTH0 : CC Admin Login Request\nA_ADMIN --\u003e A_CC_APP : Tenant Lifecycle Request Submission\nA_CC_AUTH0 --\u003e A_CC_APP : CC Session JWT Issuance\nA_ADMIN --\u003e A_CC_APP : Verifier Approval or Rejection\nA_CC_APP --\u003e A_AUDIT : Audit Log Write\nA_AUDIT --\u003e A_CC_APP : Audit Log Export / Viewer\nA_CC_APP --\u003e A_PIPELINE : Pipeline Trigger from CC\nA_PIPELINE --\u003e A_AZURE : Terraform Provisioning Actions\nA_PIPELINE --\u003e A_AZURE : Tenant SQL Database Provisioning\nA_PIPELINE --\u003e A_AZURE : Key Vault TDE Key Provisioning\nA_PIPELINE --\u003e A_TENANT_IDP : Tenant Auth0 Application Provisioning\nA_PIPELINE --\u003e A_EMAIL : Welcome Email Dispatch\nA_PIPELINE --\u003e A_DB : Tenant DB \u0026 PKI Provisioning (Azure Resource Manager API)\nA_APP -[#FFA500]-\u003e A_DB : \u003ccolor:orange\u003eDB Read/Write (Lead PII, Product Docs, Drafts)\u003c/color\u003e (SQL/TLS)\\n[Confidential]\nA_APP -[#FFA500]-\u003e A_AI : \u003ccolor:orange\u003eAudio \u0026 OCR Payload to AI Engine\u003c/color\u003e (Internal API)\\n[Confidential]\nA_AI -[#FFA500]-\u003e A_APP : \u003ccolor:orange\u003eExtracted Text \u0026 Voice Transcript Return\u003c/color\u003e (Internal API)\\n[Confidential]\nA_APP -[#FF0000,bold]-\u003e A_AI_ENGINE : \u003ccolor:red\u003e\u003cb\u003eAudio / Image Submission to AI Engine\u003c/b\u003e\u003c/color\u003e\\n!! CROSSES BOUNDARY\nA_CLIENT -[#FF0000,bold]-\u003e A_IDP : \u003ccolor:red\u003e\u003cb\u003eSSO Login Request (OAuth2 / PKCE)\u003c/b\u003e\u003c/color\u003e (HTTPS/OAuth2)\\n!! CROSSES BOUNDARY [External End-User / IAM]\nA_CLIENT -[#FF0000,bold]-\u003e A_CLOUDFLARE : \u003ccolor:red\u003e\u003cb\u003ePII Capture \u0026 Upload (Photo + Audio)\u003c/b\u003e\u003c/color\u003e (HTTPS)\\n!! CROSSES BOUNDARY [External / Edge Gateway]\nA_CLOUDFLARE -[#FF0000,bold]-\u003e A_APP : \u003ccolor:red\u003e\u003cb\u003eEdge Routing to Azure Docker Hub\u003c/b\u003e\u003c/color\u003e (HTTPS)\\n!! CROSSES BOUNDARY [Edge / Trusted Internal]\nA_APP -[#FF0000,bold]-\u003e A_CLIENT : \u003ccolor:red\u003e\u003cb\u003eApproved Draft Dispatch (Email / WhatsApp)\u003c/b\u003e\u003c/color\u003e (HTTPS / SMTP / WhatsApp API)\\n!! CROSSES BOUNDARY [Trusted Internal / External]\nA_IDP -[#FF0000,bold]-\u003e A_CLIENT : \u003ccolor:red\u003e\u003cb\u003eAuth Token Issuance to Sales Rep\u003c/b\u003e\u003c/color\u003e (HTTPS/OAuth2)\\n!! CROSSES BOUNDARY [IAM / External End-User]\nA_IDP -[#FF0000,bold]-\u003e A_APP : \u003ccolor:red\u003e\u003cb\u003eToken Validation \u0026 SCIM Sync\u003c/b\u003e\u003c/color\u003e (HTTPS/SCIM)\\n!! CROSSES BOUNDARY [IAM / Trusted Internal]\nA_PIPELINE -[#FF0000,bold]-\u003e A_IDP : \u003ccolor:red\u003e\u003cb\u003eTenant Auth \u0026 SCIM Configuration\u003c/b\u003e\u003c/color\u003e (HTTPS/SCIM)\\n!! CROSSES BOUNDARY [Trusted Internal / IAM]\n\n\u0027 === LEGEND ===\nlegend right\n    |= Color |= Meaning |\n    | \u003cback:CRITICAL_COLOR\u003e    \u003c/back\u003e | Critical Risk (CVSS 9.0+) |\n    | \u003cback:HIGH_COLOR\u003e    \u003c/back\u003e | High Risk (CVSS 7.0-8.9) |\n    | \u003cback:MEDIUM_COLOR\u003e    \u003c/back\u003e | Medium Risk (CVSS 4.0-6.9) |\n    | \u003cback:LOW_COLOR\u003e    \u003c/back\u003e | Low Risk (CVSS \u003c 4.0) |\n    | \u003ccolor:red\u003e\u2014\u2014\u003e\u003c/color\u003e | Crosses Trust Boundary |\n    | \u003ccolor:orange\u003e\u2014\u2014\u003e\u003c/color\u003e | Sensitive Data Flow |\nendlegend\n\nfooter Generated from TM-SIGNALCAPTUREAI-COMPOSED v1.0\n\n@enduml";
+        const pumlSequenceSource = "@startuml\n\ntitle SignalCaptureAI Platform \u2014 Full Threat Model - Dataflow Sequence\n\nskinparam {\n    ParticipantBorderColor #2c3e50\n    ParticipantBackgroundColor #ecf0f1\n    SequenceArrowColor #333333\n    SequenceLifeLineBorderColor #bdc3c7\n    NoteBackgroundColor #fff3cd\n    NoteBorderColor #ffc107\n}\n\nbox \"External End-User\" #d4edda\n    participant \"Sales Rep Mobile Client\" as A_CLIENT\n    participant \"Sales Rep Mobile Client\" as A_CLIENT\nend box\n\nbox \"Edge / Third-Party\" #d4edda\n    participant \"Auth0 Identity Provider\" as A_AUTH0\n    participant \"Auth0 (CC Admin Authentication)\" as A_CC_AUTH0\n    participant \"Auth0 (Tenant Authentication)\" as A_TENANT_IDP\nend box\n\nbox \"Trusted Internal\" #d4edda\n    participant \"Azure Application (Docker)\" as A_APP\n    participant \"Tenant SQL Databases\" as A_DB\n    participant \"Azure Key Vault\" as A_KEYVAULT\n    participant \"Approval and Audit Engine\" as A_AUDIT\n    participant \"Azure Infrastructure and Key Vault\" as A_AZURE\n    participant \"Azure Application (Docker)\" as A_APP\n    participant \"Tenant SQL Databases\" as A_DB\n    participant \"AI Engine (Whisper / OCR)\" as A_AI\n    participant \"CI/CD Pipeline \u0026 Terraform (IaC)\" as A_PIPELINE\nend box\n\nbox \"External / Untrusted\" #d4edda\n    participant \"AI Engine (OpenAI Whisper + OCR)\" as A_AI_ENGINE\nend box\n\nbox \"Privileged Internal\" #d4edda\n    participant \"CI/CD Pipeline \u0026 Terraform (IaC)\" as A_PIPELINE\n    participant \"CI/CD Pipeline \u0026 Terraform (IaC)\" as A_PIPELINE\nend box\n\nbox \"External / Third-Party\" #d4edda\n    participant \"Email Delivery Service (Azure Communication)\" as A_EMAIL\n    participant \"Email Delivery Service (Azure Communication)\" as A_EMAIL\nend box\n\nbox \"Trusted Internal (High Privilege)\" #d4edda\n    participant \"Control Center Application\" as A_CC_APP\nend box\n\nbox \"High-Privilege Internal\" #d4edda\n    participant \"Control Center Administrator (Human Actor)\" as A_ADMIN\nend box\n\nbox \"Edge Gateway\" #d4edda\n    participant \"Cloudflare Edge Gateway\" as A_CLOUDFLARE\nend box\n\nbox \"Edge / Iam\" #d4edda\n    actor \"Identity Provider (Auth0 / Entra ID)\" as A_IDP\nend box\n\n== Data Flow Interactions ==\n\nA_CLIENT -[#FF0000]\u003e A_CLOUDFLARE: \u003ccolor:red\u003e\u003cb\u003ePII Capture \u0026 Upload (Photo + Audio)\u003c/b\u003e\u003c/color\u003e\\n(HTTPS)\nnote right #FFCCCC\n    **\u26a0 CROSSES TRUST BOUNDARY**\n    Classification: Confidential\n    Boundary: External / Edge Gateway\nend note\nA_CLOUDFLARE -[#FF0000]\u003e A_APP: \u003ccolor:red\u003e\u003cb\u003eEdge Routing to Azure Docker Hub\u003c/b\u003e\u003c/color\u003e\\n(HTTPS)\nnote right #FFCCCC\n    **\u26a0 CROSSES TRUST BOUNDARY**\n    Classification: Confidential\n    Boundary: Edge / Trusted Internal\nend note\nA_APP -[#FF0000]\u003e A_CLIENT: \u003ccolor:red\u003e\u003cb\u003eApproved Draft Dispatch (Email / WhatsApp)\u003c/b\u003e\u003c/color\u003e\\n(HTTPS / SMTP / WhatsApp API)\nnote right #FFCCCC\n    **\u26a0 CROSSES TRUST BOUNDARY**\n    Classification: Confidential\n    Boundary: Trusted Internal / External\nend note\nA_APP -[#FF0000]\u003e A_AI_ENGINE: \u003ccolor:red\u003e\u003cb\u003eAudio / Image Submission to AI Engine\u003c/b\u003e\u003c/color\u003e\\n(N/A)\nnote right #FFCCCC\n    **\u26a0 CROSSES TRUST BOUNDARY**\n    Classification: unclassified\nend note\nA_CLIENT -[#FF0000]\u003e A_IDP: \u003ccolor:red\u003e\u003cb\u003eSSO Login Request (OAuth2 / PKCE)\u003c/b\u003e\u003c/color\u003e\\n(HTTPS/OAuth2)\nnote right #FFCCCC\n    **\u26a0 CROSSES TRUST BOUNDARY**\n    Classification: Restricted\n    Boundary: External End-User / IAM\nend note\nA_IDP -[#FF0000]\u003e A_CLIENT: \u003ccolor:red\u003e\u003cb\u003eAuth Token Issuance to Sales Rep\u003c/b\u003e\u003c/color\u003e\\n(HTTPS/OAuth2)\nnote right #FFCCCC\n    **\u26a0 CROSSES TRUST BOUNDARY**\n    Classification: Restricted\n    Boundary: IAM / External End-User\nend note\nA_IDP -[#FF0000]\u003e A_APP: \u003ccolor:red\u003e\u003cb\u003eToken Validation \u0026 SCIM Sync\u003c/b\u003e\u003c/color\u003e\\n(HTTPS/SCIM)\nnote right #FFCCCC\n    **\u26a0 CROSSES TRUST BOUNDARY**\n    Classification: Restricted\n    Boundary: IAM / Trusted Internal\nend note\nA_PIPELINE -[#FF0000]\u003e A_IDP: \u003ccolor:red\u003e\u003cb\u003eTenant Auth \u0026 SCIM Configuration\u003c/b\u003e\u003c/color\u003e\\n(HTTPS/SCIM)\nnote right #FFCCCC\n    **\u26a0 CROSSES TRUST BOUNDARY**\n    Classification: Restricted\n    Boundary: Trusted Internal / IAM\nend note\nA_APP -[#FFA500]\u003e A_DB: \u003ccolor:orange\u003eDB Read/Write (Lead PII, Product Docs, Drafts)\u003c/color\u003e\\n(SQL/TLS)\nnote right #FFF3CD\n    Classification: Confidential\nend note\nA_APP -[#FFA500]\u003e A_AI: \u003ccolor:orange\u003eAudio \u0026 OCR Payload to AI Engine\u003c/color\u003e\\n(Internal API)\nnote right #FFF3CD\n    Classification: Confidential\nend note\nA_AI -[#FFA500]\u003e A_APP: \u003ccolor:orange\u003eExtracted Text \u0026 Voice Transcript Return\u003c/color\u003e\\n(Internal API)\nnote right #FFF3CD\n    Classification: Confidential\nend note\nA_CLIENT -\u003e A_APP: PII Capture \u0026 Upload (Photo + Audio)\\n(N/A)\nA_AUTH0 -\u003e A_CLIENT: JWT Issuance to Client\\n(N/A)\nA_APP -\u003e A_DB: DB Read/Write (Lead PII, Docs, Drafts)\\n(N/A)\nA_AI_ENGINE -\u003e A_APP: Transcript and Extracted Contact Data Response\\n(N/A)\nA_APP -\u003e A_KEYVAULT: TDE Key Retrieval / Secret Access\\n(N/A)\nA_PIPELINE -\u003e A_APP: Terraform Provisioning Actions\\n(N/A)\nA_APP -\u003e A_EMAIL: Approved Email Dispatch to Lead\\n(N/A)\nA_ADMIN -\u003e A_CC_AUTH0: CC Admin Login Request\\n(N/A)\nA_ADMIN -\u003e A_CC_APP: Tenant Lifecycle Request Submission\\n(N/A)\nA_CC_AUTH0 -\u003e A_CC_APP: CC Session JWT Issuance\\n(N/A)\nA_ADMIN -\u003e A_CC_APP: Verifier Approval or Rejection\\n(N/A)\nA_CC_APP -\u003e A_AUDIT: Audit Log Write\\n(N/A)\nA_AUDIT -\u003e A_CC_APP: Audit Log Export / Viewer\\n(N/A)\nA_CC_APP -\u003e A_PIPELINE: Pipeline Trigger from CC\\n(N/A)\nA_PIPELINE -\u003e A_AZURE: Terraform Provisioning Actions\\n(N/A)\nA_PIPELINE -\u003e A_AZURE: Tenant SQL Database Provisioning\\n(N/A)\nA_PIPELINE -\u003e A_AZURE: Key Vault TDE Key Provisioning\\n(N/A)\nA_PIPELINE -\u003e A_TENANT_IDP: Tenant Auth0 Application Provisioning\\n(N/A)\nA_PIPELINE -\u003e A_EMAIL: Welcome Email Dispatch\\n(N/A)\nA_PIPELINE -\u003e A_DB: Tenant DB \u0026 PKI Provisioning\\n(Azure Resource Manager API)\n\n== High-Risk Areas ==\n\nfooter Model: TM-SIGNALCAPTUREAI-COMPOSED | Version: 1.0\n\n@enduml";
         
         console.log('PUML Component Source loaded:', pumlComponentSource ? pumlComponentSource.substring(0, 100) + '...' : 'empty');
         console.log('PUML Sequence Source loaded:', pumlSequenceSource ? pumlSequenceSource.substring(0, 100) + '...' : 'empty');
@@ -16359,7 +16359,7 @@ curl -sc /dev/null -sI &#34;$CC_URL/login&#34; | grep -i &#34;set-cookie&#34;
         }
         
         // ========== ARCHITECTURE DIAGRAM RENDERING ==========
-        const customDiagrams = [{"content": "@startuml ControlCenter_EndToEnd_Sequence\ntitle Meetsendai Control Center - End-to-End Tenant Lifecycle V0 (Initiator + Verifier)\nskinparam maxMessageSize 150\nskinparam BoxPadding 10\n\nlegend top right\n  **Risk Levels (Transactions \u0026 Actor Swimlanes)**\n  |\u003c#White\u003e Black Arrow | Internal / Low Risk Operation |\n  |\u003c#E6F2FF\u003e Light Blue Box | Trusted Internal System Boundary |\n  |\u003c#Orange\u003e Orange Arrow | Privileged Config / IAM (Medium Risk) |\n  |\u003c#FFE6CC\u003e Light Orange Box| Approval Gateway (Medium Risk) |\n  |\u003c#Red\u003e Red Arrow | Destructive / Irreversible Action (High Risk) |\n  |\u003c#FFCCCC\u003e Light Red Box| High-Privilege Internal Admin (High Risk) |\nendlegend\n\nbox \"Meetsendai Internal Admins (High Privilege)\" #FFCCCC\nactor \"CC-Initiator\" as Initiator\nactor \"CC-Verifier\" as Verifier\nend box\n\nbox \"Control Center Platform (Trusted Internal)\" #E6F2FF\nparticipant \"Control Center\\nApplication\" as CC\nparticipant \"Approval \u0026\\nAudit Engine\" as Audit\nparticipant \"CI/CD Pipeline\" as Pipeline\nparticipant \"Terraform (IaC)\" as TF\nend box\n\nbox \"Cloud Infrastructure (Trusted Internal)\" #F2F9FF\nparticipant \"Azure Infrastructure\\n\u0026 Key Vault (TDE)\" as Azure\nparticipant \"Tenant SQL DB\\n(Newly Provisioned)\" as DB\nparticipant \"Email Service\\n(Azure Communication)\" as Email\nend box\n\nbox \"Identity \u0026 Config (Med Risk)\" #FFE6CC\nparticipant \"Auth0\\n(CC Admin Auth)\" as EntraCC\nparticipant \"Auth0\\n(Tenant Auth)\" as TenantIDP\nend box\n\nbox \"External (Client)\" #FFCCCC\nactor \"Tenant Primary\\nContact\" as PrimaryContact\nend box\n\n== 1. Control Center Login ==\nInitiator -[#orange]-\u003e EntraCC: Authenticate (MFA Required)\nEntraCC --[#orange]-\u003e Initiator: CC Session Token (CC-Initiator Role)\n\n== 2a. Tenant Creation \u2014 Initiation ==\nInitiator -[#orange]-\u003e CC: Submit New Tenant Request\\n(Name, Region, Seat Limit, Lead Threshold, Auth Type)\nactivate CC\nCC -[#orange]-\u003e Audit: Register Pending Request\\n(Initiator locked from self-verifying)\nCC -[#orange]-\u003e Verifier: Dispatch Verification Notification\ndeactivate CC\n\n== 2b. Tenant Creation \u2014 Verifier Approval ==\nVerifier -[#orange]-\u003e EntraCC: Authenticate (MFA Required)\nEntraCC --[#orange]-\u003e Verifier: CC Session Token\nVerifier -[#orange]-\u003e CC: Approve or Reject Request\nactivate CC\nCC -[#orange]-\u003e Audit: Log Verification Decision\\n(Verifier Identity + Timestamp + Outcome)\nCC -\u003e CC: Verification passed\\nInitiate Provisioning Pipeline\ndeactivate CC\n\n== 2c. Automated Tenant Provisioning ==\nCC -\u003e Pipeline: Trigger Terraform Plan/Apply\nactivate Pipeline\nPipeline -\u003e TF: Execute Terraform for New Tenant\nactivate TF\nTF -[#orange]-\u003e Azure: Provision Isolated SQL Database\\n(EU Region \u2014 Azure West Europe)\nTF -[#orange]-\u003e Azure: Configure Azure Key Vault TDE\\n(Tenant Database Encryption)\nAzure --[#orange]-\u003e TF: DB Provisioned \u0026 Encrypted\nTF -[#orange]-\u003e TenantIDP: Provision Auth0 Application\\n(Tenant Authentication)\nTenantIDP --[#orange]-\u003e TF: Auth0 Tenant Configured\nTF -[#orange]-\u003e DB: Write Tenant Config\\n(Seat Limit, Lead Threshold, EU Region Lock)\nTF --\u003e Pipeline: Provisioning Complete\ndeactivate TF\nPipeline -[#orange]-\u003e Email: Dispatch Welcome Email\\n(Primary Contact Address)\nactivate Email\nEmail --[#orange]-\u003e PrimaryContact: Your Meetsendai workspace is live!\\nhttps://[slug].meetsendai.com\\nFirst user to register = Tenant Admin\\nSetup checklist included\ndeactivate Email\nPipeline -[#orange]-\u003e Audit: Write Provisioning Receipt to Audit Log\nPipeline --\u003e Initiator: Tenant Live Notification\ndeactivate Pipeline\n\n== 3. Tenant Limit Modification (Single Admin) ==\nInitiator -[#orange]-\u003e CC: Update Seat Limit or Lead Threshold\nCC -[#orange]-\u003e DB: Apply Updated Config\nCC -[#orange]-\u003e Audit: Log Limit Change\\n(Initiator, Timestamp, Old/New Values)\n\n== 4. Tenant Deletion \u2014 Initiation ==\nInitiator -[#red]-\u003e CC: Submit Tenant Deletion Request\\n(Reason + Client Notification Confirmed)\nactivate CC\nCC -[#red]-\u003e Audit: Register Pending Deletion Request\nCC -[#red]-\u003e Verifier: Broadcast Elevated Deletion Alert\ndeactivate CC\n\n== 5. Tenant Deletion \u2014 Verifier Approval ==\nVerifier -[#red]-\u003e CC: Approve Deletion\nactivate CC\nCC -[#red]-\u003e Audit: Log Deletion Verification\\n(Verifier Identity + Timestamp)\nCC -\u003e CC: Verification passed \u2014 Begin Deletion Sequence\ndeactivate CC\n\n== 6. Tenant Deletion \u2014 Execution ==\nCC -[#red]-\u003e TenantIDP: Immediately Suspend Tenant Login\nCC -[#red]-\u003e DB: Freeze Tenant Data\\n(30-Day Soft-Delete Period Begins)\nCC -[#orange]-\u003e Audit: Log Suspension Timestamp\n\nnote over CC, DB\n  Standard path: 30-day soft-delete retention\n  (data frozen, inaccessible but retained for compliance).\n  Emergency hard-delete: both Initiator AND Verifier\n  must confirm in writing before pipeline executes.\nend note\n\nCC -[#red]-\u003e Pipeline: Trigger Terraform Destroy after Retention Period\nactivate Pipeline\nPipeline -\u003e TF: Terraform Destroy \u2014 Tenant Scope\nTF -[#red]-\u003e DB: Purge Tenant SQL Database\nTF -[#red]-\u003e Azure: Invalidate Azure Key Vault TDE Key\nTF -[#red]-\u003e TenantIDP: Deprovision Auth0 Tenant Application\nTF --\u003e Pipeline: Destruction Complete\ndeactivate Pipeline\nPipeline -[#red]-\u003e Audit: Write Signed Deletion Receipt\\nto Immutable Audit Log\nPipeline --\u003e Initiator: Tenant Deletion Confirmed\n\n@enduml\n", "description": "Full end-to-end sequence from CC admin login through Initiator request submission, Verifier approval, automated Terraform provisioning, welcome email dispatch, and tenant deletion execution including soft/hard-delete paths.\n", "file": "assets/ControlCenter_EndToEnd_Sequence.puml", "id": "DIAGRAM_01", "placement": "before_attack_tree", "title": "Control Center End-to-End Tenant Lifecycle Sequence", "type": "sequence"}, {"content": "@startuml Meetsendai_EndToEnd_Sequence\ntitle Meetsendai - End-to-End Flow (Onboarding to Lead Capture)\nskinparam maxMessageSize 150\nskinparam BoxPadding 10\n\nlegend top right\n  **Risk Levels (Transactions \u0026 Actor Swimlanes)**\n  |\u003c#White\u003e Black Arrow | Internal / Low Risk Operation |\n  |\u003c#F2F9FF\u003e Light Blue Box | Trusted Internal System Boundary |\n  |\u003c#Orange\u003e Orange Arrow | PII Processing / IAM Auth (Medium Risk) |\n  |\u003c#FFE6CC\u003e Light Orange Box| Edge Transit / 3rd Party (Medium Risk) |\n  |\u003c#Red\u003e Red Arrow | External PII Ingress-Egress (High Risk) |\n  |\u003c#FFCCCC\u003e Light Red Box| Untrusted External Actors (High Risk) |\nendlegend\n\nbox \"Internal Operations\" #E6F2FF\nactor \"Sales / CRM\" as CRM\nactor \"Finance\" as Finance\nend box\n\nbox \"Trusted Cloud Hub (Low Risk Env)\" #F2F9FF\nparticipant \"CI/CD Pipeline\" as Pipeline\nparticipant \"Terraform (IaC)\" as TF\nparticipant \"Azure Infrastructure\\n\u0026 Keyfactor (PKI)\" as Azure\nparticipant \"Azure App (Docker)\" as Docker\nparticipant \"Tenant SQL DB\" as DB\nparticipant \"AI Engine\\n(Whisper / OCR)\" as AI\nend box\n\nbox \"Edge Transit \u0026 IAM (Med Risk)\" #FFE6CC\nparticipant \"Cloudflare\" as CF\nparticipant \"Identity Provider\\n(Auth0 / Entra ID)\" as IDP\nend box\n\nbox \"External Actors (High Risk)\" #FFCCCC\nactor \"Client Tenant Admin\" as Admin\nactor \"Sales Rep (Event)\" as Rep\nactor \"Lead\" as Lead\nend box\n\n== 1. Sales \u0026 Financial Approval ==\nCRM -\u003e Finance: Sale Completed (Request Order Approval)\nactivate Finance\nFinance -\u003e Pipeline: Approves Order \u0026 Triggers Provisioning\ndeactivate Finance\n\n== 2. Automated Infrastructure Provisioning ==\nactivate Pipeline\nPipeline -\u003e TF: Execute Terraform Plan/Apply for New Tenant\nactivate TF\nTF -\u003e Azure: Provision isolated SQL Database\nTF -\u003e Azure: Request Keyfactor PKI for DB Encryption\nAzure --\u003e TF: DB provisioned \u0026 encrypted\nTF -[#orange]-\u003e IDP: Configure Tenant Auth (Auth0 / Entra ID SCIM)\nIDP --[#orange]-\u003e TF: Auth configured\nTF --\u003e Pipeline: Provisioning Complete\ndeactivate TF\nPipeline -\u003e CRM: Client Created \u0026 Infrastructure Ready\ndeactivate Pipeline\n\n== 3. Client Tenant Event Setup ==\nAdmin -[#orange]-\u003e Docker: Login to Platform\nAdmin -[#orange]-\u003e Docker: Upload Product Documentation\nDocker -\u003e DB: Store Docs in Tenant DB\nAdmin -[#orange]-\u003e Docker: Create New Tracking Event\n\n== 4. Lead Capture Workflow (Geo-Routed) ==\nRep -[#orange]-\u003e IDP: Login securely\nIDP --[#orange]-\u003e Rep: Auth Token\nRep -\u003e Docker: Select Event\nRep -[#red]-\u003e Rep: Scan Business Card (OCR)\\n\u0026 Record Voice Note\nRep -[#red]-\u003e CF: Submit Lead Data (Photo + Audio)\nactivate CF\nCF -\u003e CF: Evaluate Geo-Headers\n\nalt Strict Localization Not Required (Default to EU)\n    CF -[#orange]-\u003e Docker: Route to EU Privacy Hub\nelse Strict Sovereign Local Laws Apply\n    CF -[#orange]-\u003e Docker: Route to Regional Spoke\nend\ndeactivate CF\n\nactivate Docker\nDocker -[#orange]-\u003e AI: Pass Audio \u0026 OCR Data\nactivate AI\nAI --[#orange]-\u003e Docker: Extracted Text \u0026 Voice Transcript\nDocker -\u003e DB: Fetch Product Docs for Cross-Reference\nDB --\u003e Docker: Product Docs\nDocker -[#orange]-\u003e AI: Analyze Transcript vs Product Docs\nAI --[#orange]-\u003e Docker: Generated Draft Message\ndeactivate AI\n\nDocker -[#orange]-\u003e DB: Store Lead PII \u0026 Draft (Encrypted)\nDocker --[#orange]-\u003e Rep: Present Draft Message for Review\ndeactivate Docker\n\n== 5. Human-in-the-Loop \u0026 Delivery ==\nRep -[#orange]-\u003e Docker: Review \u0026 Approve Draft\nDocker -[#red]-\u003e Lead: Dispatch via Email / WhatsApp\n\n== 6. Compliance / Admin ==\nAdmin -[#orange]-\u003e Docker: View Tenant Meta-Metrics\nAdmin -[#red]-\u003e DB: Query/Delete Subject Data (upon request)\n@enduml\n", "description": "Full lifecycle sequence from Finance approval through CI/CD tenant provisioning, Sales Rep SSO login, lead capture (OCR + Voice), Cloudflare geo-routing to EU/regional hubs, AI processing, human-in-the-loop approval, and compliance deletion.", "file": "assets/Meetsendai_EndToEnd_Sequence.puml", "id": "END_TO_END_SEQ", "placement": "before_attack_tree", "title": "End-to-End Flow (Onboarding to Lead Capture)", "type": "sequence"}, {"content": "@startuml Meetsendai_Georouting_Workflow\ntitle Meetsendai - Data Capture Workflow (Risk Highlighted)\nskinparam style strictuml\nskinparam wrapWidth 200\n\nlegend top right\n  **Risk Levels (Transactions \u0026 Actor Swimlanes)**\n  |\u003c#White\u003e White Box | Internal / Trusted Execution (Low Risk) |\n  |\u003c#E6F2FF\u003e \u003ccolor:black\u003eLight Blue Lane\u003c/color\u003e | Internal Trusted System Boundary |\n  |\u003c#Orange\u003e Orange Box | PII Processing (Medium Risk) |\n  |\u003c#FFE6CC\u003e \u003ccolor:black\u003eLight Orange Lane\u003c/color\u003e| Edge Gateway Transit (Medium Risk) |\n  |\u003c#Red\u003e \u003ccolor:white\u003eRed Box\u003c/color\u003e | External Data Ingress-Egress (High Risk) |\n  |\u003c#FFCCCC\u003e \u003ccolor:black\u003eLight Red Lane\u003c/color\u003e| Untrusted External Actors (High Risk) |\nendlegend\n\n|#FFCCCC|Sales Rep|\nstart\n:Access Meetsendai Platform;\n\n|#FFE6CC|Cloudflare (Geo-Barrier)|\n:Detect Initial Request Geolocation;\n\n|#E6F2FF|Azure Application (Docker)|\n:Serve Web Application \u0026 Capture Geo-Headers;\n\n|#FFCCCC|Sales Rep|\n:Login via Auth0 / Entra ID SSO; \u003c\u003c#Orange\u003e\u003e\n\n|#E6F2FF|Azure Application (Docker)|\n:Cache Geolocation in Secure Session Token (JWT);\n\n|#FFCCCC|Sales Rep|\n:Select Event in App;\n:Capture Business Card (Photo) \\n\u0026 Record Voice Note; \u003c\u003c#Red\u003e\u003e\n\n|#E6F2FF|Azure Application (Docker)|\n:Receive Request \u0026 Extract Cached Geolocation;\n\nif (Strict Local Data Residency Required?) then (No - Default to EU)\n\n    |#LightBlue|Azure EU Backend (Primary Privacy-Hub)|\n    :Process OCR \u0026 Transcribe Voice (Whisper) in EU; \u003c\u003c#Orange\u003e\u003e\n    note right\n        This includes the US, UK, Canada, and EU.\n        US laws (CCPA) do not mandate data localization.\n        Processing US data in the EU is legal \n        and adheres to the highest privacy standard (GDPR).\n    end note\n    :Store extracted PII in EU Tenant SQL DB \\n(Encrypted via Keyfactor PKI); \u003c\u003c#Orange\u003e\u003e\n    :AI cross-references transcript \n    with Product Docs;\n    :Generate localized follow-up draft;\n\nelse (Yes - e.g., Strict Enterprise or China/India)\n\n    |#LightGreen|Azure Localized Backend (Regional Spoke)|\n    :Process OCR \u0026 Transcribe Voice (Whisper) locally; \u003c\u003c#Orange\u003e\u003e\n    note right\n        Specific sovereign requirements \n        (e.g., US Gov ITAR, specific enterprise contracts, \n        or strict localization laws in other countries).\n    end note\n    :Store extracted PII in Local Tenant SQL DB \\n(Encrypted via Keyfactor PKI); \u003c\u003c#Orange\u003e\u003e\n    :AI cross-references transcript \n    with Product Docs;\n    :Generate localized follow-up draft;\n\nendif\n\n|#FFCCCC|Sales Rep|\n:Human-in-the-loop: \\nReview \u0026 Approve Draft Message;\n:Dispatch Message (Email / WhatsApp); \u003c\u003c#Red\u003e\u003e\n\n|#E6F2FF|Global Admin Dashboard|\n:Aggregate Meta-Metrics;\nnote right\n  Provides a \"single pane of glass\"\n  visibility across multiple regions,\n  while underlying data remains\n  strictly isolated in its home region \n  to adhere to data compliance.\nend note\n\n|#E6F2FF|Global Admin Dashboard|\nif (Data Subject Request?) then (Query/Delete)\n    :Trigger Compliance Deletion/Query; \u003c\u003c#Orange\u003e\u003e\n    :Target specific region\u0027s DB\\nto execute request; \u003c\u003c#Orange\u003e\u003e\nendif\n\nstop\n@enduml\n", "description": "Activity diagram showing the geo-routing decision at Cloudflare: default EU Privacy Hub processing for US/UK/Canada/EU vs. regional sovereign spokes for strict localization laws (US Gov ITAR, China, India). Highlights PII risk levels per swimlane.", "file": "assets/Meetsendai_Georouting_Workflow.puml", "id": "GEO_ROUTING_FLOW", "placement": "before_attack_tree", "title": "Data Capture \u0026 Geo-routing Workflow", "type": "activity"}];
+        const customDiagrams = [{"content": "@startuml ControlCenter_EndToEnd_Sequence\ntitle SignalCaptureAI Control Center - End-to-End Tenant Lifecycle V0 (Initiator + Verifier)\nskinparam maxMessageSize 150\nskinparam BoxPadding 10\n\nlegend top right\n  **Risk Levels (Transactions \u0026 Actor Swimlanes)**\n  |\u003c#White\u003e Black Arrow | Internal / Low Risk Operation |\n  |\u003c#E6F2FF\u003e Light Blue Box | Trusted Internal System Boundary |\n  |\u003c#Orange\u003e Orange Arrow | Privileged Config / IAM (Medium Risk) |\n  |\u003c#FFE6CC\u003e Light Orange Box| Approval Gateway (Medium Risk) |\n  |\u003c#Red\u003e Red Arrow | Destructive / Irreversible Action (High Risk) |\n  |\u003c#FFCCCC\u003e Light Red Box| High-Privilege Internal Admin (High Risk) |\nendlegend\n\nbox \"SignalCaptureAI Internal Admins (High Privilege)\" #FFCCCC\nactor \"CC-Initiator\" as Initiator\nactor \"CC-Verifier\" as Verifier\nend box\n\nbox \"Control Center Platform (Trusted Internal)\" #E6F2FF\nparticipant \"Control Center\\nApplication\" as CC\nparticipant \"Approval \u0026\\nAudit Engine\" as Audit\nparticipant \"CI/CD Pipeline\" as Pipeline\nparticipant \"Terraform (IaC)\" as TF\nend box\n\nbox \"Cloud Infrastructure (Trusted Internal)\" #F2F9FF\nparticipant \"Azure Infrastructure\\n\u0026 Key Vault (TDE)\" as Azure\nparticipant \"Tenant SQL DB\\n(Newly Provisioned)\" as DB\nparticipant \"Email Service\\n(Azure Communication)\" as Email\nend box\n\nbox \"Identity \u0026 Config (Med Risk)\" #FFE6CC\nparticipant \"Auth0\\n(CC Admin Auth)\" as EntraCC\nparticipant \"Auth0\\n(Tenant Auth)\" as TenantIDP\nend box\n\nbox \"External (Client)\" #FFCCCC\nactor \"Tenant Primary\\nContact\" as PrimaryContact\nend box\n\n== 1. Control Center Login ==\nInitiator -[#orange]-\u003e EntraCC: Authenticate (MFA Required)\nEntraCC --[#orange]-\u003e Initiator: CC Session Token (CC-Initiator Role)\n\n== 2a. Tenant Creation \u2014 Initiation ==\nInitiator -[#orange]-\u003e CC: Submit New Tenant Request\\n(Name, Region, Seat Limit, Lead Threshold, Auth Type)\nactivate CC\nCC -[#orange]-\u003e Audit: Register Pending Request\\n(Initiator locked from self-verifying)\nCC -[#orange]-\u003e Verifier: Dispatch Verification Notification\ndeactivate CC\n\n== 2b. Tenant Creation \u2014 Verifier Approval ==\nVerifier -[#orange]-\u003e EntraCC: Authenticate (MFA Required)\nEntraCC --[#orange]-\u003e Verifier: CC Session Token\nVerifier -[#orange]-\u003e CC: Approve or Reject Request\nactivate CC\nCC -[#orange]-\u003e Audit: Log Verification Decision\\n(Verifier Identity + Timestamp + Outcome)\nCC -\u003e CC: Verification passed\\nInitiate Provisioning Pipeline\ndeactivate CC\n\n== 2c. Automated Tenant Provisioning ==\nCC -\u003e Pipeline: Trigger Terraform Plan/Apply\nactivate Pipeline\nPipeline -\u003e TF: Execute Terraform for New Tenant\nactivate TF\nTF -[#orange]-\u003e Azure: Provision Isolated SQL Database\\n(EU Region \u2014 Azure West Europe)\nTF -[#orange]-\u003e Azure: Configure Azure Key Vault TDE\\n(Tenant Database Encryption)\nAzure --[#orange]-\u003e TF: DB Provisioned \u0026 Encrypted\nTF -[#orange]-\u003e TenantIDP: Provision Auth0 Application\\n(Tenant Authentication)\nTenantIDP --[#orange]-\u003e TF: Auth0 Tenant Configured\nTF -[#orange]-\u003e DB: Write Tenant Config\\n(Seat Limit, Lead Threshold, EU Region Lock)\nTF --\u003e Pipeline: Provisioning Complete\ndeactivate TF\nPipeline -[#orange]-\u003e Email: Dispatch Welcome Email\\n(Primary Contact Address)\nactivate Email\nEmail --[#orange]-\u003e PrimaryContact: Your SignalCaptureAI workspace is live!\\nhttps://[slug].signalcaptureai.com\\nFirst user to register = Tenant Admin\\nSetup checklist included\ndeactivate Email\nPipeline -[#orange]-\u003e Audit: Write Provisioning Receipt to Audit Log\nPipeline --\u003e Initiator: Tenant Live Notification\ndeactivate Pipeline\n\n== 3. Tenant Limit Modification (Single Admin) ==\nInitiator -[#orange]-\u003e CC: Update Seat Limit or Lead Threshold\nCC -[#orange]-\u003e DB: Apply Updated Config\nCC -[#orange]-\u003e Audit: Log Limit Change\\n(Initiator, Timestamp, Old/New Values)\n\n== 4. Tenant Deletion \u2014 Initiation ==\nInitiator -[#red]-\u003e CC: Submit Tenant Deletion Request\\n(Reason + Client Notification Confirmed)\nactivate CC\nCC -[#red]-\u003e Audit: Register Pending Deletion Request\nCC -[#red]-\u003e Verifier: Broadcast Elevated Deletion Alert\ndeactivate CC\n\n== 5. Tenant Deletion \u2014 Verifier Approval ==\nVerifier -[#red]-\u003e CC: Approve Deletion\nactivate CC\nCC -[#red]-\u003e Audit: Log Deletion Verification\\n(Verifier Identity + Timestamp)\nCC -\u003e CC: Verification passed \u2014 Begin Deletion Sequence\ndeactivate CC\n\n== 6. Tenant Deletion \u2014 Execution ==\nCC -[#red]-\u003e TenantIDP: Immediately Suspend Tenant Login\nCC -[#red]-\u003e DB: Freeze Tenant Data\\n(30-Day Soft-Delete Period Begins)\nCC -[#orange]-\u003e Audit: Log Suspension Timestamp\n\nnote over CC, DB\n  Standard path: 30-day soft-delete retention\n  (data frozen, inaccessible but retained for compliance).\n  Emergency hard-delete: both Initiator AND Verifier\n  must confirm in writing before pipeline executes.\nend note\n\nCC -[#red]-\u003e Pipeline: Trigger Terraform Destroy after Retention Period\nactivate Pipeline\nPipeline -\u003e TF: Terraform Destroy \u2014 Tenant Scope\nTF -[#red]-\u003e DB: Purge Tenant SQL Database\nTF -[#red]-\u003e Azure: Invalidate Azure Key Vault TDE Key\nTF -[#red]-\u003e TenantIDP: Deprovision Auth0 Tenant Application\nTF --\u003e Pipeline: Destruction Complete\ndeactivate Pipeline\nPipeline -[#red]-\u003e Audit: Write Signed Deletion Receipt\\nto Immutable Audit Log\nPipeline --\u003e Initiator: Tenant Deletion Confirmed\n\n@enduml\n", "description": "Full end-to-end sequence from CC admin login through Initiator request submission, Verifier approval, automated Terraform provisioning, welcome email dispatch, and tenant deletion execution including soft/hard-delete paths.\n", "file": "assets/ControlCenter_EndToEnd_Sequence.puml", "id": "DIAGRAM_01", "placement": "before_attack_tree", "title": "Control Center End-to-End Tenant Lifecycle Sequence", "type": "sequence"}, {"content": "@startuml SignalCaptureAI_EndToEnd_Sequence\ntitle SignalCaptureAI - End-to-End Flow (Onboarding to Lead Capture)\nskinparam maxMessageSize 150\nskinparam BoxPadding 10\n\nlegend top right\n  **Risk Levels (Transactions \u0026 Actor Swimlanes)**\n  |\u003c#White\u003e Black Arrow | Internal / Low Risk Operation |\n  |\u003c#F2F9FF\u003e Light Blue Box | Trusted Internal System Boundary |\n  |\u003c#Orange\u003e Orange Arrow | PII Processing / IAM Auth (Medium Risk) |\n  |\u003c#FFE6CC\u003e Light Orange Box| Edge Transit / 3rd Party (Medium Risk) |\n  |\u003c#Red\u003e Red Arrow | External PII Ingress-Egress (High Risk) |\n  |\u003c#FFCCCC\u003e Light Red Box| Untrusted External Actors (High Risk) |\nendlegend\n\nbox \"Internal Operations\" #E6F2FF\nactor \"Sales / CRM\" as CRM\nactor \"Finance\" as Finance\nend box\n\nbox \"Trusted Cloud Hub (Low Risk Env)\" #F2F9FF\nparticipant \"CI/CD Pipeline\" as Pipeline\nparticipant \"Terraform (IaC)\" as TF\nparticipant \"Azure Infrastructure\\n\u0026 Keyfactor (PKI)\" as Azure\nparticipant \"Azure App (Docker)\" as Docker\nparticipant \"Tenant SQL DB\" as DB\nparticipant \"AI Engine\\n(Whisper / OCR)\" as AI\nend box\n\nbox \"Edge Transit \u0026 IAM (Med Risk)\" #FFE6CC\nparticipant \"Cloudflare\" as CF\nparticipant \"Identity Provider\\n(Auth0 / Entra ID)\" as IDP\nend box\n\nbox \"External Actors (High Risk)\" #FFCCCC\nactor \"Client Tenant Admin\" as Admin\nactor \"Sales Rep (Event)\" as Rep\nactor \"Lead\" as Lead\nend box\n\n== 1. Sales \u0026 Financial Approval ==\nCRM -\u003e Finance: Sale Completed (Request Order Approval)\nactivate Finance\nFinance -\u003e Pipeline: Approves Order \u0026 Triggers Provisioning\ndeactivate Finance\n\n== 2. Automated Infrastructure Provisioning ==\nactivate Pipeline\nPipeline -\u003e TF: Execute Terraform Plan/Apply for New Tenant\nactivate TF\nTF -\u003e Azure: Provision isolated SQL Database\nTF -\u003e Azure: Request Keyfactor PKI for DB Encryption\nAzure --\u003e TF: DB provisioned \u0026 encrypted\nTF -[#orange]-\u003e IDP: Configure Tenant Auth (Auth0 / Entra ID SCIM)\nIDP --[#orange]-\u003e TF: Auth configured\nTF --\u003e Pipeline: Provisioning Complete\ndeactivate TF\nPipeline -\u003e CRM: Client Created \u0026 Infrastructure Ready\ndeactivate Pipeline\n\n== 3. Client Tenant Event Setup ==\nAdmin -[#orange]-\u003e Docker: Login to Platform\nAdmin -[#orange]-\u003e Docker: Upload Product Documentation\nDocker -\u003e DB: Store Docs in Tenant DB\nAdmin -[#orange]-\u003e Docker: Create New Tracking Event\n\n== 4. Lead Capture Workflow (Geo-Routed) ==\nRep -[#orange]-\u003e IDP: Login securely\nIDP --[#orange]-\u003e Rep: Auth Token\nRep -\u003e Docker: Select Event\nRep -[#red]-\u003e Rep: Scan Business Card (OCR)\\n\u0026 Record Voice Note\nRep -[#red]-\u003e CF: Submit Lead Data (Photo + Audio)\nactivate CF\nCF -\u003e CF: Evaluate Geo-Headers\n\nalt Strict Localization Not Required (Default to EU)\n    CF -[#orange]-\u003e Docker: Route to EU Privacy Hub\nelse Strict Sovereign Local Laws Apply\n    CF -[#orange]-\u003e Docker: Route to Regional Spoke\nend\ndeactivate CF\n\nactivate Docker\nDocker -[#orange]-\u003e AI: Pass Audio \u0026 OCR Data\nactivate AI\nAI --[#orange]-\u003e Docker: Extracted Text \u0026 Voice Transcript\nDocker -\u003e DB: Fetch Product Docs for Cross-Reference\nDB --\u003e Docker: Product Docs\nDocker -[#orange]-\u003e AI: Analyze Transcript vs Product Docs\nAI --[#orange]-\u003e Docker: Generated Draft Message\ndeactivate AI\n\nDocker -[#orange]-\u003e DB: Store Lead PII \u0026 Draft (Encrypted)\nDocker --[#orange]-\u003e Rep: Present Draft Message for Review\ndeactivate Docker\n\n== 5. Human-in-the-Loop \u0026 Delivery ==\nRep -[#orange]-\u003e Docker: Review \u0026 Approve Draft\nDocker -[#red]-\u003e Lead: Dispatch via Email / WhatsApp\n\n== 6. Compliance / Admin ==\nAdmin -[#orange]-\u003e Docker: View Tenant Meta-Metrics\nAdmin -[#red]-\u003e DB: Query/Delete Subject Data (upon request)\n@enduml\n", "description": "Full lifecycle sequence from Finance approval through CI/CD tenant provisioning, Sales Rep SSO login, lead capture (OCR + Voice), Cloudflare geo-routing to EU/regional hubs, AI processing, human-in-the-loop approval, and compliance deletion.", "file": "assets/SignalCaptureAI_EndToEnd_Sequence.puml", "id": "END_TO_END_SEQ", "placement": "before_attack_tree", "title": "End-to-End Flow (Onboarding to Lead Capture)", "type": "sequence"}, {"content": "@startuml SignalCaptureAI_Georouting_Workflow\ntitle SignalCaptureAI - Data Capture Workflow (Risk Highlighted)\nskinparam style strictuml\nskinparam wrapWidth 200\n\nlegend top right\n  **Risk Levels (Transactions \u0026 Actor Swimlanes)**\n  |\u003c#White\u003e White Box | Internal / Trusted Execution (Low Risk) |\n  |\u003c#E6F2FF\u003e \u003ccolor:black\u003eLight Blue Lane\u003c/color\u003e | Internal Trusted System Boundary |\n  |\u003c#Orange\u003e Orange Box | PII Processing (Medium Risk) |\n  |\u003c#FFE6CC\u003e \u003ccolor:black\u003eLight Orange Lane\u003c/color\u003e| Edge Gateway Transit (Medium Risk) |\n  |\u003c#Red\u003e \u003ccolor:white\u003eRed Box\u003c/color\u003e | External Data Ingress-Egress (High Risk) |\n  |\u003c#FFCCCC\u003e \u003ccolor:black\u003eLight Red Lane\u003c/color\u003e| Untrusted External Actors (High Risk) |\nendlegend\n\n|#FFCCCC|Sales Rep|\nstart\n:Access SignalCaptureAI Platform;\n\n|#FFE6CC|Cloudflare (Geo-Barrier)|\n:Detect Initial Request Geolocation;\n\n|#E6F2FF|Azure Application (Docker)|\n:Serve Web Application \u0026 Capture Geo-Headers;\n\n|#FFCCCC|Sales Rep|\n:Login via Auth0 / Entra ID SSO; \u003c\u003c#Orange\u003e\u003e\n\n|#E6F2FF|Azure Application (Docker)|\n:Cache Geolocation in Secure Session Token (JWT);\n\n|#FFCCCC|Sales Rep|\n:Select Event in App;\n:Capture Business Card (Photo) \\n\u0026 Record Voice Note; \u003c\u003c#Red\u003e\u003e\n\n|#E6F2FF|Azure Application (Docker)|\n:Receive Request \u0026 Extract Cached Geolocation;\n\nif (Strict Local Data Residency Required?) then (No - Default to EU)\n\n    |#LightBlue|Azure EU Backend (Primary Privacy-Hub)|\n    :Process OCR \u0026 Transcribe Voice (Whisper) in EU; \u003c\u003c#Orange\u003e\u003e\n    note right\n        This includes the US, UK, Canada, and EU.\n        US laws (CCPA) do not mandate data localization.\n        Processing US data in the EU is legal \n        and adheres to the highest privacy standard (GDPR).\n    end note\n    :Store extracted PII in EU Tenant SQL DB \\n(Encrypted via Keyfactor PKI); \u003c\u003c#Orange\u003e\u003e\n    :AI cross-references transcript \n    with Product Docs;\n    :Generate localized follow-up draft;\n\nelse (Yes - e.g., Strict Enterprise or China/India)\n\n    |#LightGreen|Azure Localized Backend (Regional Spoke)|\n    :Process OCR \u0026 Transcribe Voice (Whisper) locally; \u003c\u003c#Orange\u003e\u003e\n    note right\n        Specific sovereign requirements \n        (e.g., US Gov ITAR, specific enterprise contracts, \n        or strict localization laws in other countries).\n    end note\n    :Store extracted PII in Local Tenant SQL DB \\n(Encrypted via Keyfactor PKI); \u003c\u003c#Orange\u003e\u003e\n    :AI cross-references transcript \n    with Product Docs;\n    :Generate localized follow-up draft;\n\nendif\n\n|#FFCCCC|Sales Rep|\n:Human-in-the-loop: \\nReview \u0026 Approve Draft Message;\n:Dispatch Message (Email / WhatsApp); \u003c\u003c#Red\u003e\u003e\n\n|#E6F2FF|Global Admin Dashboard|\n:Aggregate Meta-Metrics;\nnote right\n  Provides a \"single pane of glass\"\n  visibility across multiple regions,\n  while underlying data remains\n  strictly isolated in its home region \n  to adhere to data compliance.\nend note\n\n|#E6F2FF|Global Admin Dashboard|\nif (Data Subject Request?) then (Query/Delete)\n    :Trigger Compliance Deletion/Query; \u003c\u003c#Orange\u003e\u003e\n    :Target specific region\u0027s DB\\nto execute request; \u003c\u003c#Orange\u003e\u003e\nendif\n\nstop\n@enduml\n", "description": "Activity diagram showing the geo-routing decision at Cloudflare: default EU Privacy Hub processing for US/UK/Canada/EU vs. regional sovereign spokes for strict localization laws (US Gov ITAR, China, India). Highlights PII risk levels per swimlane.", "file": "assets/SignalCaptureAI_Georouting_Workflow.puml", "id": "GEO_ROUTING_FLOW", "placement": "before_attack_tree", "title": "Data Capture \u0026 Geo-routing Workflow", "type": "activity"}];
 
         function renderArchDiagrams() {
             if (!customDiagrams || customDiagrams.length === 0) return;

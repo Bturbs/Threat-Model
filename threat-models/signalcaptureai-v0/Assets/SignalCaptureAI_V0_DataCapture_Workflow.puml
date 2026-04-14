@@ -1,0 +1,118 @@
+@startuml SignalCaptureAI_V0_DataCapture_Workflow
+title SignalCaptureAI V0 - Data Capture Workflow (EU Only)
+skinparam style strictuml
+skinparam wrapWidth 200
+
+legend top right
+  **Risk Levels (Transactions & Actor Swimlanes)**
+  |<#White> White Box | Internal / Trusted Execution (Low Risk) |
+  |<#E6F2FF> <color:black>Light Blue Lane</color> | Internal Trusted System Boundary |
+  |<#Orange> Orange Box | PII Processing (Medium Risk) |
+  |<#FFE6CC> <color:black>Light Orange Lane</color>| Auth / Transit (Medium Risk) |
+  |<#Red> <color:white>Red Box</color> | External Data Ingress-Egress (High Risk) |
+  |<#FFCCCC> <color:black>Light Red Lane</color>| Untrusted External Actors (High Risk) |
+endlegend
+
+|#FFCCCC|Sales Rep|
+start
+:Access SignalCaptureAI Platform\n(HTTPS / TLS 1.3);
+
+|#FFE6CC|WorkOS (SSO)|
+:Authenticate User (SSO / Magic Link);
+note right
+  WorkOS SSO in V0.
+  HTTP-only Secure cookie session.
+  Control Centre: MFA enforced.
+end note
+
+|#E6F2FF|API Gateway (Fastify) — Azure Container Apps|
+:Issue Session Cookie (httpOnly, Secure,\nSameSite=Lax) with Signed Location Header (EU);
+note right
+  Location context via
+  HMAC-SHA256 signed headers
+  (location-header package).
+  No external edge network in V0.
+end note
+
+|#FFCCCC|Sales Rep|
+:Select Event in App;
+:Capture Business Card (Camera Capture)\n& Record Voice Note (Voice Recorder); <<#Red>>
+
+|#FFCCCC|Sales Rep (Client-Side)|
+:Run Tesseract.js OCR in Browser; <<#Orange>>
+note right
+  OCR runs entirely client-side.
+  No business card image PII
+  sent to server for OCR.
+  Only extracted text is uploaded.
+end note
+:Encode Voice Note (WebM / Opus); <<#Orange>>
+
+|#E6F2FF|API Gateway (Fastify) — Azure Container Apps|
+:Receive Submission over HTTPS / TLS 1.3\n(OCR text + audio file);
+:Extract Signed Location Header → Confirm EU Context\n(HMAC-SHA256 validation, 60s expiry, nonce replay check);
+
+|#E6F2FF|Whisper Service (OpenAI)|
+:Pass Audio to OpenAI Whisper\nfor Transcription; <<#Orange>>
+note right
+  Voice PII transmitted to
+  OpenAI external API.
+  GDPR risk — DPA required.
+  V1: migrate to Azure AI Speech.
+end note
+:Return Transcript (PII stripped); <<#Orange>>
+
+|#E6F2FF|API Gateway (Fastify) — Azure Container Apps|
+:SET LOCAL app.current_tenant_id\n(RLS + Citus sharding isolation);
+:Fetch Firm Context from CosmosDB PostgreSQL;
+
+|#E6F2FF|AI Engine (Claude Haiku 3.5)|
+:Wrap inputs in XML delimiters:\n<ocr_data>, <voice_transcript>,\n<firm_context>; <<#Orange>>
+:Generate Personalised Draft Email\n(subject, HTML body, plain text); <<#Orange>>
+:Validate response against Zod schema\n(retry on malformed output); <<#Orange>>
+
+|#E6F2FF|API Gateway (Fastify) — Azure Container Apps|
+:Store Lead PII & Draft in CosmosDB PostgreSQL\n(TDE via Key Vault, TLS 1.3 in transit,\nCitus tenant_id sharding + RLS isolation); <<#Orange>>
+:Log lead capture event via audit-client\n→ signalcaptureai-audit-service\n(append-only, 7-year retention);
+
+|#FFCCCC|Sales Rep|
+:Human-in-the-Loop:\nReview & Approve Draft Email;
+
+|#E6F2FF|Email Service (Graph API + ACS)|
+:Sanitise CRLF in all dynamic fields;
+:Inject tracking pixel (open detection);
+:Dispatch Email via Microsoft 365 Graph API\n(from user's own mailbox, Mail.Send scope); <<#Red>>
+note right
+  OAuth tokens encrypted with
+  Key Vault envelope encryption.
+  Token rotation handled by
+  email-oauth package.
+end note
+
+|#FFCCCC|Lead|
+:Receives Personalised Follow-Up Email; <<#Red>>
+
+|#E6F2FF|Email Service (Graph API + ACS)|
+:Poll Inbox via Graph API (5min interval)\n→ Detect Reply Events;
+:Record Open + Reply in email_tracking table;
+
+|#E6F2FF|API Gateway (Fastify) — Azure Container Apps|
+:Record Interaction Metrics\n(Scoped to Event / Tenant);
+note right
+  Automated retention purge:
+  Solo/Starter/Growth — hard delete
+  leads 90 days after capture.
+  Enterprise — configurable retention
+  (365 days default).
+end note
+
+if (GDPR Data Subject Request?) then (Query / Delete)
+    |#E6F2FF|API Gateway — gdpr-tools|
+    :Scan 7 PII tables for email/name match; <<#Orange>>
+    :Cascade Delete\n(FK children before parents); <<#Orange>>
+    :Generate Compliance Receipt\n(request ID, timestamp, affected tables,\nrow counts); <<#Orange>>
+    :Log GDPR deletion via audit-client;
+endif
+
+stop
+@enduml

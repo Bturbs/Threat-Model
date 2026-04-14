@@ -48,12 +48,12 @@ jobs:
       
       - name: Set default homepage redirect
         run: |
-          if [ -f ./threat-models/github-page/Meetsendai-Control-Center-V0/reports/threat-model.html ]; then
-            target="./Meetsendai-Control-Center-V0/reports/threat-model.html"
-          elif [ -f ./threat-models/github-page/meetsendai-v0/reports/threat-model.html ]; then
-            target="./meetsendai-v0/reports/threat-model.html"
+          if [ -f ./threat-models/github-page/SignalCaptureAI-Control-Center-V0/reports/threat-model.html ]; then
+            target="./SignalCaptureAI-Control-Center-V0/reports/threat-model.html"
+          elif [ -f ./threat-models/github-page/signalcaptureai-v0/reports/threat-model.html ]; then
+            target="./signalcaptureai-v0/reports/threat-model.html"
           else
-            target="./meetsendai-V1/reports/threat-model.html"
+            target="./signalcaptureai-V1/reports/threat-model.html"
           fi
 
           cat > ./threat-models/github-page/index.html <<EOF

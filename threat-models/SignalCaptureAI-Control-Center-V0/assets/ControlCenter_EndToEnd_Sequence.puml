@@ -1,0 +1,159 @@
+@startuml ControlCenter_EndToEnd_Sequence
+title SignalCaptureAI Control Center - End-to-End Tenant Lifecycle V0 (Initiator + Verifier)
+skinparam maxMessageSize 150
+skinparam BoxPadding 10
+
+legend top right
+  **Risk Levels (Transactions & Actor Swimlanes)**
+  |<#White> Black Arrow | Internal / Low Risk Operation |
+  |<#E6F2FF> Light Blue Box | Trusted Internal System Boundary |
+  |<#Orange> Orange Arrow | Privileged Config / IAM (Medium Risk) |
+  |<#FFE6CC> Light Orange Box| Approval Gateway (Medium Risk) |
+  |<#Red> Red Arrow | Destructive / Irreversible Action (High Risk) |
+  |<#FFCCCC> Light Red Box| High-Privilege Internal Admin (High Risk) |
+endlegend
+
+box "SignalCaptureAI Internal Admins (High Privilege)" #FFCCCC
+actor "CC-Initiator" as Initiator
+actor "CC-Verifier" as Verifier
+end box
+
+box "Control Center Platform (Trusted Internal)" #E6F2FF
+participant "CC Frontend\n(Next.js 15)" as CC
+participant "CC API\n(signalcaptureai-cc-api)" as CCAPI
+participant "Approval Engine\n(approval-engine)" as Approval
+participant "Audit Service\n(signalcaptureai-audit-service)" as Audit
+participant "Provisioning Pipeline\n(5-step async)" as Pipeline
+end box
+
+box "Cloud Infrastructure (Trusted Internal)" #F2F9FF
+participant "Azure Container Apps\n& Key Vault (TDE)" as Azure
+participant "CosmosDB PostgreSQL\n(Citus — tenant_id sharding)" as DB
+participant "Email Service\n(M365 Graph + ACS)" as Email
+end box
+
+box "Identity & Config (Med Risk)" #FFE6CC
+participant "WorkOS\n(CC Admin Auth\n— separate audience)" as WorkOSCC
+participant "WorkOS\n(Tenant Auth\n— per-org)" as TenantIDP
+end box
+
+box "CI/CD (OIDC — no static secrets)" #F2F9FF
+participant "GitHub Actions\n(OIDC Workload Identity)" as CICD
+participant "Terraform (IaC)\n(remote state, lease lock)" as TF
+end box
+
+box "External (Client)" #FFCCCC
+actor "Tenant Primary\nContact" as PrimaryContact
+end box
+
+== 1. Control Center Login (WorkOS SSO — CC Audience) ==
+Initiator -[#orange]-> WorkOSCC: Authenticate (MFA Required)\n— WorkOS CC Organisation
+WorkOSCC --[#orange]-> Initiator: HTTP-only Session Cookie\n(CC-Initiator Role, 15-min TTL)
+
+== 2a. Tenant Creation — Initiation ==
+Initiator -[#orange]-> CC: Submit New Tenant Request\n(Name, Tier, Region, Seat Limit,\nLead Threshold, Retention Period)
+activate CC
+CC -> CCAPI: POST /api/tenants/request
+CCAPI -> Approval: Register Pending Request\n(requester_sub locked from self-verifying)
+CCAPI -> Audit: Log request initiation\n(WorkOS sub, IP, timestamp)
+CCAPI -[#orange]-> Email: Dispatch Verification Notification\nto CC-Verifier group
+deactivate CC
+
+== 2b. Tenant Creation — Verifier Approval ==
+Verifier -[#orange]-> WorkOSCC: Authenticate (MFA Required)\n— WorkOS CC Organisation
+WorkOSCC --[#orange]-> Verifier: HTTP-only Session Cookie
+Verifier -[#orange]-> CC: Review & Approve/Reject Request
+activate CC
+CC -> CCAPI: POST /api/approvals/{id}/approve
+CCAPI -> Approval: Validate approver_sub ≠ requester_sub\n(403 if same identity)
+CCAPI -> Audit: Log Verification Decision\n(Verifier sub, timestamp, outcome)
+CCAPI -> CCAPI: Verification passed\n— Trigger Provisioning Pipeline
+deactivate CC
+
+== 2c. Automated 5-Step Tenant Provisioning ==
+CCAPI -> Pipeline: Trigger async provisioning
+activate Pipeline
+
+note over Pipeline
+  **5-Step Provisioning Pipeline**
+  Step 1: Validate tenant config (Zod schema)
+  Step 2: Provision CosmosDB shard + RLS
+  Step 3: Configure Key Vault TDE key
+  Step 4: Create WorkOS tenant organisation
+  Step 5: Dispatch invitation + audit receipt
+end note
+
+Pipeline -> CICD: Trigger GitHub Actions workflow
+CICD -[#orange]-> Azure: OIDC Workload Identity Federation\n(no static credentials)
+CICD -> TF: Execute Terraform for New Tenant
+activate TF
+TF -[#orange]-> DB: Provision CosmosDB shard\n(Citus distribute_table by tenant_id)\n+ apply RLS policies via db-client
+TF -[#orange]-> Azure: Configure Azure Key Vault TDE key\n(per-tenant or shared by tier)
+Azure --[#orange]-> TF: Shard provisioned & encrypted
+TF -[#orange]-> TenantIDP: Create WorkOS Organisation\n(Tenant Authentication — separate audience)
+TenantIDP --[#orange]-> TF: WorkOS Org configured
+TF -[#orange]-> DB: Write tenant_config record\n(Tier, Seat Limit, Lead Threshold,\nRetention Period, EU Region Lock)
+TF --> Pipeline: Infrastructure provisioned
+deactivate TF
+
+Pipeline -[#orange]-> Email: Dispatch Magic Link Invitation\n(via email-service → M365 Graph API)
+activate Email
+Email --[#orange]-> PrimaryContact: Welcome to SignalCaptureAI!\nMagic Link: https://[slug].signalcaptureai.com/invite?token=<signed>\n(24-hour expiry, single use, bound to primary contact email)\nFirst admin seat reserved via invitation-engine
+deactivate Email
+
+Pipeline -[#orange]-> Audit: Write Provisioning Receipt\n(immutable audit_entries + App Insights)
+Pipeline --> Initiator: Tenant Live Notification
+deactivate Pipeline
+
+== 3. Tenant Limit Modification (Single Admin + Approval Engine) ==
+Initiator -[#orange]-> CC: Update Seat Limit, Lead Threshold,\nor Enterprise Retention Period
+CC -> CCAPI: PATCH /api/tenants/{id}/limits
+CCAPI -> Approval: Register limit change request\n(approval-engine enforces workflow)
+CCAPI -> DB: Apply Updated Config\n(via db-client with tenant_id sharding)
+CCAPI -> Audit: Log Limit Change\n(Initiator sub, timestamp, old/new values)
+
+== 4. Tenant Deletion — Initiation ==
+Initiator -[#red]-> CC: Submit Tenant Deletion Request\n(Reason + Client Notification Confirmed)
+activate CC
+CC -> CCAPI: POST /api/tenants/{id}/delete
+CCAPI -[#red]-> Approval: Register Pending Deletion\n(elevated approval tier)
+CCAPI -[#red]-> Audit: Log deletion request initiation
+CCAPI -[#red]-> Email: Broadcast Elevated Deletion Alert\nto CC-Verifier group + finance DL
+deactivate CC
+
+== 5. Tenant Deletion — Verifier Approval ==
+Verifier -[#red]-> CC: Approve Deletion
+activate CC
+CC -> CCAPI: POST /api/approvals/{id}/approve
+CCAPI -> Approval: Validate approver_sub ≠ requester_sub
+CCAPI -[#red]-> Audit: Log Deletion Verification\n(Verifier sub, timestamp)
+CCAPI -> CCAPI: Verification passed — Begin Deletion Sequence
+deactivate CC
+
+== 6. Tenant Deletion — Execution ==
+CCAPI -[#red]-> TenantIDP: Immediately Suspend WorkOS Org\n(all tenant sessions invalidated)
+CCAPI -[#red]-> DB: Freeze Tenant Data (Citus shard)\n(30-Day Soft-Delete Period Begins)
+CCAPI -[#orange]-> Audit: Log Suspension Timestamp
+
+note over CCAPI, DB
+  Standard path: 30-day soft-delete retention
+  (data frozen in Citus shard, inaccessible but retained).
+  Emergency hard-delete: both Initiator AND Verifier
+  must submit independent written justifications
+  via separate authenticated API calls.
+  15-minute abort window before pipeline executes.
+end note
+
+CCAPI -[#red]-> Pipeline: Trigger Terraform Destroy after Retention Period
+activate Pipeline
+Pipeline -> CICD: Trigger GitHub Actions destroy workflow\n(requires environment approval gate)
+CICD -> TF: Terraform Destroy — Tenant Scope
+TF -[#red]-> DB: Purge Citus tenant shard\n(cascade delete via gdpr-tools)
+TF -[#red]-> Azure: Invalidate TDE Key in Key Vault
+TF -[#red]-> TenantIDP: Deprovision WorkOS Tenant Organisation
+TF --> Pipeline: Destruction Complete
+deactivate Pipeline
+Pipeline -[#red]-> Audit: Write Signed Deletion Receipt\nto immutable audit_entries\n(HMAC-chained, App Insights mirrored)
+Pipeline --> Initiator: Tenant Deletion Confirmed
+
+@enduml

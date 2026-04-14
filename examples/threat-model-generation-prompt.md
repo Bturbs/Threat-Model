@@ -377,7 +377,7 @@ Return a valid YAML file with:
 6. Run the report generator: `python -m src.cli report path/to/threat-models/PROJECT_NAME`
 7. Review the HTML report and iterate as needed.
 
-**Real-world Example:** The Meetsendai V0 threat model (7 assets, 40+ threats) was successfully generated using this prompt, demonstrating end-to-end functionality from YAML generation to HTML report rendering.
+**Real-world Example:** The SignalCaptureAI V0 threat model (7 assets, 40+ threats) was successfully generated using this prompt, demonstrating end-to-end functionality from YAML generation to HTML report rendering.
 
 ---
 

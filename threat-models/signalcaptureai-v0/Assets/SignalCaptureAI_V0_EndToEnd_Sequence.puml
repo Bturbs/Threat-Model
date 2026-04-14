@@ -1,0 +1,133 @@
+@startuml SignalCaptureAI_V0_EndToEnd_Sequence
+title SignalCaptureAI V0 - End-to-End Flow (Onboarding to Lead Capture)
+skinparam maxMessageSize 150
+skinparam BoxPadding 10
+
+legend top right
+  **Risk Levels (Transactions & Actor Swimlanes)**
+  |<#White> Black Arrow | Internal / Low Risk Operation |
+  |<#F2F9FF> Light Blue Box | Trusted Internal System Boundary |
+  |<#Orange> Orange Arrow | PII Processing / Auth (Medium Risk) |
+  |<#FFE6CC> Light Orange Box| Edge Transit / 3rd Party (Medium Risk) |
+  |<#Red> Red Arrow | External PII Ingress-Egress (High Risk) |
+  |<#FFCCCC> Light Red Box| Untrusted External Actors (High Risk) |
+endlegend
+
+box "Internal Operations" #E6F2FF
+actor "Sales / CRM" as CRM
+actor "Finance" as Finance
+end box
+
+box "Trusted Cloud Hub — EU Only (Azure Container Apps)" #F2F9FF
+participant "Provisioning\nPipeline" as Pipeline
+participant "Terraform (IaC)\n(OIDC Auth)" as TF
+participant "Azure Infrastructure\n(EU Region)" as Azure
+participant "Azure Key Vault\n(TDE + Envelope Enc)" as KV
+participant "API Gateway\n(Fastify)" as Docker
+participant "CosmosDB PostgreSQL\n(Citus, RLS + TDE)" as DB
+participant "AI Engine\n(Claude Haiku 3.5)" as AI
+participant "Whisper Service\n(OpenAI)" as Whisper
+participant "Email Service\n(Graph API + ACS)" as Email
+participant "Audit Service\n(Append-Only)" as Audit
+end box
+
+box "Auth (SSO)" #FFE6CC
+participant "WorkOS" as IDP
+end box
+
+box "External Actors (High Risk)" #FFCCCC
+actor "Client Tenant Admin" as Admin
+actor "Sales Rep (Event)" as Rep
+actor "Lead" as Lead
+end box
+
+== 1. Sales & Financial Approval ==
+CRM -> Finance: Sale Completed (Request Order Approval)
+activate Finance
+Finance -> Pipeline: Approves Order & Triggers Provisioning
+deactivate Finance
+
+== 2. Async 5-Step Provisioning Pipeline (EU) ==
+activate Pipeline
+Pipeline -> TF: Step 1: Execute Terraform Plan/Apply (OIDC Auth)
+activate TF
+TF -> Azure: Provision Citus PostgreSQL\n(RLS + tenant_id sharding)
+TF -> KV: Create/Assign TDE Key + Envelope Encryption Key
+Azure --> TF: DB Provisioned & Encrypted (TLS 1.3 + TDE)
+TF --> Pipeline: Infrastructure Ready
+deactivate TF
+
+Pipeline -[#orange]-> IDP: Step 2: Create WorkOS Organisation
+IDP --[#orange]-> Pipeline: Organisation configured
+
+Pipeline -[#orange]-> Email: Step 3: Send Magic Link Invitation\n(via invitation-engine + ACS)
+Email --[#orange]-> Admin: Magic Link Email Delivered
+
+Pipeline -> Audit: Step 4: Record Provisioning Audit Receipt
+Pipeline -> Email: Step 5: Send Welcome Email (ACS)
+Email --> Admin: Welcome Email Delivered
+
+Pipeline -> CRM: Client Created & All 5 Steps Complete
+deactivate Pipeline
+
+== 3. Client Tenant Event Setup ==
+Admin -[#orange]-> IDP: Login via WorkOS (SSO)
+IDP --[#orange]-> Admin: Session Cookie (httpOnly, Secure, SameSite=Lax)
+Admin -[#orange]-> Docker: Upload Product Documentation (Firm Context)
+Docker -> DB: Store Docs in Tenant DB\n(SET LOCAL tenant_id, RLS enforced)
+Admin -[#orange]-> Docker: Create New Tracking Event
+Admin -[#orange]-> Docker: Connect Microsoft 365 Mailbox (OAuth)
+Docker -[#orange]-> Email: Store Encrypted OAuth Token\n(Key Vault Envelope Encryption)
+
+== 4. Lead Capture Workflow (EU Processing) ==
+Rep -[#orange]-> IDP: Login via WorkOS (SSO)
+IDP --[#orange]-> Rep: Session Cookie
+Rep -> Docker: Select Event
+note right
+  App passes signed location header
+  (HMAC-SHA256) to indicate EU context.
+  No external geo-routing in V0.
+end note
+Rep -[#red]-> Rep: Scan Business Card (Tesseract.js OCR)\n& Record Voice Note (WebM/Opus)
+note right
+  OCR runs client-side only.
+  No business card image PII
+  egress to server for OCR.
+end note
+Rep -[#red]-> Docker: Submit Lead Data (OCR Text + Audio)\nvia HTTPS / TLS 1.3
+
+activate Docker
+Docker -[#orange]-> Whisper: Pass Audio for Transcription
+activate Whisper
+note right #FFCCCC
+  Voice PII transmitted to
+  OpenAI external API.
+  GDPR risk — DPA required.
+end note
+Whisper --[#orange]-> Docker: Voice Transcript (PII stripped)
+deactivate Whisper
+Docker -> DB: Fetch Firm Context for Cross-Reference
+DB --> Docker: Firm Context Docs
+Docker -[#orange]-> AI: Analyse Transcript + OCR vs Firm Context\n(XML-delimited prompt, Zod validation)
+activate AI
+AI --[#orange]-> Docker: Generated Draft Email (subject, HTML, text)
+deactivate AI
+Docker -[#orange]-> DB: Store Lead PII & Draft\n(Citus sharded by tenant_id, RLS enforced)
+Docker -> Audit: Log Lead Capture Event
+Docker --[#orange]-> Rep: Present Draft Email for Review
+deactivate Docker
+
+== 5. Human-in-the-Loop & Delivery ==
+Rep -[#orange]-> Docker: Review & Approve Draft
+Docker -> Audit: Log Draft Approval (user_id, draft hash)
+Docker -[#red]-> Email: Dispatch via Microsoft 365 Graph API\n(from user's own mailbox, Mail.Send scope)
+Email -[#red]-> Lead: Email Delivered (tracking pixel injected)
+
+== 6. Tracking & Compliance ==
+Email -> DB: Record Open Event (tracking pixel loaded)
+Email -> DB: Record Reply Event (Graph API inbox poll, 5min)
+Admin -[#orange]-> Docker: View Event Metrics (Scoped to Tenant)
+Admin -[#red]-> Docker: GDPR Data Subject Request
+Docker -> DB: gdpr-tools: PII Scan → Cascade Delete\n→ Compliance Receipt
+Docker -> Audit: Log GDPR Deletion (compliance receipt)
+@enduml
