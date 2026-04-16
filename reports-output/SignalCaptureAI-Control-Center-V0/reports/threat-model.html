@@ -2662,7 +2662,7 @@ body.print-mode .interactive-diagram .plantuml-diagram {
         <header class="header">
             <h1>SignalCaptureAI Control Center (V0)</h1>
             <div class="meta">
-                Model ID: TM-SCCV0-20260414 | Version: 2.0 | Generated: 2026-04-14 18:42:26 UTC
+                Model ID: TM-SCCV0-20260414 | Version: 2.0 | Generated: 2026-04-16 20:11:14 UTC
             </div>
         </header>
 
@@ -2670,7 +2670,7 @@ body.print-mode .interactive-diagram .plantuml-diagram {
     <section id="summary">
         <h2>Summary</h2>
         <p style="margin-bottom: 15px;">
-            <strong>10</strong> unmitigated threats requiring attention:
+            <strong>8</strong> unmitigated threats requiring attention:
         </p>
         
         
@@ -2767,22 +2767,6 @@ body.print-mode .interactive-diagram .plantuml-diagram {
                 </tr>
                 
                 <tr>
-                    <td><a href="#threat-T_009_SESSION_HIJACK">T_009_SESSION_HIJACK</a></td>
-                    <td>CC Admin Session Hijacking via XSS or Token Exfiltration</td>
-                    <td>
-                        <span class="cvss cvss-high">
-                            7.7
-                        </span>
-                    </td>
-                    <td>Spoofing</td>
-                    <td style="text-align: center;">
-                        
-                        <span style="color: var(--text-muted); font-weight: 500;">FALSE</span>
-                        
-                    </td>
-                </tr>
-                
-                <tr>
                     <td><a href="#threat-T_010_CC_DOS">T_010_CC_DOS</a></td>
                     <td>Denial of Service Against Control Center Blocking Tenant Operations</td>
                     <td>
@@ -2791,22 +2775,6 @@ body.print-mode .interactive-diagram .plantuml-diagram {
                         </span>
                     </td>
                     <td>Denial of Service</td>
-                    <td style="text-align: center;">
-                        
-                        <span style="color: var(--text-muted); font-weight: 500;">FALSE</span>
-                        
-                    </td>
-                </tr>
-                
-                <tr>
-                    <td><a href="#threat-T_007_EMAIL_HIJACK">T_007_EMAIL_HIJACK</a></td>
-                    <td>Welcome Email Interception Enabling Unauthorized First-Admin Registration</td>
-                    <td>
-                        <span class="cvss cvss-high">
-                            7.1
-                        </span>
-                    </td>
-                    <td>Spoofing</td>
                     <td style="text-align: center;">
                         
                         <span style="color: var(--text-muted); font-weight: 500;">FALSE</span>
@@ -2999,7 +2967,7 @@ body.print-mode .interactive-diagram .plantuml-diagram {
                     <td><a href="#threat-T_007_EMAIL_HIJACK">Welcome Email Interception Enabling Unauthorized First-Admin Registration</a></td>
                     <td style="text-align: center;">
                         
-                        <span class="status-icon status-unmitigated">✗</span>
+                        <span class="status-icon status-mitigated">✓</span>
                         
                     </td>
                     <td style="text-align: center;">
@@ -3042,7 +3010,7 @@ body.print-mode .interactive-diagram .plantuml-diagram {
                     <td><a href="#threat-T_009_SESSION_HIJACK">CC Admin Session Hijacking via XSS or Token Exfiltration</a></td>
                     <td style="text-align: center;">
                         
-                        <span class="status-icon status-unmitigated">✗</span>
+                        <span class="status-icon status-mitigated">✓</span>
                         
                     </td>
                     <td style="text-align: center;">
@@ -3054,8 +3022,7 @@ body.print-mode .interactive-diagram .plantuml-diagram {
                         
                         
                         
-                        <span style="color: var(--red); font-weight: 600;">FALSE</span>
-                        <span style="color: #666; font-size: 0.85rem;">(2/3)</span>
+                        <span style="color: var(--green); font-weight: 600;">TRUE</span>
                         
                     </td>
                 </tr>
@@ -3115,7 +3082,7 @@ body.print-mode .interactive-diagram .plantuml-diagram {
             </tr>
             <tr>
                 <th>Operational Countermeasures</th>
-                <td>13 / 23</td>
+                <td>14 / 23</td>
             </tr>
             <tr>
                 <th>Attackers Considered</th>
@@ -3266,9 +3233,9 @@ body.print-mode .interactive-diagram .plantuml-diagram {
     CM_T_009_SESSION_HIJACK_CM_009_HTTPONLY_COOKIE(["DONE: Store CC JWT in HttpOnly, Secure, S..."])
     T_T_009_SESSION_HIJACK -.-> CM_T_009_SESSION_HIJACK_CM_009_HTTPONLY_COOKIE
     style CM_T_009_SESSION_HIJACK_CM_009_HTTPONLY_COOKIE fill:#d5f5e3,stroke:#27ae60,color:#1e8449
-    CM_T_009_SESSION_HIJACK_CM_009_CSP(["TODO: Implement a Strict Content Security..."])
+    CM_T_009_SESSION_HIJACK_CM_009_CSP(["DONE: Implement a Strict Content Security..."])
     T_T_009_SESSION_HIJACK -.-> CM_T_009_SESSION_HIJACK_CM_009_CSP
-    style CM_T_009_SESSION_HIJACK_CM_009_CSP fill:#f2f3f4,stroke:#aab7b8,color:#555
+    style CM_T_009_SESSION_HIJACK_CM_009_CSP fill:#d5f5e3,stroke:#27ae60,color:#1e8449
     CM_T_010_CC_DOS_CM_010_BREAK_GLASS(["TODO: Define and Test a Break-Glass Proce..."])
     T_T_010_CC_DOS -.-> CM_T_010_CC_DOS_CM_010_BREAK_GLASS
     style CM_T_010_CC_DOS_CM_010_BREAK_GLASS fill:#f2f3f4,stroke:#aab7b8,color:#555
@@ -3624,9 +3591,9 @@ Pipeline --&gt; Initiator: Tenant Deletion Confirmed
     CM_T_009_SESSION_HIJACK_CM_009_HTTPONLY_COOKIE([&#34;DONE: Store CC JWT in HttpOnly, Secure, S...&#34;])
     T_T_009_SESSION_HIJACK -.-&gt; CM_T_009_SESSION_HIJACK_CM_009_HTTPONLY_COOKIE
     style CM_T_009_SESSION_HIJACK_CM_009_HTTPONLY_COOKIE fill:#d5f5e3,stroke:#27ae60,color:#1e8449
-    CM_T_009_SESSION_HIJACK_CM_009_CSP([&#34;TODO: Implement a Strict Content Security...&#34;])
+    CM_T_009_SESSION_HIJACK_CM_009_CSP([&#34;DONE: Implement a Strict Content Security...&#34;])
     T_T_009_SESSION_HIJACK -.-&gt; CM_T_009_SESSION_HIJACK_CM_009_CSP
-    style CM_T_009_SESSION_HIJACK_CM_009_CSP fill:#f2f3f4,stroke:#aab7b8,color:#555
+    style CM_T_009_SESSION_HIJACK_CM_009_CSP fill:#d5f5e3,stroke:#27ae60,color:#1e8449
     CM_T_010_CC_DOS_CM_010_BREAK_GLASS([&#34;TODO: Define and Test a Break-Glass Proce...&#34;])
     T_T_010_CC_DOS -.-&gt; CM_T_010_CC_DOS_CM_010_BREAK_GLASS
     style CM_T_010_CC_DOS_CM_010_BREAK_GLASS fill:#f2f3f4,stroke:#aab7b8,color:#555
@@ -4868,8 +4835,8 @@ Pipeline --&gt; Initiator: Tenant Deletion Confirmed
                     <div class="threat-details">
                         <div class="detail-row">
                             <div class="detail-label">Threat Status:</div>
-                            <div class="detail-value unmitigated">
-                                Unmitigated
+                            <div class="detail-value mitigated">
+                                Mitigated
                             </div>
                         </div>
                         
@@ -4970,7 +4937,7 @@ Pipeline --&gt; Initiator: Tenant Deletion Confirmed
                                     <div class="vt-cm-title">Store CC JWT in HttpOnly, Secure, SameSite=Strict Cookie</div>
                                 </div>
                                 
-                                <div class="vt-cm not-impl">
+                                <div class="vt-cm ">
                                     <div class="vt-cm-label">Countermeasure</div>
                                     <div class="vt-cm-title">Implement a Strict Content Security Policy on the CC Application</div>
                                 </div>
@@ -5079,7 +5046,7 @@ Pipeline --&gt; Initiator: Tenant Deletion Confirmed
                         </div>
                     </div>
                     
-                    <div class="cm-item not-implemented">
+                    <div class="cm-item implemented">
                         <div class="cm-header">
                             <div style="display:flex;align-items:center;flex-wrap:wrap;gap:8px;">
                                 <span class="cm-id">CM_009_CSP</span>
@@ -5119,8 +5086,8 @@ Pipeline --&gt; Initiator: Tenant Deletion Confirmed
 
                         <div class="cm-status" style="margin-top:12px;">
                             <span class="cm-status-label">Countermeasure in place?</span>
-                            <span class="cm-status-value no">
-                                ✗
+                            <span class="cm-status-value yes">
+                                ✓
                             </span>
                         </div>
                     </div>
@@ -5357,8 +5324,8 @@ Pipeline --&gt; Initiator: Tenant Deletion Confirmed
                     <div class="threat-details">
                         <div class="detail-row">
                             <div class="detail-label">Threat Status:</div>
-                            <div class="detail-value unmitigated">
-                                Unmitigated
+                            <div class="detail-value mitigated">
+                                Mitigated
                             </div>
                         </div>
                         
@@ -7373,7 +7340,7 @@ curl -sc /dev/null -sI &#34;$CC_URL/login&#34; | grep -i &#34;set-cookie&#34;
 
         <!-- Footer -->
         <footer class="footer">
-            <p>Generated by Threat Model Tool | 2026-04-14 18:42:26 UTC</p>
+            <p>Generated by Threat Model Tool | 2026-04-16 20:11:14 UTC</p>
             <p>SignalCaptureAI Control Center (V0) | TM-SCCV0-20260414 v2.0</p>
         </footer>
     </main>

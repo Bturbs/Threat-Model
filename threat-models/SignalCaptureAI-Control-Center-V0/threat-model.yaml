@@ -1094,7 +1094,7 @@ threats:
       vector: "CVSS:3.1/AV:N/AC:H/PR:N/UI:R/S:U/C:H/I:H/A:L"
       score: 7.1
       severity: "High"
-    fullyMitigated: false
+    fullyMitigated: true
     alwaysPresent: false
 
     testPrerequisites:
@@ -1294,7 +1294,7 @@ threats:
       vector: "CVSS:3.1/AV:N/AC:H/PR:L/UI:R/S:C/C:H/I:H/A:N"
       score: 7.5
       severity: "High"
-    fullyMitigated: false
+    fullyMitigated: true
     alwaysPresent: false
 
     testPrerequisites:
@@ -1384,7 +1384,7 @@ threats:
           Deploy a Content Security Policy header that blocks inline script execution,
           restricts script sources to the CC application origin, and blocks external fetches
           to attacker-controlled domains.
-        status: "not_started"
+        status: "in_place"
         effort: "Medium"
         why: >
           Even if an XSS payload is injected, a strict CSP prevents the injected script from
