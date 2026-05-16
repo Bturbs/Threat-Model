@@ -1,0 +1,981 @@
+meta:
+  title: "Captraex Public Website"
+  modelId: "TM-CAP-WEB-20260516"
+  version: "1.0"
+  scope: >
+    Public-facing Captraex marketing website built with Next.js static export and
+    hosted on Azure Static Web Apps. Covers browser-side rendering, preview
+    password overlay logic, redirects to app.captraex.com, checkout initiation
+    calls to api.captraex.com, Stripe hosted checkout handoff, static hosting
+    header/CSP policy, and deployment supply chain via GitHub Actions. Excludes
+    authenticated product workflows inside app.captraex.com and backend API internals.
+  owner: "Security Team"
+  lastUpdated: "2026-05-16"
+
+diagrams:
+  - id: "DIAGRAM_01"
+    title: "Captraex Website Visitor Journey — Sign In and Checkout"
+    file: "Assets/Captraex_Website_EndToEnd_Sequence.puml"
+    type: "sequence"
+    placement: "before_attack_tree"
+    description: >
+      End-to-end visitor journey from public page load through sign-in redirect and
+      checkout handoff, including trust boundaries across static hosting, API,
+      product app, and Stripe.
+
+  - id: "DIAGRAM_02"
+    title: "Captraex Website Trust Boundaries and Deployment Path"
+    file: "Assets/Captraex_Website_TrustBoundaries.puml"
+    type: "activity"
+    placement: "before_attack_tree"
+    description: >
+      Trust boundary view of browser runtime, static hosting controls, third-party
+      integrations, and CI/CD deployment path.
+
+assets:
+  - ID: A_BROWSER
+    name: Visitor Browser Runtime
+    type: Client Application
+    description: >
+      Untrusted browser environment executing the static Captraex website bundle.
+      Handles navigation, CTA clicks, and outbound requests to app.captraex.com,
+      api.captraex.com, and Stripe hosted checkout.
+    trustZone: External End-User
+    dataFlows:
+      - ID: DF_001_SITE_LOAD
+        name: Load Marketing Website
+        source: A_BROWSER
+        destination: A_WEBSITE
+        trustBoundary: External / Edge
+      - ID: DF_002_CHECKOUT_CREATE
+        name: Checkout Session Request
+        source: A_BROWSER
+        destination: A_API
+        trustBoundary: External / API Edge
+      - ID: DF_003_SIGNIN_REDIRECT
+        name: Sign-In Redirect to Product App
+        source: A_BROWSER
+        destination: A_APP
+        trustBoundary: External / Product App
+      - ID: DF_004_STRIPE_REDIRECT
+        name: Redirect to Hosted Payment Page
+        source: A_BROWSER
+        destination: A_STRIPE
+        trustBoundary: External / Third-Party Payment
+
+  - ID: A_WEBSITE
+    name: Captraex Website (Azure Static Web Apps)
+    type: Static Web Application
+    description: >
+      Next.js 16 static export hosted on Azure Static Web Apps. Serves immutable
+      HTML/CSS/JS assets and marketing pages (home, features, use-cases,
+      how-it-works, pricing). Includes browser-side preview gate logic when
+      NEXT_PUBLIC_SITE_PASSWORD is configured.
+    trustZone: Trusted Internal
+    dataFlows:
+      - ID: DF_005_ASSET_RESPONSE
+        name: Serve Static Assets and HTML
+        source: A_WEBSITE
+        destination: A_BROWSER
+        trustBoundary: Edge / External
+      - ID: DF_006_APP_PREWARM
+        name: Product App Pre-Warm Request
+        source: A_WEBSITE
+        destination: A_APP
+        trustBoundary: External / Product App
+      - ID: DF_007_API_PREWARM
+        name: API Health Pre-Warm Request
+        source: A_WEBSITE
+        destination: A_API
+        trustBoundary: External / API
+
+  - ID: A_EDGE_CONFIG
+    name: Static Hosting Security Header Policy
+    type: Security Configuration
+    description: >
+      staticwebapp.config.json global header policy including HSTS,
+      X-Content-Type-Options, X-Frame-Options, CSP, Permissions-Policy, and
+      Referrer-Policy.
+    trustZone: Trusted Internal
+    dataFlows:
+      - ID: DF_008_SECURITY_HEADERS
+        name: Apply Security Headers to HTTP Responses
+        source: A_EDGE_CONFIG
+        destination: A_BROWSER
+        trustBoundary: Edge / External
+
+  - ID: A_API
+    name: Captraex Public API (api.captraex.com)
+    type: External API Service
+    description: >
+      Public API endpoint used by the website for pricing trial checkout session
+      creation and health checks. Returns checkout URL payload used by browser
+      redirect logic.
+    trustZone: Edge / Trusted Internal
+    dataFlows:
+      - ID: DF_009_CHECKOUT_RESPONSE
+        name: Return Checkout URL to Browser
+        source: A_API
+        destination: A_BROWSER
+        trustBoundary: API / External
+      - ID: DF_010_STRIPE_SESSION
+        name: Create Stripe Checkout Session
+        source: A_API
+        destination: A_STRIPE
+        trustBoundary: Trusted Internal / Third-Party
+
+  - ID: A_APP
+    name: Captraex Product App (app.captraex.com)
+    type: External Web Application
+    description: >
+      Product application destination for sign-in and dashboard navigation.
+      Website links and pre-warm calls route visitors to this domain.
+    trustZone: Edge / Trusted Internal
+    dataFlows:
+      - ID: DF_011_APP_RESPONSE
+        name: Serve Product App Login and Dashboard
+        source: A_APP
+        destination: A_BROWSER
+        trustBoundary: Product App / External
+
+  - ID: A_STRIPE
+    name: Stripe Hosted Checkout
+    type: External Payment Service
+    description: >
+      Third-party hosted payment page receiving browser redirects after checkout
+      session creation. Handles card capture and payment authorization.
+    trustZone: External Third-Party
+    dataFlows:
+      - ID: DF_012_STRIPE_PAGE
+        name: Render Hosted Checkout Session
+        source: A_STRIPE
+        destination: A_BROWSER
+        trustBoundary: Third-Party / External
+
+  - ID: A_REPO
+    name: GitHub Repository (captraex-ui-experiment)
+    type: Source Code Repository
+    description: >
+      Source control for website code, CI workflows, static hosting policy, and
+      build configuration. Changes in main branch trigger production deployment.
+    trustZone: Privileged Internal
+    dataFlows:
+      - ID: DF_013_REPO_TO_CI
+        name: Source Changes Trigger CI Pipeline
+        source: A_REPO
+        destination: A_CI
+        trustBoundary: Source Control / CI
+
+  - ID: A_CI
+    name: GitHub Actions Deployment Pipeline
+    type: CI/CD Pipeline
+    description: >
+      Build and deploy workflow using Node 22, npm ci, next build, and
+      Azure/static-web-apps-deploy with AZURE_STATIC_WEB_APPS_API_TOKEN.
+      Injects NEXT_PUBLIC_* runtime configuration at build time.
+    trustZone: Privileged Internal
+    dataFlows:
+      - ID: DF_014_BUILD_AND_DEPLOY
+        name: Publish Built Static Site to Azure Static Web Apps
+        source: A_CI
+        destination: A_WEBSITE
+        trustBoundary: CI/CD / Hosting Control Plane
+      - ID: DF_015_BUILD_TIME_ENV
+        name: Inject Public Runtime Endpoints at Build Time
+        source: A_CI
+        destination: A_WEBSITE
+        trustBoundary: CI/CD / Build Configuration
+
+  - ID: A_NPM
+    name: npm Registry Dependencies
+    type: External Package Repository
+    description: >
+      Third-party JavaScript package source used during CI dependency install.
+      Includes transitive dependency tree consumed by production build artifacts.
+    trustZone: External Third-Party
+    dataFlows:
+      - ID: DF_016_DEPENDENCY_FETCH
+        name: Dependency Resolution and Package Download
+        source: A_NPM
+        destination: A_CI
+        trustBoundary: Third-Party / CI
+
+attackers:
+  - REFID: ATT_EXT
+    name: External Web Attacker
+    description: >
+      Unauthenticated actor probing the public website, checkout flow, and
+      redirect paths. Uses browser tooling, interception proxies, automated bots,
+      and commodity exploit kits.
+    motivation: >
+      Deface website content, phish visitors, divert checkout traffic, or reduce
+      conversion by disrupting key call-to-action paths.
+    capability: Medium
+
+  - REFID: ATT_PHISH
+    name: Brand Impersonation Actor
+    description: >
+      Threat actor imitating Captraex sign-in or trial checkout paths to steal
+      credentials or payment details from prospects.
+    motivation: >
+      Credential theft, card theft, and reputational damage by abusing trust in
+      the Captraex brand.
+    capability: Medium
+
+  - REFID: ATT_SUPPLY_CHAIN
+    name: Supply Chain Adversary
+    description: >
+      Attacker compromising package dependencies, CI actions, or deployment
+      credentials to inject malicious JavaScript into static website builds.
+    motivation: >
+      Scaled client-side skimming, phishing redirects, persistent defacement, or
+      malware delivery through trusted web assets.
+    capability: High
+
+  - REFID: ATT_INSIDER
+    name: Malicious Insider or Compromised Contributor
+    description: >
+      User with repository or CI privileges who can alter workflow files, build
+      configuration, or deployment settings.
+    motivation: >
+      Unauthorized content changes, shadow redirects, secret exfiltration,
+      sabotage, or abuse of deployment authority.
+    capability: High
+
+securityObjectives:
+  - ID: SO-CONF
+    name: Confidentiality of Pre-Release Website Content
+    description: >
+      Private preview content and launch-state messaging are not publicly exposed
+      before intended release.
+    category: CIA
+
+  - ID: SO-INT
+    name: Website Integrity and Redirect Integrity
+    description: >
+      Static pages, CTA behavior, and external handoffs (app and checkout)
+      remain untampered and route users only to trusted destinations.
+    category: CIA
+
+  - ID: SO-AVAIL
+    name: Public Availability
+    description: >
+      Website pages and key conversion actions remain available during campaign
+      windows and launch periods.
+    category: CIA
+
+  - ID: SO-AUTH
+    name: Deployment and Publishing Authorization
+    description: >
+      Only authorized maintainers and trusted CI workflows can publish
+      production website artifacts.
+    category: Access Control
+
+  - ID: SO-BRAND
+    name: Brand Trust and Anti-Phishing Assurance
+    description: >
+      Visitors can safely distinguish legitimate Captraex website flows from
+      spoofed or malicious experiences.
+    category: Governance
+
+  - ID: SO-COMP
+    name: Baseline Security and Privacy Compliance
+    description: >
+      Public website security controls (headers, CSP, safe redirects, and minimal
+      data leakage) satisfy baseline enterprise and privacy expectations.
+    category: Governance
+
+threats:
+  - ID: T_001_PREVIEW_GATE_BYPASS
+    title: "Client-Side Preview Password Exposure and Overlay Bypass"
+    threatType: "Information Disclosure"
+    attack: >
+      Preview gating is implemented in browser JavaScript using
+      NEXT_PUBLIC_SITE_PASSWORD and a writable site-auth cookie. Because the
+      password value is baked into public client bundles and page content is
+      rendered beneath an overlay, an attacker can inspect source assets, infer
+      the gate logic, set site-auth=1 manually, and access private preview
+      content without server-side verification.
+    impactDesc: >
+      Unreleased messaging, pricing, and launch campaign content become publicly
+      accessible. Competitors, scrapers, and press can access private pages ahead
+      of launch. Loss of launch control and brand trust.
+    impactedSecObj:
+      - SO-CONF
+      - SO-BRAND
+    attackers:
+      - ATT_EXT
+      - ATT_PHISH
+    CVSS:
+      vector: "CVSS:3.1/AV:N/AC:L/PR:N/UI:N/S:U/C:H/I:L/A:N"
+      score: 8.2
+      severity: "High"
+    fullyMitigated: false
+    alwaysPresent: false
+
+    testPrerequisites:
+      - "A deployed preview instance with password mode enabled"
+      - "Browser developer tools"
+      - "curl and grep for static asset inspection"
+
+    testSteps:
+      - "Load the preview page and confirm the password overlay appears"
+      - "Open DevTools and inspect loaded JavaScript bundles for password-gate strings"
+      - "Set document.cookie = 'site-auth=1; path=/' and reload"
+      - "Verify full page content is visible without submitting the password"
+      - "View page source and check whether core marketing copy is present in initial HTML beneath the overlay"
+
+    testScripts:
+      - language: "bash"
+        description: "Detect client-side preview gate artifacts and visible gated content"
+        code: |
+          #!/bin/bash
+          BASE_URL="$1"   # e.g., https://preview.captraex.com
+
+          echo "[*] Fetching homepage HTML..."
+          html=$(curl -s "$BASE_URL")
+
+          echo "[*] Checking whether marketing headline is already in HTML..."
+          echo "$html" | grep -qi "Captraex fixes that in 60 seconds" \
+            && echo "[WARNING] Gated content appears in initial HTML" \
+            || echo "[OK] No obvious gated headline in HTML"
+
+          echo "[*] Enumerating script files from HTML..."
+          echo "$html" | grep -oE '/_next/static/[^"\047 ]+\.js' | sort -u > /tmp/captraex-js.txt
+
+          while read -r js; do
+            [ -z "$js" ] && continue
+            body=$(curl -s "$BASE_URL$js")
+            echo "$body" | grep -q "site-auth" && echo "[FOUND] site-auth marker in $js"
+            echo "$body" | grep -q "NEXT_PUBLIC_SITE_PASSWORD" && echo "[FOUND] NEXT_PUBLIC_SITE_PASSWORD marker in $js"
+          done < /tmp/captraex-js.txt
+        requirements:
+          - "curl"
+          - "grep"
+
+    testTools:
+      - "Browser DevTools"
+      - "Burp Suite"
+      - "curl"
+
+    expectedBehavior: >
+      Content is delivered in initial HTML and access is governed only by
+      client-side checks. Cookie tampering or bundle inspection bypasses preview
+      intent.
+
+    expectedMitigation: >
+      Private preview is enforced at edge/server layer before content is served.
+      No client bundle contains plaintext preview secret logic.
+
+    countermeasures:
+      - ID: CM_001_EDGE_AUTH
+        title: "Move Preview Access Control to Edge/Server Enforcement"
+        description: >
+          Enforce preview authentication at Azure edge or upstream reverse proxy
+          before serving any protected HTML.
+        status: not_started
+
+      - ID: CM_001_SIGNED_SESSION
+        title: "Use Signed, Server-Issued Preview Session Cookies"
+        description: >
+          Replace writable site-auth cookie with short-lived, signed session tokens
+          issued after successful server-side authentication.
+        status: planned
+
+      - ID: CM_001_PUBLIC_ENV_REDUCTION
+        title: "Remove NEXT_PUBLIC_SITE_PASSWORD from Build-Time Public Variables"
+        description: >
+          Prevent password secrets from entering browser bundles by eliminating
+          public environment variable usage for authentication decisions.
+        status: planned
+
+  - ID: T_002_CHECKOUT_REDIRECT_POISON
+    title: "Malicious Checkout URL Injection Leading to Phishing Redirect"
+    threatType: "Tampering"
+    attack: >
+      The website trusts checkout_url from API response payload and redirects the
+      browser directly via window.location.href without host allowlisting.
+      If API response is compromised (server bug, DNS hijack, upstream compromise),
+      visitors can be silently redirected to attacker-controlled payment pages.
+    impactDesc: >
+      Prospects are routed to fraudulent checkout flows, causing payment fraud,
+      credential theft, and severe trust damage at the conversion point.
+    impactedSecObj:
+      - SO-INT
+      - SO-BRAND
+      - SO-COMP
+    attackers:
+      - ATT_EXT
+      - ATT_SUPPLY_CHAIN
+    CVSS:
+      vector: "CVSS:3.1/AV:N/AC:L/PR:N/UI:R/S:U/C:H/I:H/A:N"
+      score: 7.3
+      severity: "High"
+    fullyMitigated: false
+    alwaysPresent: true
+
+    testPrerequisites:
+      - "Browser with request interception capability"
+      - "A page with active Start trial CTA"
+      - "Proxy or Playwright route mocking"
+
+    testSteps:
+      - "Intercept POST /api/subscription/checkout response"
+      - "Replace response body with {\"checkout_url\":\"https://evil.example/pay\"}"
+      - "Click Start trial CTA"
+      - "Verify browser navigates to attacker domain without warning"
+      - "Repeat with non-HTTPS URL and javascript: URL to test parser hardening"
+
+    testScripts:
+      - language: "javascript"
+        description: "Playwright route tampering test for checkout URL trust"
+        code: |
+          import { test, expect } from '@playwright/test';
+
+          test('checkout redirect should reject non-allowlisted hosts', async ({ page }) => {
+            await page.route('**/api/subscription/checkout', async (route) => {
+              await route.fulfill({
+                status: 200,
+                contentType: 'application/json',
+                body: JSON.stringify({ checkout_url: 'https://evil.example/pay' }),
+              });
+            });
+
+            await page.goto('https://captraex.com/pricing/');
+            await page.getByRole('button', { name: /start|choose|get started/i }).first().click();
+
+            await expect(page).not.toHaveURL(/evil\.example/);
+          });
+        requirements:
+          - "@playwright/test"
+
+    testTools:
+      - "Playwright"
+      - "Burp Suite"
+
+    expectedBehavior: >
+      Browser redirects to any URL returned by API without validating host,
+      protocol, or path.
+
+    expectedMitigation: >
+      Client validates checkout URLs against strict allowlist (checkout.stripe.com
+      and buy.stripe.com over HTTPS only). Invalid URLs are rejected and surfaced
+      as user-safe errors.
+
+    countermeasures:
+      - ID: CM_002_URL_ALLOWLIST
+        title: "Validate Checkout Redirect Host and Protocol Client-Side"
+        description: >
+          Parse checkout_url using URL API and enforce HTTPS plus host allowlist
+          before performing navigation.
+        status: not_started
+
+      - ID: CM_002_SERVER_SIGNED_REDIRECT
+        title: "Return Signed Redirect Targets from API"
+        description: >
+          Protect redirect integrity by signing checkout payloads server-side and
+          verifying signature before client navigation.
+        status: planned
+
+  - ID: T_003_DEPLOY_TOKEN_COMPROMISE
+    title: "Production Website Defacement via CI/CD Deploy Token Compromise"
+    threatType: "Elevation of Privilege"
+    attack: >
+      Deployment uses Azure Static Web Apps API token in GitHub Actions. If token
+      or workflow execution context is compromised, attacker can publish modified
+      static artifacts that inject malicious scripts, alter sign-in destinations,
+      or deface pages.
+    impactDesc: >
+      Immediate full-site integrity loss. Visitors may be served phishing code or
+      hostile scripts from a trusted domain. Incident can impact all active traffic
+      until rollback and token rotation complete.
+    impactedSecObj:
+      - SO-INT
+      - SO-AUTH
+      - SO-BRAND
+    attackers:
+      - ATT_SUPPLY_CHAIN
+      - ATT_INSIDER
+    CVSS:
+      vector: "CVSS:3.1/AV:N/AC:H/PR:H/UI:N/S:C/C:H/I:H/A:H"
+      score: 8.0
+      severity: "High"
+    fullyMitigated: false
+    alwaysPresent: false
+
+    testPrerequisites:
+      - "Read access to deploy workflow"
+      - "Repository branch protection policy visibility"
+      - "Security review access to GitHub environment settings"
+
+    testSteps:
+      - "Review deploy workflow for secret token usage and trust boundaries"
+      - "Verify production deploy requires protected branch and reviewer controls"
+      - "Confirm deploy action versions are pinned to immutable SHAs"
+      - "Check rotation cadence and incident runbook for AZURE_STATIC_WEB_APPS_API_TOKEN"
+      - "Verify unauthorized PRs cannot trigger production deploy"
+
+    testScripts:
+      - language: "bash"
+        description: "Quick static checks for deploy hardening gaps"
+        code: |
+          #!/bin/bash
+          WF=".github/workflows/deploy.yml"
+
+          echo "[*] Checking for deploy token usage..."
+          grep -n "AZURE_STATIC_WEB_APPS_API_TOKEN" "$WF"
+
+          echo "[*] Checking action pinning (SHA expected)..."
+          grep -n "uses:" "$WF" | grep -v "@v" || true
+
+          echo "[*] Checking whether push to main triggers deploy..."
+          grep -n "branches:" -n "$WF"
+        requirements:
+          - "grep"
+
+    testTools:
+      - "GitHub repository settings review"
+      - "Branch protection rules"
+      - "Secret scanning"
+
+    expectedBehavior: >
+      Compromised CI context with valid deploy token can publish arbitrary static
+      content to production.
+
+    expectedMitigation: >
+      Deploy path requires hardened branch protections, pinned actions, explicit
+      environment approvals, rapid token rotation, and auditable release controls.
+
+    countermeasures:
+      - ID: CM_003_PROTECTED_DEPLOY_ENV
+        title: "Use Protected GitHub Environment for Production Deploy"
+        description: >
+          Require environment-level reviewers and branch restrictions before any
+          production deployment step executes.
+        status: planned
+
+      - ID: CM_003_ACTION_SHA_PIN
+        title: "Pin GitHub Actions to Commit SHAs"
+        description: >
+          Replace floating action tags with immutable commit SHA references to
+          reduce third-party action supply-chain risk.
+        status: not_started
+
+      - ID: CM_003_TOKEN_ROTATION
+        title: "Rotate Static Web Apps Deploy Token on Fixed Cadence"
+        description: >
+          Rotate deployment token quarterly and immediately after any suspected CI
+          compromise; document rollback and emergency revoke steps.
+        status: planned
+
+  - ID: T_004_NPM_SUPPLY_CHAIN
+    title: "Build Artifact Compromise via npm Dependency Supply Chain"
+    threatType: "Tampering"
+    attack: >
+      CI installs dependencies from npm registry. A compromised direct or
+      transitive package can inject malicious code into production bundles at
+      build time, enabling credential harvesting, redirect hijack, or malicious
+      script execution in visitors' browsers.
+    impactDesc: >
+      Persistent client-side compromise served from trusted captraex domain.
+      Potential theft of sign-in credentials, pricing form data, and session
+      navigation context.
+    impactedSecObj:
+      - SO-INT
+      - SO-BRAND
+      - SO-COMP
+    attackers:
+      - ATT_SUPPLY_CHAIN
+    CVSS:
+      vector: "CVSS:3.1/AV:N/AC:H/PR:N/UI:N/S:C/C:H/I:H/A:L"
+      score: 7.4
+      severity: "High"
+    fullyMitigated: false
+    alwaysPresent: true
+
+    testPrerequisites:
+      - "Access to package-lock.json and CI logs"
+      - "Software composition analysis tooling"
+
+    testSteps:
+      - "Review whether CI uses npm ci with lockfile enforcement"
+      - "Run npm audit and OSV scan for vulnerable direct/transitive dependencies"
+      - "Check dependency update process (Dependabot/Renovate) and review gates"
+      - "Verify lockfile changes require explicit code review"
+      - "Inspect postinstall scripts of high-risk dependencies"
+
+    testScripts:
+      - language: "bash"
+        description: "Basic dependency hygiene checks"
+        code: |
+          #!/bin/bash
+          set -e
+
+          echo "[*] Verifying lockfile exists..."
+          test -f package-lock.json && echo "[OK] package-lock.json present"
+
+          echo "[*] Running npm audit (production deps)..."
+          npm audit --omit=dev || true
+
+          echo "[*] Listing packages with install scripts..."
+          npm ls --all --json | grep -E '"postinstall"|"install"' || true
+        requirements:
+          - "npm"
+
+    testTools:
+      - "npm audit"
+      - "osv-scanner"
+      - "Dependabot"
+
+    expectedBehavior: >
+      Malicious package code reaches production build artifacts when dependency
+      intake is insufficiently controlled.
+
+    expectedMitigation: >
+      Strict lockfile governance, dependency scanning gates, and reviewed updates
+      reduce package compromise risk before build artifacts are published.
+
+    countermeasures:
+      - ID: CM_004_LOCKFILE_ENFORCE
+        title: "Use npm ci with Locked Dependency Graph"
+        description: >
+          Build pipeline installs strictly from package-lock.json to avoid
+          unreviewed dependency drift during deployment.
+        status: in_place
+
+      - ID: CM_004_DEP_SCANNING_GATE
+        title: "Add Mandatory Dependency Vulnerability Gates in CI"
+        description: >
+          Block production deploy when high/critical vulnerabilities are detected
+          in runtime dependency tree.
+        status: planned
+
+      - ID: CM_004_SBOM
+        title: "Generate SBOM for Each Production Build"
+        description: >
+          Emit SBOM artifact and retain with release metadata to improve incident
+          response and affected-version traceability.
+        status: planned
+
+  - ID: T_005_CSP_INLINE_SCRIPT_RISK
+    title: "CSP Weakening via Unsafe Inline Script Allowance"
+    threatType: "Information Disclosure"
+    attack: >
+      staticwebapp.config currently permits script-src 'unsafe-inline' and broad
+      connect-src https:. If any script injection vector occurs (defacement,
+      compromised dependency, or hostile third-party snippet), attacker JavaScript
+      can execute and exfiltrate data to arbitrary HTTPS endpoints.
+    impactDesc: >
+      Elevated blast radius for any injection event, enabling phishing overlays,
+      checkout diversion, and browser-side data exfiltration from trusted origin.
+    impactedSecObj:
+      - SO-INT
+      - SO-CONF
+      - SO-COMP
+    attackers:
+      - ATT_EXT
+      - ATT_SUPPLY_CHAIN
+    CVSS:
+      vector: "CVSS:3.1/AV:N/AC:H/PR:N/UI:R/S:C/C:H/I:H/A:N"
+      score: 7.0
+      severity: "High"
+    fullyMitigated: false
+    alwaysPresent: true
+
+    testPrerequisites:
+      - "Production response header inspection capability"
+      - "CSP evaluator or browser security tooling"
+
+    testSteps:
+      - "Fetch site headers and inspect Content-Security-Policy"
+      - "Verify script-src includes or excludes 'unsafe-inline'"
+      - "Verify connect-src is domain-scoped vs wildcard https:"
+      - "Validate CSP effectiveness using CSP Evaluator"
+      - "Confirm no inline scripts remain before tightening policy"
+
+    testScripts:
+      - language: "bash"
+        description: "Extract and inspect CSP directives"
+        code: |
+          #!/bin/bash
+          BASE_URL="$1"   # e.g., https://captraex.com
+
+          csp=$(curl -sI "$BASE_URL" | tr -d '\r' | grep -i '^content-security-policy:')
+          echo "$csp"
+
+          echo "$csp" | grep -q "unsafe-inline" \
+            && echo "[WARNING] script-src allows unsafe-inline" \
+            || echo "[OK] No unsafe-inline in script-src"
+
+          echo "$csp" | grep -q "connect-src 'self' https:" \
+            && echo "[WARNING] connect-src allows broad https destinations"
+        requirements:
+          - "curl"
+          - "grep"
+
+    testTools:
+      - "Google CSP Evaluator"
+      - "Security headers scanners"
+
+    expectedBehavior: >
+      CSP permits inline script execution and broad outbound connections if
+      injection occurs.
+
+    expectedMitigation: >
+      CSP uses nonce/hash-based script controls and explicit connect-src domain
+      allowlist (self, api.captraex.com, js.stripe.com, checkout.stripe.com).
+
+    countermeasures:
+      - ID: CM_005_NONCE_HASH_CSP
+        title: "Replace Unsafe Inline Script Policy with Nonce/Hash-Based CSP"
+        description: >
+          Remove unsafe-inline and adopt deterministic nonce/hash controls for
+          required bootstrap scripts.
+        status: planned
+
+      - ID: CM_005_CONNECT_ALLOWLIST
+        title: "Restrict connect-src to Explicit Service Domains"
+        description: >
+          Replace broad https: with strict allowlist of required endpoints only.
+        status: planned
+
+  - ID: T_006_CLICKJACKING
+    title: "Clickjacking Attempts Against Website Navigation and CTA Flows"
+    threatType: "Spoofing"
+    attack: >
+      An attacker attempts to embed captraex.com in an iframe and overlays
+      deceptive UI to trick users into clicking Sign in or Start trial actions.
+      This can be used to stage phishing or deceptive redirects.
+    impactDesc: >
+      If successful, users could be manipulated into unintended actions and
+      trust could be shifted to attacker-controlled pages.
+    impactedSecObj:
+      - SO-BRAND
+      - SO-INT
+    attackers:
+      - ATT_PHISH
+      - ATT_EXT
+    CVSS:
+      vector: "CVSS:3.1/AV:N/AC:L/PR:N/UI:R/S:U/C:L/I:L/A:N"
+      score: 4.6
+      severity: "Medium"
+    fullyMitigated: true
+    alwaysPresent: false
+
+    testPrerequisites:
+      - "A separate attacker-controlled test page"
+      - "Browser with developer tools"
+
+    testSteps:
+      - "Create an attacker page containing iframe src='https://captraex.com'"
+      - "Load attacker page and observe whether frame renders"
+      - "Inspect response headers for X-Frame-Options and frame-ancestors CSP"
+      - "Confirm browser blocks framing attempt"
+
+    testScripts:
+      - language: "bash"
+        description: "Check anti-framing headers"
+        code: |
+          #!/bin/bash
+          BASE_URL="$1"
+          curl -sI "$BASE_URL" | tr -d '\r' | grep -Ei 'x-frame-options|content-security-policy'
+        requirements:
+          - "curl"
+          - "grep"
+
+    testTools:
+      - "Browser developer tools"
+      - "SecurityHeaders.com"
+
+    expectedBehavior: >
+      Framing attempts are denied by X-Frame-Options: DENY and CSP
+      frame-ancestors 'none'.
+
+    expectedMitigation: >
+      All responses continue to include anti-framing directives and regression
+      tests detect accidental header removal.
+
+    countermeasures:
+      - ID: CM_006_ANTIFRAME_HEADERS
+        title: "Maintain X-Frame-Options DENY and CSP frame-ancestors none"
+        description: >
+          Keep anti-framing controls enforced through static hosting headers.
+        status: in_place
+
+      - ID: CM_006_HEADER_REGRESSION_TEST
+        title: "Add CI Smoke Test for Mandatory Security Headers"
+        description: >
+          Validate HSTS, CSP, and anti-framing headers on production after each
+          deploy to prevent silent policy regressions.
+        status: planned
+
+  - ID: T_007_BUILD_TIME_ENDPOINT_TAMPER
+    title: "Build-Time Endpoint Poisoning via Public Environment Variable Misconfiguration"
+    threatType: "Tampering"
+    attack: >
+      NEXT_PUBLIC_APP_URL and NEXT_PUBLIC_API_BASE are injected at build time.
+      If these values are malicious or misconfigured, website sign-in and checkout
+      flows route users to attacker-controlled infrastructure while still appearing
+      under trusted brand pages.
+    impactDesc: >
+      High-confidence phishing and payment diversion from legitimate UI. Users are
+      redirected to fake app or API endpoints controlled by attacker.
+    impactedSecObj:
+      - SO-INT
+      - SO-BRAND
+      - SO-AUTH
+    attackers:
+      - ATT_INSIDER
+      - ATT_SUPPLY_CHAIN
+    CVSS:
+      vector: "CVSS:3.1/AV:N/AC:H/PR:H/UI:R/S:C/C:H/I:H/A:N"
+      score: 7.2
+      severity: "High"
+    fullyMitigated: false
+    alwaysPresent: false
+
+    testPrerequisites:
+      - "CI access in non-production environment"
+      - "Ability to override NEXT_PUBLIC_APP_URL and NEXT_PUBLIC_API_BASE in test build"
+
+    testSteps:
+      - "Build site with NEXT_PUBLIC_APP_URL set to attacker-controlled test domain"
+      - "Open built site and click Sign in"
+      - "Verify browser navigates to injected domain"
+      - "Repeat for NEXT_PUBLIC_API_BASE and checkout call"
+      - "Confirm no build-time validation blocks unapproved hostnames"
+
+    testScripts:
+      - language: "bash"
+        description: "Demonstrate build-time endpoint injection and output artifact impact"
+        code: |
+          #!/bin/bash
+          set -e
+
+          NEXT_PUBLIC_APP_URL="https://evil.example" \
+          NEXT_PUBLIC_API_BASE="https://evil.example" \
+          npm run build
+
+          echo "[*] Searching output for injected endpoint..."
+          grep -R "evil.example" out/ | head -20
+        requirements:
+          - "npm"
+          - "grep"
+
+    testTools:
+      - "CI pipeline dry-run"
+      - "Static artifact inspection"
+
+    expectedBehavior: >
+      Build succeeds and generated artifacts embed attacker-controlled endpoints.
+
+    expectedMitigation: >
+      Build fails unless public endpoints match strict production allowlist.
+      Runtime guards reject off-domain redirects.
+
+    countermeasures:
+      - ID: CM_007_ENV_ALLOWLIST
+        title: "Enforce Build-Time Host Allowlist for Public Endpoint Variables"
+        description: >
+          Add CI assertion that NEXT_PUBLIC_APP_URL and NEXT_PUBLIC_API_BASE must
+          match approved captraex domains for production deploys.
+        status: not_started
+
+      - ID: CM_007_RUNTIME_HOST_GUARD
+        title: "Add Runtime Guard Before External Navigation"
+        description: >
+          Validate destination host in client navigation code before redirecting.
+        status: planned
+
+      - ID: CM_007_SECRET_GOVERNANCE
+        title: "Protect Production Environment Variable Secrets in GitHub"
+        description: >
+          Restrict who can modify production secrets and require audited approvals
+          for secret changes.
+        status: planned
+
+  - ID: T_008_CHECKOUT_API_ABUSE
+    title: "Checkout Endpoint Abuse and Conversion Path Degradation"
+    threatType: "Denial of Service"
+    attack: >
+      Public checkout creation endpoint can be targeted with automated high-volume
+      POST requests, causing backend strain, third-party billing noise, and failed
+      trial conversion attempts for real visitors.
+    impactDesc: >
+      Availability degradation in key revenue path, increased operational cost,
+      reduced conversion rates, and reputation impact during campaigns.
+    impactedSecObj:
+      - SO-AVAIL
+      - SO-BRAND
+    attackers:
+      - ATT_EXT
+    CVSS:
+      vector: "CVSS:3.1/AV:N/AC:L/PR:N/UI:N/S:U/C:N/I:N/A:H"
+      score: 7.5
+      severity: "High"
+    fullyMitigated: false
+    alwaysPresent: true
+
+    testPrerequisites:
+      - "Non-production API environment"
+      - "Load-testing tool or scripted curl loop"
+
+    testSteps:
+      - "Send burst traffic to /api/subscription/checkout with randomized payloads"
+      - "Observe API latency and error rates"
+      - "Verify per-IP and per-fingerprint throttling responses (HTTP 429)"
+      - "Check whether abuse telemetry and alerts fire"
+      - "Validate legitimate user checkout requests still succeed under load"
+
+    testScripts:
+      - language: "bash"
+        description: "Simple burst test for checkout endpoint throttling"
+        code: |
+          #!/bin/bash
+          API_BASE="$1"   # e.g., https://api.captraex.com
+          N="${2:-100}"
+
+          for i in $(seq 1 "$N"); do
+            curl -s -o /dev/null -w "%{http_code}\n" \
+              -X POST "$API_BASE/api/subscription/checkout" \
+              -H "Content-Type: application/json" \
+              -d '{"target_tier":"starter","origin":"https://captraex.com"}' &
+          done
+          wait
+        requirements:
+          - "curl"
+
+    testTools:
+      - "k6"
+      - "Locust"
+      - "API gateway metrics"
+
+    expectedBehavior: >
+      Without robust abuse controls, burst traffic causes elevated error rates and
+      checkout latency for legitimate prospects.
+
+    expectedMitigation: >
+      API enforces adaptive rate limiting, abuse detection, and alerting while
+      preserving throughput for legitimate traffic.
+
+    countermeasures:
+      - ID: CM_008_RATE_LIMIT
+        title: "Apply Rate Limiting and Burst Controls on Checkout Endpoint"
+        description: >
+          Enforce per-IP and behavioral throttles with HTTP 429 responses and
+          retry guidance.
+        status: planned
+
+      - ID: CM_008_BOT_SIGNAL
+        title: "Add Bot Detection Signals to CTA/Checkout Flow"
+        description: >
+          Introduce server-side abuse scoring and optional challenges for repeated
+          suspicious checkout creation attempts.
+        status: not_started
+
+      - ID: CM_008_MONITORING
+        title: "Alert on Checkout Error Rate and Abuse Spikes"
+        description: >
+          Configure operational alerts for sudden checkout failure spikes,
+          anomalous request volume, and regional abuse concentration.
+        status: planned

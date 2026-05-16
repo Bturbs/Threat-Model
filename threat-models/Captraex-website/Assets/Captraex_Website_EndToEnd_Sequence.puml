@@ -1,0 +1,63 @@
+@startuml Captraex_Website_EndToEnd_Sequence
+title Captraex Website - Visitor Journey (Sign In + Checkout)
+skinparam maxMessageSize 140
+skinparam BoxPadding 10
+
+legend top right
+  **Risk Levels (Flows and Boundaries)**
+  |<#White> Black Arrow | Internal / Low Risk |
+  |<#FFE6CC> Orange Arrow | External Hand-off / Medium Risk |
+  |<#FFCCCC> Red Arrow | High-Impact User-Trust Flow |
+endlegend
+
+box "External Visitor" #FFCCCC
+actor Visitor as V
+participant Browser as B
+end box
+
+box "Captraex Website Stack" #E6F2FF
+participant "Captraex Website\n(Azure Static Web Apps)" as W
+participant "Static Header Policy\n(staticwebapp.config.json)" as CFG
+participant "GitHub Actions Deploy\n(Node 22 + next build)" as CI
+end box
+
+box "Captraex Services" #F2F9FF
+participant "Product App\napp.captraex.com" as APP
+participant "Public API\napi.captraex.com" as API
+end box
+
+box "Third-Party" #FFE6CC
+participant "Stripe Hosted Checkout" as STRIPE
+end box
+
+== Deployment Path ==
+CI -> W: Publish static export artifact
+CI -> CFG: Apply global header policy
+
+== Initial Visit ==
+V -> B: Open https://captraex.com
+B -> W: GET /, /features, /pricing
+W -> CFG: Attach security headers + CSP
+W --> B: HTML/CSS/JS response
+
+== Preview Gate (when enabled) ==
+B -> B: Check site-auth cookie\nand run client-side overlay logic
+note right
+  Gate is browser-side.
+  No server-side auth boundary
+  in current implementation.
+end note
+
+== Sign In Flow ==
+V -[#orange]-> B: Click "Sign in"
+B -[#orange]-> APP: HEAD / (pre-warm, no-cors)
+B -[#orange]-> API: GET /health (pre-warm, no-cors)
+B -[#red]-> APP: Navigate to /dashboard
+
+== Trial Checkout Flow ==
+V -[#orange]-> B: Click "Start trial"
+B -[#orange]-> API: POST /api/subscription/checkout\n{target_tier, origin}
+API -[#orange]-> STRIPE: Create checkout session
+API -[#orange]-> B: Return { checkout_url }
+B -[#red]-> STRIPE: Redirect to hosted checkout URL
+@enduml

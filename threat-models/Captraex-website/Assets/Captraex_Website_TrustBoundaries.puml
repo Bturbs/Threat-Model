@@ -1,0 +1,50 @@
+@startuml Captraex_Website_TrustBoundaries
+title Captraex Website - Trust Boundaries and Deployment Controls
+skinparam style strictuml
+skinparam wrapWidth 180
+
+legend top right
+  **Lane Semantics**
+  |<#FFCCCC> Light Red | Untrusted user-controlled zone |
+  |<#FFE6CC> Light Orange | Third-party / internet transit |
+  |<#E6F2FF> Light Blue | Captraex trusted infrastructure |
+endlegend
+
+|#FFCCCC|Visitor + Browser Runtime|
+start
+:Load captraex.com pages;
+:Execute static JS bundle in browser;
+if (Preview mode enabled?) then (yes)
+  :Evaluate site-auth cookie and\nclient-side password logic;
+endif
+:Click Sign in / Start trial CTA;
+
+|#E6F2FF|Azure Static Web Apps (Website)|
+:Serve immutable static export;
+:Apply HSTS, CSP, anti-framing headers;
+:Expose pricing and CTA pages;
+
+|#FFE6CC|External Service Hand-offs|
+:Redirect users to app.captraex.com;
+:POST checkout request to api.captraex.com;
+:Redirect to checkout.stripe.com;
+
+|#E6F2FF|GitHub Actions CI/CD|
+:Checkout repository source;
+:Install dependencies (npm ci);
+:Build static site artifact;
+:Deploy using Azure Static Web Apps API token;
+
+if (CI token/workflow compromised?) then (yes)
+  |#FFCCCC|Threat Outcome|
+  :Publish malicious site build;
+  :Inject phishing redirect or hostile script;
+  :Serve tampered content from trusted domain;
+endif
+
+|#E6F2FF|Security Operations|
+:Monitor security headers in production;
+:Rotate deploy token and review workflow access;
+:Validate redirect host allowlists;
+stop
+@enduml
