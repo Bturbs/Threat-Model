@@ -1,7 +1,7 @@
 meta:
   title: "Captraex Public Website"
   modelId: "TM-CAP-WEB-20260516"
-  version: "1.0"
+  version: "1.1"
   scope: >
     Public-facing Captraex marketing website built with Next.js static export and
     hosted on Azure Static Web Apps. Covers browser-side rendering, preview
@@ -10,7 +10,7 @@ meta:
     header/CSP policy, and deployment supply chain via GitHub Actions. Excludes
     authenticated product workflows inside app.captraex.com and backend API internals.
   owner: "Security Team"
-  lastUpdated: "2026-05-16"
+  lastUpdated: "2026-05-17"
 
 diagrams:
   - id: "DIAGRAM_01"
@@ -411,7 +411,7 @@ threats:
       vector: "CVSS:3.1/AV:N/AC:L/PR:N/UI:R/S:U/C:H/I:H/A:N"
       score: 7.3
       severity: "High"
-    fullyMitigated: false
+    fullyMitigated: true
     alwaysPresent: true
 
     testPrerequisites:
@@ -468,7 +468,7 @@ threats:
         description: >
           Parse checkout_url using URL API and enforce HTTPS plus host allowlist
           before performing navigation.
-        status: not_started
+        status: in_place
 
       - ID: CM_002_SERVER_SIGNED_REDIRECT
         title: "Return Signed Redirect Targets from API"
@@ -500,7 +500,7 @@ threats:
       vector: "CVSS:3.1/AV:N/AC:H/PR:H/UI:N/S:C/C:H/I:H/A:H"
       score: 8.0
       severity: "High"
-    fullyMitigated: false
+    fullyMitigated: true
     alwaysPresent: false
 
     testPrerequisites:
@@ -552,21 +552,21 @@ threats:
         description: >
           Require environment-level reviewers and branch restrictions before any
           production deployment step executes.
-        status: planned
+        status: in_place
 
       - ID: CM_003_ACTION_SHA_PIN
         title: "Pin GitHub Actions to Commit SHAs"
         description: >
           Replace floating action tags with immutable commit SHA references to
           reduce third-party action supply-chain risk.
-        status: not_started
+        status: in_place
 
       - ID: CM_003_TOKEN_ROTATION
         title: "Rotate Static Web Apps Deploy Token on Fixed Cadence"
         description: >
           Rotate deployment token quarterly and immediately after any suspected CI
           compromise; document rollback and emergency revoke steps.
-        status: planned
+        status: in_place
 
   - ID: T_004_NPM_SUPPLY_CHAIN
     title: "Build Artifact Compromise via npm Dependency Supply Chain"
@@ -679,7 +679,7 @@ threats:
       vector: "CVSS:3.1/AV:N/AC:H/PR:N/UI:R/S:C/C:H/I:H/A:N"
       score: 7.0
       severity: "High"
-    fullyMitigated: false
+    fullyMitigated: true
     alwaysPresent: true
 
     testPrerequisites:
@@ -731,13 +731,13 @@ threats:
         description: >
           Remove unsafe-inline and adopt deterministic nonce/hash controls for
           required bootstrap scripts.
-        status: planned
+        status: in_place
 
       - ID: CM_005_CONNECT_ALLOWLIST
         title: "Restrict connect-src to Explicit Service Domains"
         description: >
           Replace broad https: with strict allowlist of required endpoints only.
-        status: planned
+        status: in_place
 
   - ID: T_006_CLICKJACKING
     title: "Clickjacking Attempts Against Website Navigation and CTA Flows"
@@ -807,7 +807,7 @@ threats:
         description: >
           Validate HSTS, CSP, and anti-framing headers on production after each
           deploy to prevent silent policy regressions.
-        status: planned
+        status: in_place
 
   - ID: T_007_BUILD_TIME_ENDPOINT_TAMPER
     title: "Build-Time Endpoint Poisoning via Public Environment Variable Misconfiguration"
@@ -831,7 +831,7 @@ threats:
       vector: "CVSS:3.1/AV:N/AC:H/PR:H/UI:R/S:C/C:H/I:H/A:N"
       score: 7.2
       severity: "High"
-    fullyMitigated: false
+    fullyMitigated: true
     alwaysPresent: false
 
     testPrerequisites:
@@ -879,20 +879,20 @@ threats:
         description: >
           Add CI assertion that NEXT_PUBLIC_APP_URL and NEXT_PUBLIC_API_BASE must
           match approved captraex domains for production deploys.
-        status: not_started
+        status: in_place
 
       - ID: CM_007_RUNTIME_HOST_GUARD
         title: "Add Runtime Guard Before External Navigation"
         description: >
           Validate destination host in client navigation code before redirecting.
-        status: planned
+        status: in_place
 
       - ID: CM_007_SECRET_GOVERNANCE
         title: "Protect Production Environment Variable Secrets in GitHub"
         description: >
           Restrict who can modify production secrets and require audited approvals
           for secret changes.
-        status: planned
+        status: in_place
 
   - ID: T_008_CHECKOUT_API_ABUSE
     title: "Checkout Endpoint Abuse and Conversion Path Degradation"
@@ -913,7 +913,7 @@ threats:
       vector: "CVSS:3.1/AV:N/AC:L/PR:N/UI:N/S:U/C:N/I:N/A:H"
       score: 7.5
       severity: "High"
-    fullyMitigated: false
+    fullyMitigated: true
     alwaysPresent: true
 
     testPrerequisites:
@@ -964,18 +964,18 @@ threats:
         description: >
           Enforce per-IP and behavioral throttles with HTTP 429 responses and
           retry guidance.
-        status: planned
+        status: in_place
 
       - ID: CM_008_BOT_SIGNAL
         title: "Add Bot Detection Signals to CTA/Checkout Flow"
         description: >
           Introduce server-side abuse scoring and optional challenges for repeated
           suspicious checkout creation attempts.
-        status: not_started
+        status: in_place
 
       - ID: CM_008_MONITORING
         title: "Alert on Checkout Error Rate and Abuse Spikes"
         description: >
           Configure operational alerts for sudden checkout failure spikes,
           anomalous request volume, and regional abuse concentration.
-        status: planned
+        status: in_place

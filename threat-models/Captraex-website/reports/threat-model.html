@@ -2651,7 +2651,7 @@ body.print-mode .interactive-diagram .plantuml-diagram {
         <header class="header">
             <h1>Captraex Public Website</h1>
             <div class="meta">
-                Model ID: TM-CAP-WEB-20260516 | Version: 1.0 | Generated: 2026-05-16 08:52:13 UTC
+                Model ID: TM-CAP-WEB-20260516 | Version: 1.1 | Generated: 2026-05-17 12:55:23 UTC
             </div>
         </header>
 
@@ -2659,7 +2659,7 @@ body.print-mode .interactive-diagram .plantuml-diagram {
     <section id="summary">
         <h2>Summary</h2>
         <p style="margin-bottom: 15px;">
-            <strong>7</strong> unmitigated threats requiring attention:
+            <strong>2</strong> unmitigated threats requiring attention:
         </p>
         
         
@@ -2700,86 +2700,6 @@ body.print-mode .interactive-diagram .plantuml-diagram {
                         </span>
                     </td>
                     <td>Information Disclosure</td>
-                    <td style="text-align: center;">
-                        
-                        <span style="color: var(--text-muted); font-weight: 500;">FALSE</span>
-                        
-                    </td>
-                </tr>
-                
-                <tr>
-                    <td><a href="#threat-T_002_CHECKOUT_REDIRECT_POISON">T_002_CHECKOUT_REDIRECT_POISON</a></td>
-                    <td>Malicious Checkout URL Injection Leading to Phishing Redirect</td>
-                    <td>
-                        <span class="cvss cvss-high">
-                            8.1
-                        </span>
-                    </td>
-                    <td>Tampering</td>
-                    <td style="text-align: center;">
-                        
-                        <span style="color: var(--orange); font-weight: 600;">TRUE</span>
-                        
-                    </td>
-                </tr>
-                
-                <tr>
-                    <td><a href="#threat-T_003_DEPLOY_TOKEN_COMPROMISE">T_003_DEPLOY_TOKEN_COMPROMISE</a></td>
-                    <td>Production Website Defacement via CI/CD Deploy Token Compromise</td>
-                    <td>
-                        <span class="cvss cvss-high">
-                            8.0
-                        </span>
-                    </td>
-                    <td>Elevation of Privilege</td>
-                    <td style="text-align: center;">
-                        
-                        <span style="color: var(--text-muted); font-weight: 500;">FALSE</span>
-                        
-                    </td>
-                </tr>
-                
-                <tr>
-                    <td><a href="#threat-T_005_CSP_INLINE_SCRIPT_RISK">T_005_CSP_INLINE_SCRIPT_RISK</a></td>
-                    <td>CSP Weakening via Unsafe Inline Script Allowance</td>
-                    <td>
-                        <span class="cvss cvss-high">
-                            8.0
-                        </span>
-                    </td>
-                    <td>Information Disclosure</td>
-                    <td style="text-align: center;">
-                        
-                        <span style="color: var(--orange); font-weight: 600;">TRUE</span>
-                        
-                    </td>
-                </tr>
-                
-                <tr>
-                    <td><a href="#threat-T_008_CHECKOUT_API_ABUSE">T_008_CHECKOUT_API_ABUSE</a></td>
-                    <td>Checkout Endpoint Abuse and Conversion Path Degradation</td>
-                    <td>
-                        <span class="cvss cvss-high">
-                            7.5
-                        </span>
-                    </td>
-                    <td>Denial of Service</td>
-                    <td style="text-align: center;">
-                        
-                        <span style="color: var(--orange); font-weight: 600;">TRUE</span>
-                        
-                    </td>
-                </tr>
-                
-                <tr>
-                    <td><a href="#threat-T_007_BUILD_TIME_ENDPOINT_TAMPER">T_007_BUILD_TIME_ENDPOINT_TAMPER</a></td>
-                    <td>Build-Time Endpoint Poisoning via Public Environment Variable Misconfiguration</td>
-                    <td>
-                        <span class="cvss cvss-high">
-                            7.3
-                        </span>
-                    </td>
-                    <td>Tampering</td>
                     <td style="text-align: center;">
                         
                         <span style="color: var(--text-muted); font-weight: 500;">FALSE</span>
@@ -2832,7 +2752,7 @@ body.print-mode .interactive-diagram .plantuml-diagram {
                     <td><a href="#threat-T_002_CHECKOUT_REDIRECT_POISON">Malicious Checkout URL Injection Leading to Phishing Redirect</a></td>
                     <td style="text-align: center;">
                         
-                        <span class="status-icon status-unmitigated">✗</span>
+                        <span class="status-icon status-mitigated">✓</span>
                         
                     </td>
                     <td style="text-align: center;">
@@ -2845,7 +2765,7 @@ body.print-mode .interactive-diagram .plantuml-diagram {
                         
                         
                         <span style="color: var(--red); font-weight: 600;">FALSE</span>
-                        <span style="color: #666; font-size: 0.85rem;">(0/2)</span>
+                        <span style="color: #666; font-size: 0.85rem;">(1/2)</span>
                         
                     </td>
                 </tr>
@@ -2854,7 +2774,7 @@ body.print-mode .interactive-diagram .plantuml-diagram {
                     <td><a href="#threat-T_003_DEPLOY_TOKEN_COMPROMISE">Production Website Defacement via CI/CD Deploy Token Compromise</a></td>
                     <td style="text-align: center;">
                         
-                        <span class="status-icon status-unmitigated">✗</span>
+                        <span class="status-icon status-mitigated">✓</span>
                         
                     </td>
                     <td style="text-align: center;">
@@ -2866,8 +2786,7 @@ body.print-mode .interactive-diagram .plantuml-diagram {
                         
                         
                         
-                        <span style="color: var(--red); font-weight: 600;">FALSE</span>
-                        <span style="color: #666; font-size: 0.85rem;">(0/3)</span>
+                        <span style="color: var(--green); font-weight: 600;">TRUE</span>
                         
                     </td>
                 </tr>
@@ -2898,7 +2817,7 @@ body.print-mode .interactive-diagram .plantuml-diagram {
                     <td><a href="#threat-T_005_CSP_INLINE_SCRIPT_RISK">CSP Weakening via Unsafe Inline Script Allowance</a></td>
                     <td style="text-align: center;">
                         
-                        <span class="status-icon status-unmitigated">✗</span>
+                        <span class="status-icon status-mitigated">✓</span>
                         
                     </td>
                     <td style="text-align: center;">
@@ -2910,8 +2829,7 @@ body.print-mode .interactive-diagram .plantuml-diagram {
                         
                         
                         
-                        <span style="color: var(--red); font-weight: 600;">FALSE</span>
-                        <span style="color: #666; font-size: 0.85rem;">(0/2)</span>
+                        <span style="color: var(--green); font-weight: 600;">TRUE</span>
                         
                     </td>
                 </tr>
@@ -2932,8 +2850,7 @@ body.print-mode .interactive-diagram .plantuml-diagram {
                         
                         
                         
-                        <span style="color: var(--red); font-weight: 600;">FALSE</span>
-                        <span style="color: #666; font-size: 0.85rem;">(1/2)</span>
+                        <span style="color: var(--green); font-weight: 600;">TRUE</span>
                         
                     </td>
                 </tr>
@@ -2942,7 +2859,7 @@ body.print-mode .interactive-diagram .plantuml-diagram {
                     <td><a href="#threat-T_007_BUILD_TIME_ENDPOINT_TAMPER">Build-Time Endpoint Poisoning via Public Environment Variable Misconfiguration</a></td>
                     <td style="text-align: center;">
                         
-                        <span class="status-icon status-unmitigated">✗</span>
+                        <span class="status-icon status-mitigated">✓</span>
                         
                     </td>
                     <td style="text-align: center;">
@@ -2954,8 +2871,7 @@ body.print-mode .interactive-diagram .plantuml-diagram {
                         
                         
                         
-                        <span style="color: var(--red); font-weight: 600;">FALSE</span>
-                        <span style="color: #666; font-size: 0.85rem;">(0/3)</span>
+                        <span style="color: var(--green); font-weight: 600;">TRUE</span>
                         
                     </td>
                 </tr>
@@ -2964,7 +2880,7 @@ body.print-mode .interactive-diagram .plantuml-diagram {
                     <td><a href="#threat-T_008_CHECKOUT_API_ABUSE">Checkout Endpoint Abuse and Conversion Path Degradation</a></td>
                     <td style="text-align: center;">
                         
-                        <span class="status-icon status-unmitigated">✗</span>
+                        <span class="status-icon status-mitigated">✓</span>
                         
                     </td>
                     <td style="text-align: center;">
@@ -2976,8 +2892,7 @@ body.print-mode .interactive-diagram .plantuml-diagram {
                         
                         
                         
-                        <span style="color: var(--red); font-weight: 600;">FALSE</span>
-                        <span style="color: #666; font-size: 0.85rem;">(0/3)</span>
+                        <span style="color: var(--green); font-weight: 600;">TRUE</span>
                         
                     </td>
                 </tr>
@@ -3015,7 +2930,7 @@ body.print-mode .interactive-diagram .plantuml-diagram {
             </tr>
             <tr>
                 <th>Operational Countermeasures</th>
-                <td>2 / 21</td>
+                <td>15 / 21</td>
             </tr>
             <tr>
                 <th>Attackers Considered</th>
@@ -3112,21 +3027,21 @@ body.print-mode .interactive-diagram .plantuml-diagram {
     CM_T_001_PREVIEW_GATE_BYPASS_CM_001_PUBLIC_ENV_REDUCTION(["TODO: Remove NEXT_PUBLIC_SITE_PASSWORD fr..."])
     T_T_001_PREVIEW_GATE_BYPASS -.-> CM_T_001_PREVIEW_GATE_BYPASS_CM_001_PUBLIC_ENV_REDUCTION
     style CM_T_001_PREVIEW_GATE_BYPASS_CM_001_PUBLIC_ENV_REDUCTION fill:#f2f3f4,stroke:#aab7b8,color:#555
-    CM_T_002_CHECKOUT_REDIRECT_POISON_CM_002_URL_ALLOWLIST(["TODO: Validate Checkout Redirect Host and..."])
+    CM_T_002_CHECKOUT_REDIRECT_POISON_CM_002_URL_ALLOWLIST(["DONE: Validate Checkout Redirect Host and..."])
     T_T_002_CHECKOUT_REDIRECT_POISON -.-> CM_T_002_CHECKOUT_REDIRECT_POISON_CM_002_URL_ALLOWLIST
-    style CM_T_002_CHECKOUT_REDIRECT_POISON_CM_002_URL_ALLOWLIST fill:#f2f3f4,stroke:#aab7b8,color:#555
+    style CM_T_002_CHECKOUT_REDIRECT_POISON_CM_002_URL_ALLOWLIST fill:#d5f5e3,stroke:#27ae60,color:#1e8449
     CM_T_002_CHECKOUT_REDIRECT_POISON_CM_002_SERVER_SIGNED_REDIRECT(["TODO: Return Signed Redirect Targets from..."])
     T_T_002_CHECKOUT_REDIRECT_POISON -.-> CM_T_002_CHECKOUT_REDIRECT_POISON_CM_002_SERVER_SIGNED_REDIRECT
     style CM_T_002_CHECKOUT_REDIRECT_POISON_CM_002_SERVER_SIGNED_REDIRECT fill:#f2f3f4,stroke:#aab7b8,color:#555
-    CM_T_003_DEPLOY_TOKEN_COMPROMISE_CM_003_PROTECTED_DEPLOY_ENV(["TODO: Use Protected GitHub Environment fo..."])
+    CM_T_003_DEPLOY_TOKEN_COMPROMISE_CM_003_PROTECTED_DEPLOY_ENV(["DONE: Use Protected GitHub Environment fo..."])
     T_T_003_DEPLOY_TOKEN_COMPROMISE -.-> CM_T_003_DEPLOY_TOKEN_COMPROMISE_CM_003_PROTECTED_DEPLOY_ENV
-    style CM_T_003_DEPLOY_TOKEN_COMPROMISE_CM_003_PROTECTED_DEPLOY_ENV fill:#f2f3f4,stroke:#aab7b8,color:#555
-    CM_T_003_DEPLOY_TOKEN_COMPROMISE_CM_003_ACTION_SHA_PIN(["TODO: Pin GitHub Actions to Commit SHAs"])
+    style CM_T_003_DEPLOY_TOKEN_COMPROMISE_CM_003_PROTECTED_DEPLOY_ENV fill:#d5f5e3,stroke:#27ae60,color:#1e8449
+    CM_T_003_DEPLOY_TOKEN_COMPROMISE_CM_003_ACTION_SHA_PIN(["DONE: Pin GitHub Actions to Commit SHAs"])
     T_T_003_DEPLOY_TOKEN_COMPROMISE -.-> CM_T_003_DEPLOY_TOKEN_COMPROMISE_CM_003_ACTION_SHA_PIN
-    style CM_T_003_DEPLOY_TOKEN_COMPROMISE_CM_003_ACTION_SHA_PIN fill:#f2f3f4,stroke:#aab7b8,color:#555
-    CM_T_003_DEPLOY_TOKEN_COMPROMISE_CM_003_TOKEN_ROTATION(["TODO: Rotate Static Web Apps Deploy Token..."])
+    style CM_T_003_DEPLOY_TOKEN_COMPROMISE_CM_003_ACTION_SHA_PIN fill:#d5f5e3,stroke:#27ae60,color:#1e8449
+    CM_T_003_DEPLOY_TOKEN_COMPROMISE_CM_003_TOKEN_ROTATION(["DONE: Rotate Static Web Apps Deploy Token..."])
     T_T_003_DEPLOY_TOKEN_COMPROMISE -.-> CM_T_003_DEPLOY_TOKEN_COMPROMISE_CM_003_TOKEN_ROTATION
-    style CM_T_003_DEPLOY_TOKEN_COMPROMISE_CM_003_TOKEN_ROTATION fill:#f2f3f4,stroke:#aab7b8,color:#555
+    style CM_T_003_DEPLOY_TOKEN_COMPROMISE_CM_003_TOKEN_ROTATION fill:#d5f5e3,stroke:#27ae60,color:#1e8449
     CM_T_004_NPM_SUPPLY_CHAIN_CM_004_LOCKFILE_ENFORCE(["DONE: Use npm ci with Locked Dependency G..."])
     T_T_004_NPM_SUPPLY_CHAIN -.-> CM_T_004_NPM_SUPPLY_CHAIN_CM_004_LOCKFILE_ENFORCE
     style CM_T_004_NPM_SUPPLY_CHAIN_CM_004_LOCKFILE_ENFORCE fill:#d5f5e3,stroke:#27ae60,color:#1e8449
@@ -3136,36 +3051,36 @@ body.print-mode .interactive-diagram .plantuml-diagram {
     CM_T_004_NPM_SUPPLY_CHAIN_CM_004_SBOM(["TODO: Generate SBOM for Each Production B..."])
     T_T_004_NPM_SUPPLY_CHAIN -.-> CM_T_004_NPM_SUPPLY_CHAIN_CM_004_SBOM
     style CM_T_004_NPM_SUPPLY_CHAIN_CM_004_SBOM fill:#f2f3f4,stroke:#aab7b8,color:#555
-    CM_T_005_CSP_INLINE_SCRIPT_RISK_CM_005_NONCE_HASH_CSP(["TODO: Replace Unsafe Inline Script Policy..."])
+    CM_T_005_CSP_INLINE_SCRIPT_RISK_CM_005_NONCE_HASH_CSP(["DONE: Replace Unsafe Inline Script Policy..."])
     T_T_005_CSP_INLINE_SCRIPT_RISK -.-> CM_T_005_CSP_INLINE_SCRIPT_RISK_CM_005_NONCE_HASH_CSP
-    style CM_T_005_CSP_INLINE_SCRIPT_RISK_CM_005_NONCE_HASH_CSP fill:#f2f3f4,stroke:#aab7b8,color:#555
-    CM_T_005_CSP_INLINE_SCRIPT_RISK_CM_005_CONNECT_ALLOWLIST(["TODO: Restrict connect-src to Explicit Se..."])
+    style CM_T_005_CSP_INLINE_SCRIPT_RISK_CM_005_NONCE_HASH_CSP fill:#d5f5e3,stroke:#27ae60,color:#1e8449
+    CM_T_005_CSP_INLINE_SCRIPT_RISK_CM_005_CONNECT_ALLOWLIST(["DONE: Restrict connect-src to Explicit Se..."])
     T_T_005_CSP_INLINE_SCRIPT_RISK -.-> CM_T_005_CSP_INLINE_SCRIPT_RISK_CM_005_CONNECT_ALLOWLIST
-    style CM_T_005_CSP_INLINE_SCRIPT_RISK_CM_005_CONNECT_ALLOWLIST fill:#f2f3f4,stroke:#aab7b8,color:#555
+    style CM_T_005_CSP_INLINE_SCRIPT_RISK_CM_005_CONNECT_ALLOWLIST fill:#d5f5e3,stroke:#27ae60,color:#1e8449
     CM_T_006_CLICKJACKING_CM_006_ANTIFRAME_HEADERS(["DONE: Maintain X-Frame-Options DENY and C..."])
     T_T_006_CLICKJACKING -.-> CM_T_006_CLICKJACKING_CM_006_ANTIFRAME_HEADERS
     style CM_T_006_CLICKJACKING_CM_006_ANTIFRAME_HEADERS fill:#d5f5e3,stroke:#27ae60,color:#1e8449
-    CM_T_006_CLICKJACKING_CM_006_HEADER_REGRESSION_TEST(["TODO: Add CI Smoke Test for Mandatory Sec..."])
+    CM_T_006_CLICKJACKING_CM_006_HEADER_REGRESSION_TEST(["DONE: Add CI Smoke Test for Mandatory Sec..."])
     T_T_006_CLICKJACKING -.-> CM_T_006_CLICKJACKING_CM_006_HEADER_REGRESSION_TEST
-    style CM_T_006_CLICKJACKING_CM_006_HEADER_REGRESSION_TEST fill:#f2f3f4,stroke:#aab7b8,color:#555
-    CM_T_007_BUILD_TIME_ENDPOINT_TAMPER_CM_007_ENV_ALLOWLIST(["TODO: Enforce Build-Time Host Allowlist f..."])
+    style CM_T_006_CLICKJACKING_CM_006_HEADER_REGRESSION_TEST fill:#d5f5e3,stroke:#27ae60,color:#1e8449
+    CM_T_007_BUILD_TIME_ENDPOINT_TAMPER_CM_007_ENV_ALLOWLIST(["DONE: Enforce Build-Time Host Allowlist f..."])
     T_T_007_BUILD_TIME_ENDPOINT_TAMPER -.-> CM_T_007_BUILD_TIME_ENDPOINT_TAMPER_CM_007_ENV_ALLOWLIST
-    style CM_T_007_BUILD_TIME_ENDPOINT_TAMPER_CM_007_ENV_ALLOWLIST fill:#f2f3f4,stroke:#aab7b8,color:#555
-    CM_T_007_BUILD_TIME_ENDPOINT_TAMPER_CM_007_RUNTIME_HOST_GUARD(["TODO: Add Runtime Guard Before External N..."])
+    style CM_T_007_BUILD_TIME_ENDPOINT_TAMPER_CM_007_ENV_ALLOWLIST fill:#d5f5e3,stroke:#27ae60,color:#1e8449
+    CM_T_007_BUILD_TIME_ENDPOINT_TAMPER_CM_007_RUNTIME_HOST_GUARD(["DONE: Add Runtime Guard Before External N..."])
     T_T_007_BUILD_TIME_ENDPOINT_TAMPER -.-> CM_T_007_BUILD_TIME_ENDPOINT_TAMPER_CM_007_RUNTIME_HOST_GUARD
-    style CM_T_007_BUILD_TIME_ENDPOINT_TAMPER_CM_007_RUNTIME_HOST_GUARD fill:#f2f3f4,stroke:#aab7b8,color:#555
-    CM_T_007_BUILD_TIME_ENDPOINT_TAMPER_CM_007_SECRET_GOVERNANCE(["TODO: Protect Production Environment Vari..."])
+    style CM_T_007_BUILD_TIME_ENDPOINT_TAMPER_CM_007_RUNTIME_HOST_GUARD fill:#d5f5e3,stroke:#27ae60,color:#1e8449
+    CM_T_007_BUILD_TIME_ENDPOINT_TAMPER_CM_007_SECRET_GOVERNANCE(["DONE: Protect Production Environment Vari..."])
     T_T_007_BUILD_TIME_ENDPOINT_TAMPER -.-> CM_T_007_BUILD_TIME_ENDPOINT_TAMPER_CM_007_SECRET_GOVERNANCE
-    style CM_T_007_BUILD_TIME_ENDPOINT_TAMPER_CM_007_SECRET_GOVERNANCE fill:#f2f3f4,stroke:#aab7b8,color:#555
-    CM_T_008_CHECKOUT_API_ABUSE_CM_008_RATE_LIMIT(["TODO: Apply Rate Limiting and Burst Contr..."])
+    style CM_T_007_BUILD_TIME_ENDPOINT_TAMPER_CM_007_SECRET_GOVERNANCE fill:#d5f5e3,stroke:#27ae60,color:#1e8449
+    CM_T_008_CHECKOUT_API_ABUSE_CM_008_RATE_LIMIT(["DONE: Apply Rate Limiting and Burst Contr..."])
     T_T_008_CHECKOUT_API_ABUSE -.-> CM_T_008_CHECKOUT_API_ABUSE_CM_008_RATE_LIMIT
-    style CM_T_008_CHECKOUT_API_ABUSE_CM_008_RATE_LIMIT fill:#f2f3f4,stroke:#aab7b8,color:#555
-    CM_T_008_CHECKOUT_API_ABUSE_CM_008_BOT_SIGNAL(["TODO: Add Bot Detection Signals to CTA/Ch..."])
+    style CM_T_008_CHECKOUT_API_ABUSE_CM_008_RATE_LIMIT fill:#d5f5e3,stroke:#27ae60,color:#1e8449
+    CM_T_008_CHECKOUT_API_ABUSE_CM_008_BOT_SIGNAL(["DONE: Add Bot Detection Signals to CTA/Ch..."])
     T_T_008_CHECKOUT_API_ABUSE -.-> CM_T_008_CHECKOUT_API_ABUSE_CM_008_BOT_SIGNAL
-    style CM_T_008_CHECKOUT_API_ABUSE_CM_008_BOT_SIGNAL fill:#f2f3f4,stroke:#aab7b8,color:#555
-    CM_T_008_CHECKOUT_API_ABUSE_CM_008_MONITORING(["TODO: Alert on Checkout Error Rate and Ab..."])
+    style CM_T_008_CHECKOUT_API_ABUSE_CM_008_BOT_SIGNAL fill:#d5f5e3,stroke:#27ae60,color:#1e8449
+    CM_T_008_CHECKOUT_API_ABUSE_CM_008_MONITORING(["DONE: Alert on Checkout Error Rate and Ab..."])
     T_T_008_CHECKOUT_API_ABUSE -.-> CM_T_008_CHECKOUT_API_ABUSE_CM_008_MONITORING
-    style CM_T_008_CHECKOUT_API_ABUSE_CM_008_MONITORING fill:#f2f3f4,stroke:#aab7b8,color:#555</div></div>
+    style CM_T_008_CHECKOUT_API_ABUSE_CM_008_MONITORING fill:#d5f5e3,stroke:#27ae60,color:#1e8449</div></div>
         
 
         
@@ -3448,15 +3363,15 @@ stop
     CM_T_001_PREVIEW_GATE_BYPASS_CM_001_PUBLIC_ENV_REDUCTION([&#34;TODO: Remove NEXT_PUBLIC_SITE_PASSWORD fr...&#34;])
     T_T_001_PREVIEW_GATE_BYPASS -.-&gt; CM_T_001_PREVIEW_GATE_BYPASS_CM_001_PUBLIC_ENV_REDUCTION
     style CM_T_001_PREVIEW_GATE_BYPASS_CM_001_PUBLIC_ENV_REDUCTION fill:#f2f3f4,stroke:#aab7b8,color:#555
-    CM_T_003_DEPLOY_TOKEN_COMPROMISE_CM_003_PROTECTED_DEPLOY_ENV([&#34;TODO: Use Protected GitHub Environment fo...&#34;])
+    CM_T_003_DEPLOY_TOKEN_COMPROMISE_CM_003_PROTECTED_DEPLOY_ENV([&#34;DONE: Use Protected GitHub Environment fo...&#34;])
     T_T_003_DEPLOY_TOKEN_COMPROMISE -.-&gt; CM_T_003_DEPLOY_TOKEN_COMPROMISE_CM_003_PROTECTED_DEPLOY_ENV
-    style CM_T_003_DEPLOY_TOKEN_COMPROMISE_CM_003_PROTECTED_DEPLOY_ENV fill:#f2f3f4,stroke:#aab7b8,color:#555
-    CM_T_003_DEPLOY_TOKEN_COMPROMISE_CM_003_ACTION_SHA_PIN([&#34;TODO: Pin GitHub Actions to Commit SHAs&#34;])
+    style CM_T_003_DEPLOY_TOKEN_COMPROMISE_CM_003_PROTECTED_DEPLOY_ENV fill:#d5f5e3,stroke:#27ae60,color:#1e8449
+    CM_T_003_DEPLOY_TOKEN_COMPROMISE_CM_003_ACTION_SHA_PIN([&#34;DONE: Pin GitHub Actions to Commit SHAs&#34;])
     T_T_003_DEPLOY_TOKEN_COMPROMISE -.-&gt; CM_T_003_DEPLOY_TOKEN_COMPROMISE_CM_003_ACTION_SHA_PIN
-    style CM_T_003_DEPLOY_TOKEN_COMPROMISE_CM_003_ACTION_SHA_PIN fill:#f2f3f4,stroke:#aab7b8,color:#555
-    CM_T_003_DEPLOY_TOKEN_COMPROMISE_CM_003_TOKEN_ROTATION([&#34;TODO: Rotate Static Web Apps Deploy Token...&#34;])
+    style CM_T_003_DEPLOY_TOKEN_COMPROMISE_CM_003_ACTION_SHA_PIN fill:#d5f5e3,stroke:#27ae60,color:#1e8449
+    CM_T_003_DEPLOY_TOKEN_COMPROMISE_CM_003_TOKEN_ROTATION([&#34;DONE: Rotate Static Web Apps Deploy Token...&#34;])
     T_T_003_DEPLOY_TOKEN_COMPROMISE -.-&gt; CM_T_003_DEPLOY_TOKEN_COMPROMISE_CM_003_TOKEN_ROTATION
-    style CM_T_003_DEPLOY_TOKEN_COMPROMISE_CM_003_TOKEN_ROTATION fill:#f2f3f4,stroke:#aab7b8,color:#555
+    style CM_T_003_DEPLOY_TOKEN_COMPROMISE_CM_003_TOKEN_ROTATION fill:#d5f5e3,stroke:#27ae60,color:#1e8449
     CM_T_004_NPM_SUPPLY_CHAIN_CM_004_LOCKFILE_ENFORCE([&#34;DONE: Use npm ci with Locked Dependency G...&#34;])
     T_T_004_NPM_SUPPLY_CHAIN -.-&gt; CM_T_004_NPM_SUPPLY_CHAIN_CM_004_LOCKFILE_ENFORCE
     style CM_T_004_NPM_SUPPLY_CHAIN_CM_004_LOCKFILE_ENFORCE fill:#d5f5e3,stroke:#27ae60,color:#1e8449
@@ -3466,36 +3381,36 @@ stop
     CM_T_004_NPM_SUPPLY_CHAIN_CM_004_SBOM([&#34;TODO: Generate SBOM for Each Production B...&#34;])
     T_T_004_NPM_SUPPLY_CHAIN -.-&gt; CM_T_004_NPM_SUPPLY_CHAIN_CM_004_SBOM
     style CM_T_004_NPM_SUPPLY_CHAIN_CM_004_SBOM fill:#f2f3f4,stroke:#aab7b8,color:#555
-    CM_T_005_CSP_INLINE_SCRIPT_RISK_CM_005_NONCE_HASH_CSP([&#34;TODO: Replace Unsafe Inline Script Policy...&#34;])
+    CM_T_005_CSP_INLINE_SCRIPT_RISK_CM_005_NONCE_HASH_CSP([&#34;DONE: Replace Unsafe Inline Script Policy...&#34;])
     T_T_005_CSP_INLINE_SCRIPT_RISK -.-&gt; CM_T_005_CSP_INLINE_SCRIPT_RISK_CM_005_NONCE_HASH_CSP
-    style CM_T_005_CSP_INLINE_SCRIPT_RISK_CM_005_NONCE_HASH_CSP fill:#f2f3f4,stroke:#aab7b8,color:#555
-    CM_T_005_CSP_INLINE_SCRIPT_RISK_CM_005_CONNECT_ALLOWLIST([&#34;TODO: Restrict connect-src to Explicit Se...&#34;])
+    style CM_T_005_CSP_INLINE_SCRIPT_RISK_CM_005_NONCE_HASH_CSP fill:#d5f5e3,stroke:#27ae60,color:#1e8449
+    CM_T_005_CSP_INLINE_SCRIPT_RISK_CM_005_CONNECT_ALLOWLIST([&#34;DONE: Restrict connect-src to Explicit Se...&#34;])
     T_T_005_CSP_INLINE_SCRIPT_RISK -.-&gt; CM_T_005_CSP_INLINE_SCRIPT_RISK_CM_005_CONNECT_ALLOWLIST
-    style CM_T_005_CSP_INLINE_SCRIPT_RISK_CM_005_CONNECT_ALLOWLIST fill:#f2f3f4,stroke:#aab7b8,color:#555
+    style CM_T_005_CSP_INLINE_SCRIPT_RISK_CM_005_CONNECT_ALLOWLIST fill:#d5f5e3,stroke:#27ae60,color:#1e8449
     CM_T_006_CLICKJACKING_CM_006_ANTIFRAME_HEADERS([&#34;DONE: Maintain X-Frame-Options DENY and C...&#34;])
     T_T_006_CLICKJACKING -.-&gt; CM_T_006_CLICKJACKING_CM_006_ANTIFRAME_HEADERS
     style CM_T_006_CLICKJACKING_CM_006_ANTIFRAME_HEADERS fill:#d5f5e3,stroke:#27ae60,color:#1e8449
-    CM_T_006_CLICKJACKING_CM_006_HEADER_REGRESSION_TEST([&#34;TODO: Add CI Smoke Test for Mandatory Sec...&#34;])
+    CM_T_006_CLICKJACKING_CM_006_HEADER_REGRESSION_TEST([&#34;DONE: Add CI Smoke Test for Mandatory Sec...&#34;])
     T_T_006_CLICKJACKING -.-&gt; CM_T_006_CLICKJACKING_CM_006_HEADER_REGRESSION_TEST
-    style CM_T_006_CLICKJACKING_CM_006_HEADER_REGRESSION_TEST fill:#f2f3f4,stroke:#aab7b8,color:#555
-    CM_T_007_BUILD_TIME_ENDPOINT_TAMPER_CM_007_ENV_ALLOWLIST([&#34;TODO: Enforce Build-Time Host Allowlist f...&#34;])
+    style CM_T_006_CLICKJACKING_CM_006_HEADER_REGRESSION_TEST fill:#d5f5e3,stroke:#27ae60,color:#1e8449
+    CM_T_007_BUILD_TIME_ENDPOINT_TAMPER_CM_007_ENV_ALLOWLIST([&#34;DONE: Enforce Build-Time Host Allowlist f...&#34;])
     T_T_007_BUILD_TIME_ENDPOINT_TAMPER -.-&gt; CM_T_007_BUILD_TIME_ENDPOINT_TAMPER_CM_007_ENV_ALLOWLIST
-    style CM_T_007_BUILD_TIME_ENDPOINT_TAMPER_CM_007_ENV_ALLOWLIST fill:#f2f3f4,stroke:#aab7b8,color:#555
-    CM_T_007_BUILD_TIME_ENDPOINT_TAMPER_CM_007_RUNTIME_HOST_GUARD([&#34;TODO: Add Runtime Guard Before External N...&#34;])
+    style CM_T_007_BUILD_TIME_ENDPOINT_TAMPER_CM_007_ENV_ALLOWLIST fill:#d5f5e3,stroke:#27ae60,color:#1e8449
+    CM_T_007_BUILD_TIME_ENDPOINT_TAMPER_CM_007_RUNTIME_HOST_GUARD([&#34;DONE: Add Runtime Guard Before External N...&#34;])
     T_T_007_BUILD_TIME_ENDPOINT_TAMPER -.-&gt; CM_T_007_BUILD_TIME_ENDPOINT_TAMPER_CM_007_RUNTIME_HOST_GUARD
-    style CM_T_007_BUILD_TIME_ENDPOINT_TAMPER_CM_007_RUNTIME_HOST_GUARD fill:#f2f3f4,stroke:#aab7b8,color:#555
-    CM_T_007_BUILD_TIME_ENDPOINT_TAMPER_CM_007_SECRET_GOVERNANCE([&#34;TODO: Protect Production Environment Vari...&#34;])
+    style CM_T_007_BUILD_TIME_ENDPOINT_TAMPER_CM_007_RUNTIME_HOST_GUARD fill:#d5f5e3,stroke:#27ae60,color:#1e8449
+    CM_T_007_BUILD_TIME_ENDPOINT_TAMPER_CM_007_SECRET_GOVERNANCE([&#34;DONE: Protect Production Environment Vari...&#34;])
     T_T_007_BUILD_TIME_ENDPOINT_TAMPER -.-&gt; CM_T_007_BUILD_TIME_ENDPOINT_TAMPER_CM_007_SECRET_GOVERNANCE
-    style CM_T_007_BUILD_TIME_ENDPOINT_TAMPER_CM_007_SECRET_GOVERNANCE fill:#f2f3f4,stroke:#aab7b8,color:#555
-    CM_T_008_CHECKOUT_API_ABUSE_CM_008_RATE_LIMIT([&#34;TODO: Apply Rate Limiting and Burst Contr...&#34;])
+    style CM_T_007_BUILD_TIME_ENDPOINT_TAMPER_CM_007_SECRET_GOVERNANCE fill:#d5f5e3,stroke:#27ae60,color:#1e8449
+    CM_T_008_CHECKOUT_API_ABUSE_CM_008_RATE_LIMIT([&#34;DONE: Apply Rate Limiting and Burst Contr...&#34;])
     T_T_008_CHECKOUT_API_ABUSE -.-&gt; CM_T_008_CHECKOUT_API_ABUSE_CM_008_RATE_LIMIT
-    style CM_T_008_CHECKOUT_API_ABUSE_CM_008_RATE_LIMIT fill:#f2f3f4,stroke:#aab7b8,color:#555
-    CM_T_008_CHECKOUT_API_ABUSE_CM_008_BOT_SIGNAL([&#34;TODO: Add Bot Detection Signals to CTA/Ch...&#34;])
+    style CM_T_008_CHECKOUT_API_ABUSE_CM_008_RATE_LIMIT fill:#d5f5e3,stroke:#27ae60,color:#1e8449
+    CM_T_008_CHECKOUT_API_ABUSE_CM_008_BOT_SIGNAL([&#34;DONE: Add Bot Detection Signals to CTA/Ch...&#34;])
     T_T_008_CHECKOUT_API_ABUSE -.-&gt; CM_T_008_CHECKOUT_API_ABUSE_CM_008_BOT_SIGNAL
-    style CM_T_008_CHECKOUT_API_ABUSE_CM_008_BOT_SIGNAL fill:#f2f3f4,stroke:#aab7b8,color:#555
-    CM_T_008_CHECKOUT_API_ABUSE_CM_008_MONITORING([&#34;TODO: Alert on Checkout Error Rate and Ab...&#34;])
+    style CM_T_008_CHECKOUT_API_ABUSE_CM_008_BOT_SIGNAL fill:#d5f5e3,stroke:#27ae60,color:#1e8449
+    CM_T_008_CHECKOUT_API_ABUSE_CM_008_MONITORING([&#34;DONE: Alert on Checkout Error Rate and Ab...&#34;])
     T_T_008_CHECKOUT_API_ABUSE -.-&gt; CM_T_008_CHECKOUT_API_ABUSE_CM_008_MONITORING
-    style CM_T_008_CHECKOUT_API_ABUSE_CM_008_MONITORING fill:#f2f3f4,stroke:#aab7b8,color:#555</div>
+    style CM_T_008_CHECKOUT_API_ABUSE_CM_008_MONITORING fill:#d5f5e3,stroke:#27ae60,color:#1e8449</div>
                 </div>
             </div>
             
@@ -3917,8 +3832,8 @@ stop
                     <div class="threat-details">
                         <div class="detail-row">
                             <div class="detail-label">Threat Status:</div>
-                            <div class="detail-value unmitigated">
-                                Unmitigated
+                            <div class="detail-value mitigated">
+                                Mitigated
                             </div>
                         </div>
                         
@@ -4007,17 +3922,17 @@ stop
                             <!-- Countermeasures row -->
                             <div class="vt-cm-row">
                                 
-                                <div class="vt-cm not-impl">
+                                <div class="vt-cm ">
                                     <div class="vt-cm-label">Countermeasure</div>
                                     <div class="vt-cm-title">Use Protected GitHub Environment for Production Deploy</div>
                                 </div>
                                 
-                                <div class="vt-cm not-impl">
+                                <div class="vt-cm ">
                                     <div class="vt-cm-label">Countermeasure</div>
                                     <div class="vt-cm-title">Pin GitHub Actions to Commit SHAs</div>
                                 </div>
                                 
-                                <div class="vt-cm not-impl">
+                                <div class="vt-cm ">
                                     <div class="vt-cm-label">Countermeasure</div>
                                     <div class="vt-cm-title">Rotate Static Web Apps Deploy Token on Fixed Cadence</div>
                                 </div>
@@ -4032,7 +3947,7 @@ stop
                     <h5>Counter-measures for T_003_DEPLOY_TOKEN_COMPROMISE</h5>
                     
                     
-                    <div class="cm-item not-implemented">
+                    <div class="cm-item implemented">
                         <div class="cm-header">
                             <div style="display:flex;align-items:center;flex-wrap:wrap;gap:8px;">
                                 <span class="cm-id">CM_003_PROTECTED_DEPLOY_ENV</span>
@@ -4049,13 +3964,13 @@ stop
 
                         <div class="cm-status" style="margin-top:12px;">
                             <span class="cm-status-label">Countermeasure in place?</span>
-                            <span class="cm-status-value no">
-                                ✗
+                            <span class="cm-status-value yes">
+                                ✓
                             </span>
                         </div>
                     </div>
                     
-                    <div class="cm-item not-implemented">
+                    <div class="cm-item implemented">
                         <div class="cm-header">
                             <div style="display:flex;align-items:center;flex-wrap:wrap;gap:8px;">
                                 <span class="cm-id">CM_003_ACTION_SHA_PIN</span>
@@ -4072,13 +3987,13 @@ stop
 
                         <div class="cm-status" style="margin-top:12px;">
                             <span class="cm-status-label">Countermeasure in place?</span>
-                            <span class="cm-status-value no">
-                                ✗
+                            <span class="cm-status-value yes">
+                                ✓
                             </span>
                         </div>
                     </div>
                     
-                    <div class="cm-item not-implemented">
+                    <div class="cm-item implemented">
                         <div class="cm-header">
                             <div style="display:flex;align-items:center;flex-wrap:wrap;gap:8px;">
                                 <span class="cm-id">CM_003_TOKEN_ROTATION</span>
@@ -4095,8 +4010,8 @@ stop
 
                         <div class="cm-status" style="margin-top:12px;">
                             <span class="cm-status-label">Countermeasure in place?</span>
-                            <span class="cm-status-value no">
-                                ✗
+                            <span class="cm-status-value yes">
+                                ✓
                             </span>
                         </div>
                     </div>
@@ -4115,8 +4030,8 @@ stop
                     <div class="threat-details">
                         <div class="detail-row">
                             <div class="detail-label">Threat Status:</div>
-                            <div class="detail-value unmitigated">
-                                Unmitigated
+                            <div class="detail-value mitigated">
+                                Mitigated
                             </div>
                         </div>
                         
@@ -4211,12 +4126,12 @@ stop
                             <!-- Countermeasures row -->
                             <div class="vt-cm-row">
                                 
-                                <div class="vt-cm not-impl">
+                                <div class="vt-cm ">
                                     <div class="vt-cm-label">Countermeasure</div>
                                     <div class="vt-cm-title">Replace Unsafe Inline Script Policy with Nonce/Hash-Based CSP</div>
                                 </div>
                                 
-                                <div class="vt-cm not-impl">
+                                <div class="vt-cm ">
                                     <div class="vt-cm-label">Countermeasure</div>
                                     <div class="vt-cm-title">Restrict connect-src to Explicit Service Domains</div>
                                 </div>
@@ -4231,7 +4146,7 @@ stop
                     <h5>Counter-measures for T_005_CSP_INLINE_SCRIPT_RISK</h5>
                     
                     
-                    <div class="cm-item not-implemented">
+                    <div class="cm-item implemented">
                         <div class="cm-header">
                             <div style="display:flex;align-items:center;flex-wrap:wrap;gap:8px;">
                                 <span class="cm-id">CM_005_NONCE_HASH_CSP</span>
@@ -4248,13 +4163,13 @@ stop
 
                         <div class="cm-status" style="margin-top:12px;">
                             <span class="cm-status-label">Countermeasure in place?</span>
-                            <span class="cm-status-value no">
-                                ✗
+                            <span class="cm-status-value yes">
+                                ✓
                             </span>
                         </div>
                     </div>
                     
-                    <div class="cm-item not-implemented">
+                    <div class="cm-item implemented">
                         <div class="cm-header">
                             <div style="display:flex;align-items:center;flex-wrap:wrap;gap:8px;">
                                 <span class="cm-id">CM_005_CONNECT_ALLOWLIST</span>
@@ -4271,8 +4186,8 @@ stop
 
                         <div class="cm-status" style="margin-top:12px;">
                             <span class="cm-status-label">Countermeasure in place?</span>
-                            <span class="cm-status-value no">
-                                ✗
+                            <span class="cm-status-value yes">
+                                ✓
                             </span>
                         </div>
                     </div>
@@ -4291,8 +4206,8 @@ stop
                     <div class="threat-details">
                         <div class="detail-row">
                             <div class="detail-label">Threat Status:</div>
-                            <div class="detail-value unmitigated">
-                                Unmitigated
+                            <div class="detail-value mitigated">
+                                Mitigated
                             </div>
                         </div>
                         
@@ -4383,17 +4298,17 @@ stop
                             <!-- Countermeasures row -->
                             <div class="vt-cm-row">
                                 
-                                <div class="vt-cm not-impl">
+                                <div class="vt-cm ">
                                     <div class="vt-cm-label">Countermeasure</div>
                                     <div class="vt-cm-title">Apply Rate Limiting and Burst Controls on Checkout Endpoint</div>
                                 </div>
                                 
-                                <div class="vt-cm not-impl">
+                                <div class="vt-cm ">
                                     <div class="vt-cm-label">Countermeasure</div>
                                     <div class="vt-cm-title">Add Bot Detection Signals to CTA/Checkout Flow</div>
                                 </div>
                                 
-                                <div class="vt-cm not-impl">
+                                <div class="vt-cm ">
                                     <div class="vt-cm-label">Countermeasure</div>
                                     <div class="vt-cm-title">Alert on Checkout Error Rate and Abuse Spikes</div>
                                 </div>
@@ -4408,7 +4323,7 @@ stop
                     <h5>Counter-measures for T_008_CHECKOUT_API_ABUSE</h5>
                     
                     
-                    <div class="cm-item not-implemented">
+                    <div class="cm-item implemented">
                         <div class="cm-header">
                             <div style="display:flex;align-items:center;flex-wrap:wrap;gap:8px;">
                                 <span class="cm-id">CM_008_RATE_LIMIT</span>
@@ -4425,13 +4340,13 @@ stop
 
                         <div class="cm-status" style="margin-top:12px;">
                             <span class="cm-status-label">Countermeasure in place?</span>
-                            <span class="cm-status-value no">
-                                ✗
+                            <span class="cm-status-value yes">
+                                ✓
                             </span>
                         </div>
                     </div>
                     
-                    <div class="cm-item not-implemented">
+                    <div class="cm-item implemented">
                         <div class="cm-header">
                             <div style="display:flex;align-items:center;flex-wrap:wrap;gap:8px;">
                                 <span class="cm-id">CM_008_BOT_SIGNAL</span>
@@ -4448,13 +4363,13 @@ stop
 
                         <div class="cm-status" style="margin-top:12px;">
                             <span class="cm-status-label">Countermeasure in place?</span>
-                            <span class="cm-status-value no">
-                                ✗
+                            <span class="cm-status-value yes">
+                                ✓
                             </span>
                         </div>
                     </div>
                     
-                    <div class="cm-item not-implemented">
+                    <div class="cm-item implemented">
                         <div class="cm-header">
                             <div style="display:flex;align-items:center;flex-wrap:wrap;gap:8px;">
                                 <span class="cm-id">CM_008_MONITORING</span>
@@ -4471,8 +4386,8 @@ stop
 
                         <div class="cm-status" style="margin-top:12px;">
                             <span class="cm-status-label">Countermeasure in place?</span>
-                            <span class="cm-status-value no">
-                                ✗
+                            <span class="cm-status-value yes">
+                                ✓
                             </span>
                         </div>
                     </div>
@@ -4491,8 +4406,8 @@ stop
                     <div class="threat-details">
                         <div class="detail-row">
                             <div class="detail-label">Threat Status:</div>
-                            <div class="detail-value unmitigated">
-                                Unmitigated
+                            <div class="detail-value mitigated">
+                                Mitigated
                             </div>
                         </div>
                         
@@ -4581,17 +4496,17 @@ stop
                             <!-- Countermeasures row -->
                             <div class="vt-cm-row">
                                 
-                                <div class="vt-cm not-impl">
+                                <div class="vt-cm ">
                                     <div class="vt-cm-label">Countermeasure</div>
                                     <div class="vt-cm-title">Enforce Build-Time Host Allowlist for Public Endpoint Variables</div>
                                 </div>
                                 
-                                <div class="vt-cm not-impl">
+                                <div class="vt-cm ">
                                     <div class="vt-cm-label">Countermeasure</div>
                                     <div class="vt-cm-title">Add Runtime Guard Before External Navigation</div>
                                 </div>
                                 
-                                <div class="vt-cm not-impl">
+                                <div class="vt-cm ">
                                     <div class="vt-cm-label">Countermeasure</div>
                                     <div class="vt-cm-title">Protect Production Environment Variable Secrets in GitHub</div>
                                 </div>
@@ -4606,7 +4521,7 @@ stop
                     <h5>Counter-measures for T_007_BUILD_TIME_ENDPOINT_TAMPER</h5>
                     
                     
-                    <div class="cm-item not-implemented">
+                    <div class="cm-item implemented">
                         <div class="cm-header">
                             <div style="display:flex;align-items:center;flex-wrap:wrap;gap:8px;">
                                 <span class="cm-id">CM_007_ENV_ALLOWLIST</span>
@@ -4623,13 +4538,13 @@ stop
 
                         <div class="cm-status" style="margin-top:12px;">
                             <span class="cm-status-label">Countermeasure in place?</span>
-                            <span class="cm-status-value no">
-                                ✗
+                            <span class="cm-status-value yes">
+                                ✓
                             </span>
                         </div>
                     </div>
                     
-                    <div class="cm-item not-implemented">
+                    <div class="cm-item implemented">
                         <div class="cm-header">
                             <div style="display:flex;align-items:center;flex-wrap:wrap;gap:8px;">
                                 <span class="cm-id">CM_007_RUNTIME_HOST_GUARD</span>
@@ -4646,13 +4561,13 @@ stop
 
                         <div class="cm-status" style="margin-top:12px;">
                             <span class="cm-status-label">Countermeasure in place?</span>
-                            <span class="cm-status-value no">
-                                ✗
+                            <span class="cm-status-value yes">
+                                ✓
                             </span>
                         </div>
                     </div>
                     
-                    <div class="cm-item not-implemented">
+                    <div class="cm-item implemented">
                         <div class="cm-header">
                             <div style="display:flex;align-items:center;flex-wrap:wrap;gap:8px;">
                                 <span class="cm-id">CM_007_SECRET_GOVERNANCE</span>
@@ -4669,8 +4584,8 @@ stop
 
                         <div class="cm-status" style="margin-top:12px;">
                             <span class="cm-status-label">Countermeasure in place?</span>
-                            <span class="cm-status-value no">
-                                ✗
+                            <span class="cm-status-value yes">
+                                ✓
                             </span>
                         </div>
                     </div>
@@ -4782,7 +4697,7 @@ stop
                                     <div class="vt-cm-title">Maintain X-Frame-Options DENY and CSP frame-ancestors none</div>
                                 </div>
                                 
-                                <div class="vt-cm not-impl">
+                                <div class="vt-cm ">
                                     <div class="vt-cm-label">Countermeasure</div>
                                     <div class="vt-cm-title">Add CI Smoke Test for Mandatory Security Headers</div>
                                 </div>
@@ -4820,7 +4735,7 @@ stop
                         </div>
                     </div>
                     
-                    <div class="cm-item not-implemented">
+                    <div class="cm-item implemented">
                         <div class="cm-header">
                             <div style="display:flex;align-items:center;flex-wrap:wrap;gap:8px;">
                                 <span class="cm-id">CM_006_HEADER_REGRESSION_TEST</span>
@@ -4837,8 +4752,8 @@ stop
 
                         <div class="cm-status" style="margin-top:12px;">
                             <span class="cm-status-label">Countermeasure in place?</span>
-                            <span class="cm-status-value no">
-                                ✗
+                            <span class="cm-status-value yes">
+                                ✓
                             </span>
                         </div>
                     </div>
@@ -4889,9 +4804,9 @@ stop
     style T_T_002_CHECKOUT_REDIRECT_POISON fill:#e74c3c,stroke:#c0392b,color:#fff
 
     %% Countermeasures
-    CM_T_002_CHECKOUT_REDIRECT_POISON_CM_002_URL_ALLOWLIST([&#34;TODO: Validate Checkout Redirect Host and...&#34;])
+    CM_T_002_CHECKOUT_REDIRECT_POISON_CM_002_URL_ALLOWLIST([&#34;DONE: Validate Checkout Redirect Host and...&#34;])
     T_T_002_CHECKOUT_REDIRECT_POISON -.-&gt; CM_T_002_CHECKOUT_REDIRECT_POISON_CM_002_URL_ALLOWLIST
-    style CM_T_002_CHECKOUT_REDIRECT_POISON_CM_002_URL_ALLOWLIST fill:#f2f3f4,stroke:#aab7b8,color:#555
+    style CM_T_002_CHECKOUT_REDIRECT_POISON_CM_002_URL_ALLOWLIST fill:#d5f5e3,stroke:#27ae60,color:#1e8449
     CM_T_002_CHECKOUT_REDIRECT_POISON_CM_002_SERVER_SIGNED_REDIRECT([&#34;TODO: Return Signed Redirect Targets from...&#34;])
     T_T_002_CHECKOUT_REDIRECT_POISON -.-&gt; CM_T_002_CHECKOUT_REDIRECT_POISON_CM_002_SERVER_SIGNED_REDIRECT
     style CM_T_002_CHECKOUT_REDIRECT_POISON_CM_002_SERVER_SIGNED_REDIRECT fill:#f2f3f4,stroke:#aab7b8,color:#555</div>
@@ -4912,8 +4827,8 @@ stop
                     <div class="threat-details">
                         <div class="detail-row">
                             <div class="detail-label">Threat Status:</div>
-                            <div class="detail-value unmitigated">
-                                Unmitigated
+                            <div class="detail-value mitigated">
+                                Mitigated
                             </div>
                         </div>
                         
@@ -5008,7 +4923,7 @@ stop
                             <!-- Countermeasures row -->
                             <div class="vt-cm-row">
                                 
-                                <div class="vt-cm not-impl">
+                                <div class="vt-cm ">
                                     <div class="vt-cm-label">Countermeasure</div>
                                     <div class="vt-cm-title">Validate Checkout Redirect Host and Protocol Client-Side</div>
                                 </div>
@@ -5028,7 +4943,7 @@ stop
                     <h5>Counter-measures for T_002_CHECKOUT_REDIRECT_POISON</h5>
                     
                     
-                    <div class="cm-item not-implemented">
+                    <div class="cm-item implemented">
                         <div class="cm-header">
                             <div style="display:flex;align-items:center;flex-wrap:wrap;gap:8px;">
                                 <span class="cm-id">CM_002_URL_ALLOWLIST</span>
@@ -5045,8 +4960,8 @@ stop
 
                         <div class="cm-status" style="margin-top:12px;">
                             <span class="cm-status-label">Countermeasure in place?</span>
-                            <span class="cm-status-value no">
-                                ✗
+                            <span class="cm-status-value yes">
+                                ✓
                             </span>
                         </div>
                     </div>
@@ -6266,8 +6181,8 @@ wait
 
         <!-- Footer -->
         <footer class="footer">
-            <p>Generated by Threat Model Tool | 2026-05-16 08:52:13 UTC</p>
-            <p>Captraex Public Website | TM-CAP-WEB-20260516 v1.0</p>
+            <p>Generated by Threat Model Tool | 2026-05-17 12:55:23 UTC</p>
+            <p>Captraex Public Website | TM-CAP-WEB-20260516 v1.1</p>
         </footer>
     </main>
 
@@ -6414,8 +6329,8 @@ wait
         
         // PlantUML rendering using online service
         // Store PUML source without HTML escaping (using tojson for proper JS string escaping)
-        const pumlComponentSource = "@startuml\n\ntitle Captraex Public Website - Data Flow Diagram\n\n!define CRITICAL_COLOR #FF6B6B\n!define HIGH_COLOR #FFA500\n!define MEDIUM_COLOR #FFD93D\n!define LOW_COLOR #6BCB77\n!define TRUST_BOUNDARY_COLOR #E8E8E8\n\nskinparam {\n    BackgroundColor white\n    ArrowColor #333333\n    ArrowFontSize 10\n    ParticipantBorderColor #2c3e50\n    ParticipantBackgroundColor #ecf0f1\n    ParticipantFontColor #2c3e50\n    NoteBackgroundColor #fffde7\n    NoteBorderColor #ffc107\n    RectangleBorderColor #2c3e50\n    RectangleBorderStyle dashed\n}\n\n\u0027 === TRUST ZONES AND PARTICIPANTS ===\nrectangle \"External End-User\" as zone_External_End_User \u003c\u003ctrust_zone\u003e\u003e {\n    component \"Visitor Browser Runtime\" as A_BROWSER\n}\n\nrectangle \"Trusted Internal\" as zone_Trusted_Internal \u003c\u003ctrust_zone\u003e\u003e {\n    component \"Captraex Website (Azure Static Web Apps)\" as A_WEBSITE\n    component \"Static Hosting Security Header Policy\" as A_EDGE_CONFIG\n}\n\nrectangle \"Edge / Trusted Internal\" as zone_Edge___Trusted_Internal \u003c\u003ctrust_zone\u003e\u003e {\n    component \"Captraex Public API (api.captraex.com)\" as A_API\n    component \"Captraex Product App (app.captraex.com)\" as A_APP\n}\n\nrectangle \"External Third-Party\" as zone_External_Third_Party \u003c\u003ctrust_zone\u003e\u003e {\n    component \"Stripe Hosted Checkout\" as A_STRIPE\n    component \"npm Registry Dependencies\" as A_NPM\n}\n\nrectangle \"Privileged Internal\" as zone_Privileged_Internal \u003c\u003ctrust_zone\u003e\u003e {\n    component \"GitHub Repository (captraex-ui-experiment)\" as A_REPO\n    component \"GitHub Actions Deployment Pipeline\" as A_CI\n}\n\n\u0027 === DATA FLOWS ===\nA_BROWSER --\u003e A_WEBSITE : Load Marketing Website\nA_BROWSER --\u003e A_API : Checkout Session Request\nA_BROWSER --\u003e A_APP : Sign-In Redirect to Product App\nA_BROWSER --\u003e A_STRIPE : Redirect to Hosted Payment Page\nA_WEBSITE --\u003e A_BROWSER : Serve Static Assets and HTML\nA_WEBSITE --\u003e A_APP : Product App Pre-Warm Request\nA_WEBSITE --\u003e A_API : API Health Pre-Warm Request\nA_EDGE_CONFIG --\u003e A_BROWSER : Apply Security Headers to HTTP Responses\nA_API --\u003e A_BROWSER : Return Checkout URL to Browser\nA_API --\u003e A_STRIPE : Create Stripe Checkout Session\nA_APP --\u003e A_BROWSER : Serve Product App Login and Dashboard\nA_STRIPE --\u003e A_BROWSER : Render Hosted Checkout Session\nA_REPO --\u003e A_CI : Source Changes Trigger CI Pipeline\nA_CI --\u003e A_WEBSITE : Publish Built Static Site to Azure Static Web Apps\nA_CI --\u003e A_WEBSITE : Inject Public Runtime Endpoints at Build Time\nA_NPM --\u003e A_CI : Dependency Resolution and Package Download\n\n\u0027 === LEGEND ===\nlegend right\n    |= Color |= Meaning |\n    | \u003cback:CRITICAL_COLOR\u003e    \u003c/back\u003e | Critical Risk (CVSS 9.0+) |\n    | \u003cback:HIGH_COLOR\u003e    \u003c/back\u003e | High Risk (CVSS 7.0-8.9) |\n    | \u003cback:MEDIUM_COLOR\u003e    \u003c/back\u003e | Medium Risk (CVSS 4.0-6.9) |\n    | \u003cback:LOW_COLOR\u003e    \u003c/back\u003e | Low Risk (CVSS \u003c 4.0) |\n    | \u003ccolor:red\u003e\u2014\u2014\u003e\u003c/color\u003e | Crosses Trust Boundary |\n    | \u003ccolor:orange\u003e\u2014\u2014\u003e\u003c/color\u003e | Sensitive Data Flow |\nendlegend\n\nfooter Generated from TM-CAP-WEB-20260516 v1.0\n\n@enduml";
-        const pumlSequenceSource = "@startuml\n\ntitle Captraex Public Website - Dataflow Sequence\n\nskinparam {\n    ParticipantBorderColor #2c3e50\n    ParticipantBackgroundColor #ecf0f1\n    SequenceArrowColor #333333\n    SequenceLifeLineBorderColor #bdc3c7\n    NoteBackgroundColor #fff3cd\n    NoteBorderColor #ffc107\n}\n\nbox \"External End-User\" #d4edda\n    participant \"Visitor Browser Runtime\" as A_BROWSER\nend box\n\nbox \"Trusted Internal\" #d4edda\n    participant \"Captraex Website (Azure Static Web Apps)\" as A_WEBSITE\n    participant \"Static Hosting Security Header Policy\" as A_EDGE_CONFIG\nend box\n\nbox \"Edge / Trusted Internal\" #d4edda\n    participant \"Captraex Public API (api.captraex.com)\" as A_API\n    participant \"Captraex Product App (app.captraex.com)\" as A_APP\nend box\n\nbox \"External Third-Party\" #d4edda\n    participant \"Stripe Hosted Checkout\" as A_STRIPE\n    participant \"npm Registry Dependencies\" as A_NPM\nend box\n\nbox \"Privileged Internal\" #d4edda\n    participant \"GitHub Repository (captraex-ui-experiment)\" as A_REPO\n    participant \"GitHub Actions Deployment Pipeline\" as A_CI\nend box\n\n== Data Flow Interactions ==\n\nA_BROWSER -\u003e A_WEBSITE: Load Marketing Website\\n(N/A)\nA_BROWSER -\u003e A_API: Checkout Session Request\\n(N/A)\nA_BROWSER -\u003e A_APP: Sign-In Redirect to Product App\\n(N/A)\nA_BROWSER -\u003e A_STRIPE: Redirect to Hosted Payment Page\\n(N/A)\nA_WEBSITE -\u003e A_BROWSER: Serve Static Assets and HTML\\n(N/A)\nA_WEBSITE -\u003e A_APP: Product App Pre-Warm Request\\n(N/A)\nA_WEBSITE -\u003e A_API: API Health Pre-Warm Request\\n(N/A)\nA_EDGE_CONFIG -\u003e A_BROWSER: Apply Security Headers to HTTP Responses\\n(N/A)\nA_API -\u003e A_BROWSER: Return Checkout URL to Browser\\n(N/A)\nA_API -\u003e A_STRIPE: Create Stripe Checkout Session\\n(N/A)\nA_APP -\u003e A_BROWSER: Serve Product App Login and Dashboard\\n(N/A)\nA_STRIPE -\u003e A_BROWSER: Render Hosted Checkout Session\\n(N/A)\nA_REPO -\u003e A_CI: Source Changes Trigger CI Pipeline\\n(N/A)\nA_CI -\u003e A_WEBSITE: Publish Built Static Site to Azure Static Web Apps\\n(N/A)\nA_CI -\u003e A_WEBSITE: Inject Public Runtime Endpoints at Build Time\\n(N/A)\nA_NPM -\u003e A_CI: Dependency Resolution and Package Download\\n(N/A)\n\nfooter Model: TM-CAP-WEB-20260516 | Version: 1.0\n\n@enduml";
+        const pumlComponentSource = "@startuml\n\ntitle Captraex Public Website - Data Flow Diagram\n\n!define CRITICAL_COLOR #FF6B6B\n!define HIGH_COLOR #FFA500\n!define MEDIUM_COLOR #FFD93D\n!define LOW_COLOR #6BCB77\n!define TRUST_BOUNDARY_COLOR #E8E8E8\n\nskinparam {\n    BackgroundColor white\n    ArrowColor #333333\n    ArrowFontSize 10\n    ParticipantBorderColor #2c3e50\n    ParticipantBackgroundColor #ecf0f1\n    ParticipantFontColor #2c3e50\n    NoteBackgroundColor #fffde7\n    NoteBorderColor #ffc107\n    RectangleBorderColor #2c3e50\n    RectangleBorderStyle dashed\n}\n\n\u0027 === TRUST ZONES AND PARTICIPANTS ===\nrectangle \"External End-User\" as zone_External_End_User \u003c\u003ctrust_zone\u003e\u003e {\n    component \"Visitor Browser Runtime\" as A_BROWSER\n}\n\nrectangle \"Trusted Internal\" as zone_Trusted_Internal \u003c\u003ctrust_zone\u003e\u003e {\n    component \"Captraex Website (Azure Static Web Apps)\" as A_WEBSITE\n    component \"Static Hosting Security Header Policy\" as A_EDGE_CONFIG\n}\n\nrectangle \"Edge / Trusted Internal\" as zone_Edge___Trusted_Internal \u003c\u003ctrust_zone\u003e\u003e {\n    component \"Captraex Public API (api.captraex.com)\" as A_API\n    component \"Captraex Product App (app.captraex.com)\" as A_APP\n}\n\nrectangle \"External Third-Party\" as zone_External_Third_Party \u003c\u003ctrust_zone\u003e\u003e {\n    component \"Stripe Hosted Checkout\" as A_STRIPE\n    component \"npm Registry Dependencies\" as A_NPM\n}\n\nrectangle \"Privileged Internal\" as zone_Privileged_Internal \u003c\u003ctrust_zone\u003e\u003e {\n    component \"GitHub Repository (captraex-ui-experiment)\" as A_REPO\n    component \"GitHub Actions Deployment Pipeline\" as A_CI\n}\n\n\u0027 === DATA FLOWS ===\nA_BROWSER --\u003e A_WEBSITE : Load Marketing Website\nA_BROWSER --\u003e A_API : Checkout Session Request\nA_BROWSER --\u003e A_APP : Sign-In Redirect to Product App\nA_BROWSER --\u003e A_STRIPE : Redirect to Hosted Payment Page\nA_WEBSITE --\u003e A_BROWSER : Serve Static Assets and HTML\nA_WEBSITE --\u003e A_APP : Product App Pre-Warm Request\nA_WEBSITE --\u003e A_API : API Health Pre-Warm Request\nA_EDGE_CONFIG --\u003e A_BROWSER : Apply Security Headers to HTTP Responses\nA_API --\u003e A_BROWSER : Return Checkout URL to Browser\nA_API --\u003e A_STRIPE : Create Stripe Checkout Session\nA_APP --\u003e A_BROWSER : Serve Product App Login and Dashboard\nA_STRIPE --\u003e A_BROWSER : Render Hosted Checkout Session\nA_REPO --\u003e A_CI : Source Changes Trigger CI Pipeline\nA_CI --\u003e A_WEBSITE : Publish Built Static Site to Azure Static Web Apps\nA_CI --\u003e A_WEBSITE : Inject Public Runtime Endpoints at Build Time\nA_NPM --\u003e A_CI : Dependency Resolution and Package Download\n\n\u0027 === LEGEND ===\nlegend right\n    |= Color |= Meaning |\n    | \u003cback:CRITICAL_COLOR\u003e    \u003c/back\u003e | Critical Risk (CVSS 9.0+) |\n    | \u003cback:HIGH_COLOR\u003e    \u003c/back\u003e | High Risk (CVSS 7.0-8.9) |\n    | \u003cback:MEDIUM_COLOR\u003e    \u003c/back\u003e | Medium Risk (CVSS 4.0-6.9) |\n    | \u003cback:LOW_COLOR\u003e    \u003c/back\u003e | Low Risk (CVSS \u003c 4.0) |\n    | \u003ccolor:red\u003e\u2014\u2014\u003e\u003c/color\u003e | Crosses Trust Boundary |\n    | \u003ccolor:orange\u003e\u2014\u2014\u003e\u003c/color\u003e | Sensitive Data Flow |\nendlegend\n\nfooter Generated from TM-CAP-WEB-20260516 v1.1\n\n@enduml";
+        const pumlSequenceSource = "@startuml\n\ntitle Captraex Public Website - Dataflow Sequence\n\nskinparam {\n    ParticipantBorderColor #2c3e50\n    ParticipantBackgroundColor #ecf0f1\n    SequenceArrowColor #333333\n    SequenceLifeLineBorderColor #bdc3c7\n    NoteBackgroundColor #fff3cd\n    NoteBorderColor #ffc107\n}\n\nbox \"External End-User\" #d4edda\n    participant \"Visitor Browser Runtime\" as A_BROWSER\nend box\n\nbox \"Trusted Internal\" #d4edda\n    participant \"Captraex Website (Azure Static Web Apps)\" as A_WEBSITE\n    participant \"Static Hosting Security Header Policy\" as A_EDGE_CONFIG\nend box\n\nbox \"Edge / Trusted Internal\" #d4edda\n    participant \"Captraex Public API (api.captraex.com)\" as A_API\n    participant \"Captraex Product App (app.captraex.com)\" as A_APP\nend box\n\nbox \"External Third-Party\" #d4edda\n    participant \"Stripe Hosted Checkout\" as A_STRIPE\n    participant \"npm Registry Dependencies\" as A_NPM\nend box\n\nbox \"Privileged Internal\" #d4edda\n    participant \"GitHub Repository (captraex-ui-experiment)\" as A_REPO\n    participant \"GitHub Actions Deployment Pipeline\" as A_CI\nend box\n\n== Data Flow Interactions ==\n\nA_BROWSER -\u003e A_WEBSITE: Load Marketing Website\\n(N/A)\nA_BROWSER -\u003e A_API: Checkout Session Request\\n(N/A)\nA_BROWSER -\u003e A_APP: Sign-In Redirect to Product App\\n(N/A)\nA_BROWSER -\u003e A_STRIPE: Redirect to Hosted Payment Page\\n(N/A)\nA_WEBSITE -\u003e A_BROWSER: Serve Static Assets and HTML\\n(N/A)\nA_WEBSITE -\u003e A_APP: Product App Pre-Warm Request\\n(N/A)\nA_WEBSITE -\u003e A_API: API Health Pre-Warm Request\\n(N/A)\nA_EDGE_CONFIG -\u003e A_BROWSER: Apply Security Headers to HTTP Responses\\n(N/A)\nA_API -\u003e A_BROWSER: Return Checkout URL to Browser\\n(N/A)\nA_API -\u003e A_STRIPE: Create Stripe Checkout Session\\n(N/A)\nA_APP -\u003e A_BROWSER: Serve Product App Login and Dashboard\\n(N/A)\nA_STRIPE -\u003e A_BROWSER: Render Hosted Checkout Session\\n(N/A)\nA_REPO -\u003e A_CI: Source Changes Trigger CI Pipeline\\n(N/A)\nA_CI -\u003e A_WEBSITE: Publish Built Static Site to Azure Static Web Apps\\n(N/A)\nA_CI -\u003e A_WEBSITE: Inject Public Runtime Endpoints at Build Time\\n(N/A)\nA_NPM -\u003e A_CI: Dependency Resolution and Package Download\\n(N/A)\n\nfooter Model: TM-CAP-WEB-20260516 | Version: 1.1\n\n@enduml";
         
         console.log('PUML Component Source loaded:', pumlComponentSource ? pumlComponentSource.substring(0, 100) + '...' : 'empty');
         console.log('PUML Sequence Source loaded:', pumlSequenceSource ? pumlSequenceSource.substring(0, 100) + '...' : 'empty');
