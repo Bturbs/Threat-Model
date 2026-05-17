@@ -1,7 +1,7 @@
 meta:
   title: "Captraex User Center (V0)"
   modelId: "TM-SCV0-20260414"
-  version: "2.1"
+  version: "2.2"
   scope: >
     EU-only multi-tenant SaaS platform for AI-powered lead capture, voice
     transcription, and personalised email outreach. Covers: Next.js 15 web client
@@ -12,7 +12,7 @@ meta:
     /api/auth/logout) with same-origin request guards, per-IP rate limiting,
     safe return_to normalization, and server-side session revocation; Fastify API
     gateway on Azure Container Apps (9 microservices,
-    scale-to-zero); Claude Haiku 3.5 AI draft generation with XML-delimited prompt
+    scale-to-zero); Claude Haiku AI draft generation with XML-delimited prompt
     hardening; OpenAI Whisper voice transcription; Microsoft 365 Graph API email
     dispatch from user mailboxes with open/reply tracking; Azure Communication
     Services for system emails; CosmosDB PostgreSQL (Citus) with tenant_id
@@ -22,7 +22,7 @@ meta:
     receipts; invitation-engine with seat-limit enforcement. EU region only
     (Azure West Europe / North Europe).
   owner: "Security Team"
-  lastUpdated: "2026-05-16"
+  lastUpdated: "2026-05-17"
 
 diagrams:
   - id: "DIAGRAM_01"
@@ -549,7 +549,7 @@ threats:
       vector: "CVSS:3.1/AV:A/AC:H/PR:N/UI:N/S:U/C:H/I:N/A:N"
       score: 5.9
       severity: "Medium"
-    fullyMitigated: false
+    fullyMitigated: true
     alwaysPresent: false
 
     testPrerequisites:
@@ -637,7 +637,7 @@ threats:
         description: >
           Pin the application's TLS public key in native mobile builds to prevent
           interception via rogue CA certificate installation.
-        status: "not_started"
+        status: "in_place"
         effort: "Medium"
         why: >
           Certificate pinning defeats MITM attacks that rely on the attacker installing
@@ -679,7 +679,7 @@ threats:
       vector: "CVSS:3.1/AV:N/AC:H/PR:L/UI:N/S:U/C:N/I:H/A:N"
       score: 5.3
       severity: "Medium"
-    fullyMitigated: true
+    fullyMitigated: false
     alwaysPresent: false
 
     testPrerequisites:
@@ -1834,7 +1834,7 @@ threats:
       vector: "CVSS:3.1/AV:N/AC:L/PR:N/UI:R/S:U/C:L/I:H/A:L"
       score: 7.1
       severity: "High"
-    fullyMitigated: false
+    fullyMitigated: true
     alwaysPresent: false
 
     testPrerequisites:
@@ -1892,7 +1892,7 @@ threats:
         description: >
           Publish SPF, DKIM, and DMARC DNS records to authenticate outbound emails
           and protect sender domain reputation.
-        status: "not_started"
+        status: "in_place"
         effort: "Low"
         why: >
           SPF/DKIM/DMARC protect sender reputation, prevent domain spoofing, and
@@ -2336,7 +2336,7 @@ threats:
       vector: "CVSS:3.1/AV:N/AC:H/PR:N/UI:R/S:U/C:H/I:H/A:N"
       score: 6.8
       severity: "Medium"
-    fullyMitigated: true
+    fullyMitigated: false
     alwaysPresent: false
 
     testPrerequisites:
@@ -2640,7 +2640,7 @@ threats:
       vector: "CVSS:3.1/AV:N/AC:L/PR:L/UI:N/S:U/C:N/I:H/A:L"
       score: 7.1
       severity: "High"
-    fullyMitigated: false
+    fullyMitigated: true
     alwaysPresent: false
 
     testPrerequisites:
@@ -2679,7 +2679,7 @@ threats:
           CSV import pipeline validates file size, strips formula-triggering
           characters, validates field formats via Zod schemas, and applies HTML
           encoding for UI display.
-        status: "planned"
+        status: "in_place"
         effort: "Medium"
         why: >
           Unsanitised CSV imports are a vector for formula injection, XSS, and
